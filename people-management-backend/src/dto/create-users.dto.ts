@@ -34,6 +34,31 @@ export class CreateUsersDto {
   @IsInt()
   roleId: number; // references Role.id
 
+  @IsString()
+  AddressLine1: string;
+
+  @IsString()
+  AddressLine2: string;
+
+  @IsString()
+  City: string;
+
+  @IsString()
+  State: string;
+
+  @IsString()
+  Country: string;
+
+  @IsString()
+  Zipcode: string;
+
+  @IsString()
+  AadharNumber: string;
+
+  @IsString()
+  PANNumber: string;
+
   @IsBoolean()
   isDeleted: boolean;
+
 }

@@ -1,74 +1,71 @@
 src/
 │
-├── app.module.ts                # Root module
-├── main.ts                      # Entry point
-│
-├── auth/                        # Authentication and authorization
-│   ├── auth.module.ts
-│   ├── auth.service.ts
+├── controllers/                    # All API endpoints (organized per stakeholder or module)
 │   ├── auth.controller.ts
-│   ├── guards/                  # JWT & Role guards
-│   │   ├── jwt-auth.guard.ts
-│   │   └── roles.guard.ts
-│   ├── strategies/              # JWT strategy
-│   │   └── jwt.strategy.ts
-│   └── dto/                     # Login/Register DTOs
-│
-├── users/                       # Admins and employees
-│   ├── users.module.ts
 │   ├── users.controller.ts
-│   ├── users.service.ts
-│   ├── entities/
-│   │   └── user.entity.ts
-│   └── dto/
-│       ├── create-user.dto.ts
-│       ├── update-user.dto.ts
-│       └── user-response.dto.ts
-│
-├── attendance/                  # Punch-in, punch-out, logs
-│   ├── attendance.module.ts
 │   ├── attendance.controller.ts
-│   ├── attendance.service.ts
-│   ├── entities/
-│   │   └── attendance.entity.ts
-│   └── dto/
-│       ├── create-attendance.dto.ts
-│       └── attendance-report.dto.ts
-│
-├── leaves/                      # Leave requests and approvals
-│   ├── leaves.module.ts
 │   ├── leaves.controller.ts
-│   ├── leaves.service.ts
-│   ├── entities/
-│   │   └── leave.entity.ts
-│   └── dto/
-│       ├── create-leave.dto.ts
-│       ├── update-leave.dto.ts
-│       └── leave-approval.dto.ts
-│
-├── configs/                     # Holiday configs, leave buckets
-│   ├── configs.module.ts
 │   ├── configs.controller.ts
+│   └── reports.controller.ts
+│
+├── services/                       # All business logic
+│   ├── auth.service.ts
+│   ├── users.service.ts
+│   ├── attendance.service.ts
+│   ├── leaves.service.ts
 │   ├── configs.service.ts
-│   ├── entities/
-│   │   └── holiday.entity.ts
-│   └── dto/
+│   └── reports.service.ts
+│
+├── repositories/                   # Persistence/database operations
+│   ├── user.repository.ts
+│   ├── attendance.repository.ts
+│   ├── leave.repository.ts
+│   └── holiday.repository.ts
+│
+├── entities/                       # TypeORM entities or schemas
+│   ├── user.entity.ts
+│   ├── attendance.entity.ts
+│   ├── leave.entity.ts
+│   └── holiday.entity.ts
+│
+├── dtos/                           # All DTOs
+│   ├── auth/
+│   │   ├── login.dto.ts
+│   │   └── register.dto.ts
+│   ├── users/
+│   │   ├── create-user.dto.ts
+│   │   ├── update-user.dto.ts
+│   │   └── user-response.dto.ts
+│   ├── attendance/
+│   │   ├── create-attendance.dto.ts
+│   │   └── attendance-report.dto.ts
+│   ├── leaves/
+│   │   ├── create-leave.dto.ts
+│   │   ├── update-leave.dto.ts
+│   │   └── leave-approval.dto.ts
+│   └── configs/
 │       ├── create-holiday.dto.ts
 │       └── create-leave-bucket.dto.ts
 │
-├── reports/                     # Reports and dashboards
-│   ├── reports.module.ts
-│   ├── reports.controller.ts
-│   └── reports.service.ts
+├── guards/                         # Guards (JWT, Roles)
+│   ├── jwt-auth.guard.ts
+│   └── roles.guard.ts
 │
-├── common/                      # Shared utilities, decorators, filters
-│   ├── decorators/
-│   │   ├── roles.decorator.ts
-│   │   └── user.decorator.ts
-│   ├── filters/
-│   │   └── http-exception.filter.ts
-│   └── interceptors/
-│       └── logging.interceptor.ts
+├── strategies/                     # Passport strategies
+│   └── jwt.strategy.ts
 │
-└── utils/                       # Helper functions, constants
-    └── file-upload.util.ts
+├── interceptors/                   # Interceptors (e.g., logging)
+│   └── logging.interceptor.ts
+│
+├── decorators/                     # Custom decorators
+│   ├── roles.decorator.ts
+│   └── user.decorator.ts
+│
+├── filters/                        # Exception filters
+│   └── http-exception.filter.ts
+│
+├── utils/                          # Helpers
+│   └── file-upload.util.ts
+│
+├── app.module.ts                   # Root module
+└── main.ts                         # Bootstrap entry point

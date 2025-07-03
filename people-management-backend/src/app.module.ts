@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
-import { RolesModule } from './roles/roles.module';
+import { UsersService } from './services/users.service';
+import { UsersController } from './controllers/users.controller';
+import { Users } from './entities/users.entity';
+import { Roles } from './entities/roles.entity';
 
 @Module({
   imports: [
@@ -15,8 +17,9 @@ import { RolesModule } from './roles/roles.module';
       autoLoadEntities: true,
       synchronize: true,         // auto-create tables in dev
     }),
-    UsersModule,
-    RolesModule,
+    TypeOrmModule.forFeature([Users, Roles]),
   ],
+  controllers: [UsersController],
+  providers: [UsersService],
 })
 export class AppModule {}

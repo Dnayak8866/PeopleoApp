@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
-import { Roles } from '../../roles/entities/roles.entity';
+import { Roles } from './roles.entity';
 
 @Entity()
 export class Users {
@@ -38,6 +38,30 @@ export class Users {
   @JoinColumn({ name: 'roleId' })
   role: Roles;
 
+  @Column()
+  AddressLine1: string;
+
+  @Column()
+  AddressLine2: string;
+
+  @Column()
+  City: string;
+
+  @Column()
+  State: string;
+
+  @Column()
+  Country: string;
+
+  @Column()
+  Zipcode: string;
+
+  @Column()
+  AadharNumber: string;
+
+  @Column()
+  PANNumber: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -46,5 +70,6 @@ export class Users {
 
   @Column()
   isDeleted: Boolean;
+
 
 }
