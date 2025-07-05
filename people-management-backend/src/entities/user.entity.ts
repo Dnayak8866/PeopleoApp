@@ -1,8 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
-import { Roles } from './roles.entity';
+import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
+import { Role } from './role.entity';
 
 @Entity()
-export class Users {
+export class User {
   @PrimaryColumn()
   id: number;
 
@@ -34,9 +34,9 @@ export class Users {
   roleId: number;
 
   // New: relation to Role
-  @ManyToOne(() => Roles, (role) => role.users, { eager: true })
+  @ManyToOne(() => Role, (role) => role.user, { eager: true })
   @JoinColumn({ name: 'roleId' })
-  role: Roles;
+  role: Role;
 
   @Column()
   AddressLine1: string;

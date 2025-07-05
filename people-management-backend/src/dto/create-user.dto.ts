@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, IsNumber, IsBoolean, IsDate, IsInt } from 'class-validator';
 
-export class CreateUsersDto {
+export class CreateUserDto {
   @IsNumber()
   @IsNotEmpty()
   id: number;
@@ -57,8 +57,4 @@ export class CreateUsersDto {
 
   @IsString()
   PANNumber: string;
-
-  @IsBoolean()
-  isDeleted: boolean;
-
 }
