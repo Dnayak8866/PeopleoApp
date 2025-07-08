@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/Colors';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -169,13 +170,13 @@ export default function EmployeesScreen() {
           </View>
         </View>
 
-        <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+        <View style={{ flex: 1, backgroundColor: Colors.background }}>
           <View style={styles.selectAllContainer}>
             <Checkbox
               style={styles.checkbox}
               value={selectAll}
               onValueChange={toggleSelectAll}
-              color={selectAll ? '#8B5CF6' : undefined}
+              color={selectAll ? Colors.primary : undefined}
             />
             <Text style={styles.selectAllText}>Select All</Text>
           </View>
@@ -187,7 +188,7 @@ export default function EmployeesScreen() {
                   style={styles.checkbox}
                   value={selectedEmployees.has(employee.id)}
                   onValueChange={() => toggleEmployeeSelection(employee.id)}
-                  color={selectedEmployees.has(employee.id) ? '#8B5CF6' : undefined}
+                  color={selectedEmployees.has(employee.id) ? Colors.primary : undefined}
                 />
 
                 {renderAvatar(employee)}
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -283,29 +284,32 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
+    backgroundColor: '#F7F7F780',
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 2,
     gap: 6,
+    borderColor:'#EBEBEA99',
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     color: '#1F2937',
+    backgroundColor: '#F7F7F780'
   },
   selectAllContainer: {
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
+    marginLeft: 18,
   },
   selectAllButton: {
     flexDirection: 'row',
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

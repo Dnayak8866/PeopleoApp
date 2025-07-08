@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -121,16 +122,13 @@ export default function AddEmployeeScreen() {
   };
 
   const handleImagePicker = async() => {
-    console.log("calling image picker");
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['livePhotos', 'images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-    console.log("result", result);
      if (!result.canceled && result.assets && result.assets.length > 0) {
-      console.log("code reached here");
       setFormData({...formData, profileImage: result.assets[0].uri });
     }
   };
@@ -324,8 +322,8 @@ export default function AddEmployeeScreen() {
     label: string,
     field: keyof FormData,
     placeholder: string,
+    onPress?: () => void,
     icon?: React.ReactNode,
-    onPress?: () => void
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>{label}</Text>
@@ -406,7 +404,7 @@ export default function AddEmployeeScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.container}>
           <View style={styles.header}>
@@ -438,11 +436,11 @@ export default function AddEmployeeScreen() {
                 {renderInput('Email ID', 'email', 'e.g., john.doe@example.com', <Mail size={20} color="#9CA3AF" />, 'email-address')}
                 {renderInput('Employee ID', 'employeeId', 'e.g., EMP12345', <Building size={20} color="#9CA3AF" />)}
                 {renderDropdown('Gender', 'gender', 'Select gender', <User size={20} color="#9CA3AF" />, () => setShowGenderModal(true))}
-                {renderDatePicker('Date of Birth', 'dateOfBirth', 'Select date', <Calendar size={20} color="#9CA3AF" />, () => {
+                {renderDatePicker('Date of Birth', 'dateOfBirth', 'Select date', () => {
                   setDatePickerDate(formData.dateOfBirth ? new Date(formData.dateOfBirth) : new Date());
                   setShowDatePicker(true);
                 })}
-                {renderDatePicker('Joining Date', 'joiningDate', 'Select date', <Calendar size={20} color="#9CA3AF" />, () => {
+                {renderDatePicker('Joining Date', 'joiningDate', 'Select date', () => {
                   setDatePickerDate(formData.joiningDate ? new Date(formData.joiningDate) : new Date());
                   setShowJoiningDatePicker(true);
                 })}
@@ -596,7 +594,7 @@ export default function AddEmployeeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     paddingTop: 20,
   },
   header: {
@@ -623,11 +621,10 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
     textAlign: 'center',
-    marginLeft: -35,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.background,
   },
   photoSection: {
     alignItems: 'center',
@@ -664,7 +661,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   section: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.background,
     marginBottom: 6,
     paddingVertical: 10,
   },
@@ -719,7 +716,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#9CA3AF',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   dropdownSelected: {
     color: '#171A1FFF',
@@ -731,13 +728,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   saveButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: Colors.primary,
     marginHorizontal: 20,
     marginTop: 14,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#8B5CF6',
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -779,7 +776,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   shiftButtonTextSelected: {
-    color: '#8B5CF6',
+    color: Colors.primary,
     fontWeight: '600',
   },
   shiftRow: {
@@ -787,7 +784,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginTop: 8,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
