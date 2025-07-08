@@ -67,7 +67,7 @@ const SplashScreen = ({ onAnimationComplete }: any) => {
       if (onAnimationComplete) {
         onAnimationComplete();
       }
-    }, 10000);
+    }, 5000);
 
     return () => {
       clearTimeout(timer);
