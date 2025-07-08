@@ -15,7 +15,7 @@ import { Role } from './entities/role.entity';
       password: '123456',      // your DB password
       database: 'PeopleO', // your DB name
       autoLoadEntities: true,
-      synchronize: true,         // auto-create tables in dev
+      synchronize: false,         // auto-create tables in dev
     }),
     TypeOrmModule.forFeature([User, Role]),
   ],
