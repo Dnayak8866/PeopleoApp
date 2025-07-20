@@ -21,6 +21,8 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="add-employee" options={{ headerShown: false }} />
+        <Stack.Screen name="employee-details" options={{ headerShown: false }} />
+        <Stack.Screen name="reports" options={{headerShown: false}} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="light" />
