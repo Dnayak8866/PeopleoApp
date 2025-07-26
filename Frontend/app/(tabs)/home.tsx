@@ -1,4 +1,5 @@
 import { RadialChart } from '@/components/RadialCharts';
+import { Colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -17,7 +18,7 @@ import {
 
 
 
-const QuickActionCard = ({ icon: Icon, title, onPress, iconColor = '#8B5CF6' }: {
+const QuickActionCard = ({ icon: Icon, title, onPress, iconColor = Colors.primary }: {
   icon: any;
   title: string;
   onPress: () => void;
@@ -71,7 +72,7 @@ export default function HomePage() {
   };
   const [selectedDate, setSelectedDate] = useState(getToday()); // Default to today's date
   const [currentData, setCurrentData] = useState<WorkingData>(mockData[0]);
-   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     const data = mockData.find(d => d.date === selectedDate) || mockData[0];
@@ -109,7 +110,7 @@ export default function HomePage() {
           </View>
         </View>
 
-        <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection:'row', gap:4 }} onPress={() => setShowDatePicker(true)}>
+        <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection:'row', gap:4, marginBottom:20 }} onPress={() => setShowDatePicker(true)}>
           <CalendarDays size={24} color="#6B7280" />
           <Text>{getDisplayDate(selectedDate)}</Text>
         </TouchableOpacity>
@@ -158,7 +159,7 @@ export default function HomePage() {
             <Status label='Absent' value='5' iconColor='#EF4444' />
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', }}>
-            <Status label='On leave' value='3' iconColor='#8B5CF6' />
+            <Status label='On leave' value='3' iconColor={Colors.primary} />
             <Status label='Late Check-ins' value='2' iconColor='#F59E0B' />
           </View>
         </View>
@@ -177,7 +178,7 @@ export default function HomePage() {
               icon={ClipboardCheck}
               title="View Attendance"
               onPress={() => router.push('/employees')}
-              iconColor="#8B5CF6"
+              iconColor={Colors.primary}
             />
             <QuickActionCard
               icon={Users}
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

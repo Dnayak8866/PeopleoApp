@@ -1,8 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 
-import { Home, Users } from 'lucide-react-native';
+import { Colors } from '@/constants/Colors';
+import { CalendarCheck, Home, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
 
@@ -25,8 +26,18 @@ export default function TabLayout() {
             borderTopWidth: 0,
           },
         }),
-        tabBarActiveTintColor: '#8B5CF6',
-        tabBarInactiveTintColor: '#000000',
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: '#565E6CFF',
+        tabBarButton: (props) => (
+        <Pressable
+          {...props}
+          android_ripple={null}
+          style={[
+            props.style,
+            { backgroundColor: 'transparent' }
+          ]}
+        />
+      )
       }}>
       <Tabs.Screen
         name="home"
@@ -39,6 +50,20 @@ export default function TabLayout() {
         name="employees"
         options={{
           title: 'Employees',
+          tabBarIcon: ({ color }) => <Users size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="attendance"
+        options={{
+          title: 'Attendance',
+          tabBarIcon: ({ color }) => <CalendarCheck size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="employee-home"
+        options={{
+          title: 'Employee Home',
           tabBarIcon: ({ color }) => <Users size={28} color={color} />,
         }}
       />

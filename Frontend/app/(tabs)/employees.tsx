@@ -12,9 +12,10 @@ import {
   Trash2,
   UserPlus
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Animated,
   Image,
   SafeAreaView,
   ScrollView,
@@ -69,11 +70,67 @@ const employees: Employee[] = [
   },
 ];
 
+const SkeletonItem = () => {
+  const animatedValue = new Animated.Value(0);
+
+  useEffect(() => {
+    const startAnimation = () => {
+      Animated.sequence([
+        Animated.timing(animatedValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animatedValue, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: false,
+        }),
+      ]).start(() => startAnimation());
+    };
+
+    startAnimation();
+  }, []);
+
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  return (
+    <View style={styles.employeeCard}>
+      <Animated.View style={[styles.skeletonCheckbox, { opacity }]} />
+      
+      <Animated.View style={[styles.skeletonAvatar, { opacity }]} />
+      
+      <View style={styles.employeeInfo}>
+        <Animated.View style={[styles.skeletonName, { opacity }]} />
+        <Animated.View style={[styles.skeletonPosition, { opacity }]} />
+      </View>
+      
+      <View style={styles.actionButtons}>
+        {[...Array(5)].map((_, index) => (
+          <Animated.View key={index} style={[styles.skeletonActionButton, { opacity }]} />
+        ))}
+      </View>
+    </View>
+  );
+};
+
 export default function EmployeesScreen() {
   const [searchText, setSearchText] = useState('');
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 4500);
+
+    return () => clearTimeout(loadingTimer);
+  }, []);
 
   const filteredEmployees = employees.filter(employee =>
     employee.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -144,6 +201,88 @@ export default function EmployeesScreen() {
     );
   };
 
+  const renderEmployeeList = () => {
+    if (isLoading) {
+      return (
+        <>
+          <View style={styles.selectAllContainer}>
+            <Animated.View style={styles.skeletonCheckbox} />
+            <Animated.View style={styles.skeletonSelectAllText} />
+          </View>
+          
+          {[...Array(5)].map((_, index) => (
+            <SkeletonItem key={index} />
+          ))}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.selectAllContainer}>
+          <Checkbox
+            style={styles.checkbox}
+            value={selectAll}
+            onValueChange={toggleSelectAll}
+            color={selectAll ? Colors.primary : undefined}
+          />
+          <Text style={styles.selectAllText}>Select All</Text>
+        </View>
+
+        {filteredEmployees.map((employee) => (
+          <View key={employee.id} style={styles.employeeCard}>
+            <Checkbox
+              style={styles.checkbox}
+              value={selectedEmployees.has(employee.id)}
+              onValueChange={() => toggleEmployeeSelection(employee.id)}
+              color={selectedEmployees.has(employee.id) ? Colors.primary : undefined}
+            />
+
+            {renderAvatar(employee)}
+
+            <View style={styles.employeeInfo}>
+              <Text style={styles.employeeName}>{employee.name}</Text>
+              <Text style={styles.employeePosition}>{employee.position}</Text>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleCall(employee)}
+              >
+                <Phone size={16} color="#EF4444" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleMessage(employee)}
+              >
+                <MessageCircle size={16} color="#EF4444" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleDelete(employee)}
+              >
+                <Mail size={16} color="#EF4444" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleDelete(employee)}
+              >
+                <Edit size={16} color="grey" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleDelete(employee)}
+              >
+                <Trash2 size={16} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </>
+    );
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF'}}>
       <View style={styles.container}>
@@ -166,77 +305,21 @@ export default function EmployeesScreen() {
               placeholderTextColor="#9CA3AF"
               value={searchText}
               onChangeText={setSearchText}
+              editable={!isLoading}
             />
           </View>
         </View>
 
         <View style={{ flex: 1, backgroundColor: Colors.background }}>
-          <View style={styles.selectAllContainer}>
-            <Checkbox
-              style={styles.checkbox}
-              value={selectAll}
-              onValueChange={toggleSelectAll}
-              color={selectAll ? Colors.primary : undefined}
-            />
-            <Text style={styles.selectAllText}>Select All</Text>
-          </View>
-
           <ScrollView style={styles.employeeList} showsVerticalScrollIndicator={false}>
-            {filteredEmployees.map((employee) => (
-              <View key={employee.id} style={styles.employeeCard}>
-                <Checkbox
-                  style={styles.checkbox}
-                  value={selectedEmployees.has(employee.id)}
-                  onValueChange={() => toggleEmployeeSelection(employee.id)}
-                  color={selectedEmployees.has(employee.id) ? Colors.primary : undefined}
-                />
-
-                {renderAvatar(employee)}
-
-                <View style={styles.employeeInfo}>
-                  <Text style={styles.employeeName}>{employee.name}</Text>
-                  <Text style={styles.employeePosition}>{employee.position}</Text>
-                </View>
-
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleCall(employee)}
-                  >
-                    <Phone size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleMessage(employee)}
-                  >
-                    <MessageCircle size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleDelete(employee)}
-                  >
-                    <Mail size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleDelete(employee)}
-                  >
-                    <Edit size={16} color="grey" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleDelete(employee)}
-                  >
-                    <Trash2 size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
+            {renderEmployeeList()}
           </ScrollView>
 
-          <TouchableOpacity style={styles.fab} onPress={handleAddEmployee}>
-            <UserPlus size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          {!isLoading && (
+            <TouchableOpacity style={styles.fab} onPress={handleAddEmployee}>
+              <UserPlus size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       <StatusBar style="dark" />
@@ -247,14 +330,14 @@ export default function EmployeesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 14,
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 44,
     backgroundColor: '#FFFFFF',
   },
   headerTitle: {
@@ -287,6 +370,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    backgroundColor: '#FFFFFF',
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -309,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    marginLeft: 18,
+    marginLeft: 9,
   },
   selectAllButton: {
     flexDirection: 'row',
@@ -402,5 +486,46 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  // Skeleton Styles
+  skeletonCheckbox: {
+    width: 20,
+    height: 20,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginRight: 16,
+  },
+  skeletonAvatar: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 24,
+    marginRight: 16,
+  },
+  skeletonName: {
+    height: 16,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 8,
+    width: '70%',
+  },
+  skeletonPosition: {
+    height: 14,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    width: '50%',
+  },
+  skeletonActionButton: {
+    width: 26,
+    height: 26,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 6,
+  },
+  skeletonSelectAllText: {
+    height: 16,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    width: 80,
+    marginLeft: 8,
   },
 });
