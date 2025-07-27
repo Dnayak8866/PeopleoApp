@@ -15,8 +15,11 @@ export class User {
   @Column()
   jobTitle: string;
 
-  @Column()
-  phone: number;
+  @Column({ unique: true })
+  phone: string;
+
+  @Column() 
+  pass: string;
 
   @Column({ unique: true })
   email: string;

@@ -16,8 +16,13 @@ export class CreateUserDto {
   @IsString()
   jobTitle: string;
 
-  @IsNumber()
-  phone: number;
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+
+  @IsString()
+  @IsNotEmpty()
+  pass: string;
 
   @IsEmail()
   email: string;
