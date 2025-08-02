@@ -1,78 +1,58 @@
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { Role } from './role.entity';
 
-@Entity()
+@Entity('employees')
 export class User {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn({ name: 'employee_id' })
   id: number;
 
-  @Column()
-  firstName: string;
+  @Column({ name: 'full_name', type: 'varchar', length: 255 })
+  fullName: string;
 
-  @Column()
-  lastName: string;
-
-  @Column()
-  jobTitle: string;
-
-  @Column({ unique: true })
-  phone: string;
-
-  @Column() 
-  pass: string;
-
-  @Column({ unique: true })
+  @Column({ name: 'email', type: 'varchar', length: 255, unique: true, nullable: true })
   email: string;
 
-  @Column()
-  gender: string;
+  @Column({ name: 'phone_number', type: 'varchar', length: 20, nullable: true })
+  phoneNumber: string;
 
-  @Column()
-  dob: Date;
+  @Column({ name: 'employee_code', type: 'varchar', length: 100, unique: true, nullable: true })
+  employeeCode: string;
 
-  @Column()
+  @Column({ name: 'joining_date', type: 'date', nullable: true })
   joiningDate: Date;
 
-  @Column({foreignKeyConstraintName: 'roleId'})
-  roleId: number;
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
 
-  // New: relation to Role
-  @ManyToOne(() => Role, (role) => role.user, { eager: true })
-  @JoinColumn({ name: 'roleId' })
-  role: Role;
-
-  @Column()
-  AddressLine1: string;
-
-  @Column()
-  AddressLine2: string;
-
-  @Column()
-  City: string;
-
-  @Column()
-  State: string;
-
-  @Column()
-  Country: string;
-
-  @Column()
-  Zipcode: string;
-
-  @Column()
-  AadharNumber: string;
-
-  @Column()
-  PANNumber: string;
-
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Column({ name: 'company_id', type: 'int' })
+  companyId: number;
 
-  @Column()
-  isDeleted: Boolean;
+  @Column({ name: 'department_id', type: 'int', nullable: true })
+  departmentId: number;
 
+  @Column({ name: 'designation_id', type: 'int', nullable: true })
+  designationId: number;
 
+  @Column({ name: 'role_id', type: 'int' })
+  roleId: number;
+
+  @ManyToOne(() => Role, role => role.users)
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
+
+  @Column({ type: 'varchar', select: false }) // Exclude password from default queries
+  password: string;
+
+  @Column({ name: 'is_deleted', type: 'boolean', default: false })
+  isDeleted: boolean;
 }

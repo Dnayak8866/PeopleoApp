@@ -1,48 +1,52 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 
-import { AuthModule } from './modules/auth.module';
-import { UsersModule } from './modules/user.module';
-
-import { AuthMiddleware } from './middlewares/auth/auth.middleware'; 
+import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './services/auth.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // makes config available app-wide
+      isGlobal: true,
     }),
-     JwtModule.register({
-      global: true,
-      secret: 'your_jwt_secret_key', // use env variables for prod
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get('JWT_SECRET_KEY'),
+      }),
+      inject: [ConfigService],
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME,      // your DB user
-      password: process.env.DB_PASSWORD,      // your DB password
-      database: process.env.DB_NAME, // your DB name
-      autoLoadEntities: true,
-      synchronize: true,         // auto-create tables in dev
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => {
+        console.log('🔍 DB_HOST:', configService.get('DB_HOST'));
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST'),
+          port: parseInt(configService.get<string>('DB_PORT') || '5432', 10),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_NAME'),
+          autoLoadEntities: true,
+          synchronize: false,
+        };
+      },
+      inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role]),
-    AuthModule,
-    UsersModule
+    TypeOrmModule.forFeature([User, Role])
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [UserController, AuthController],
+  providers: [UserService, AuthService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes('user'); // ✅ apply auth middleware for all /user/* routes
+    consumer.apply(AuthMiddleware).forRoutes('user');
   }
 }

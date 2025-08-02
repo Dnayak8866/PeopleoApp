@@ -14,15 +14,25 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const employee = this.userRepository.create(createUserDto);
+    console.log(createUserDto);
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(createUserDto.pass, saltRounds);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+    const now = new Date();
 
     const user = this.userRepository.create({
-      ...createUserDto,
-      pass: hashedPassword, // Store hashed password
+      companyId: createUserDto.company_id,
+      departmentId: createUserDto.department_id,
+      designationId: createUserDto.designation_id,
+      email: createUserDto.email,
+      employeeCode: createUserDto.employee_code,
+      fullName: createUserDto.full_name,
+      joiningDate: createUserDto.joining_date,
+      phoneNumber: createUserDto.phone_number,
+      roleId: createUserDto.role_id,
+      createdAt: now.toISOString(),
+      password: hashedPassword,
     });
-    return this.userRepository.save(employee);
+    return this.userRepository.save(user);
   }
 
   findAll(): Promise<User[]> {
@@ -51,7 +61,7 @@ export class UserService {
     const result = this.userRepository.save(employee);
   }
 
-  async findByPhone(phone: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { phone } });
+  async findByPhone(phoneNumber: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 }

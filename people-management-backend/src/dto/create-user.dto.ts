@@ -1,65 +1,58 @@
-import { IsEmail, IsNotEmpty, IsString, IsNumber, IsBoolean, IsDate, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsDateString,
+  IsBoolean,
+  IsInt,
+  IsPhoneNumber,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
-  @IsNumber()
   @IsNotEmpty()
-  id: number;
-
   @IsString()
-  @IsNotEmpty()
-  firstName: string;
+  full_name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
-
-  @IsString()
-  jobTitle: string;
-
-  @IsString()
-  @IsNotEmpty()
-  phone: string;
-
-  @IsString()
-  @IsNotEmpty()
-  pass: string;
-
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
+  @IsOptional()
+  @IsPhoneNumber(undefined)
+  phone_number?: string;
+
+  @IsOptional()
   @IsString()
-  gender: string;
+  employee_code?: string;
 
-  @IsDate()
-  dob: Date;
+  @IsOptional()
+  @IsDateString()
+  joining_date?: string;
 
-  @IsDate()
-  joiningDate: Date;
+  @IsOptional()
+  @IsBoolean()
+  is_active?: boolean;
 
+  @IsNotEmpty()
   @IsInt()
-  roleId: number; // references Role.id
+  company_id: number;
 
-  @IsString()
-  AddressLine1: string;
+  @IsNotEmpty()
+  @IsInt()
+  role_id: number;
 
-  @IsString()
-  AddressLine2: string;
+  @IsOptional()
+  @IsInt()
+  department_id?: number;
 
-  @IsString()
-  City: string;
+  @IsOptional()
+  @IsInt()
+  designation_id?: number;
 
+  @IsNotEmpty()
+  @MinLength(6)
   @IsString()
-  State: string;
-
-  @IsString()
-  Country: string;
-
-  @IsString()
-  Zipcode: string;
-
-  @IsString()
-  AadharNumber: string;
-
-  @IsString()
-  PANNumber: string;
+  password: string;
 }

@@ -15,7 +15,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(phone);
     if (!user) {
       throw new UnauthorizedException('No user found');
-    }else if(await bcrypt.compare(password, user.pass)){
+    }else if(await bcrypt.compare(password, user.password)){
       throw new UnauthorizedException('Invalid Credentials');
     }
     return user;
@@ -62,7 +62,7 @@ export class AuthService {
   // Final Login API
   async login(phone: string, password: string) {
     const user = await this.validateUser(phone, password);
-    const refreshToken = this.generateRefreshToken(user.phone,  user.id);
+    const refreshToken = this.generateRefreshToken(user.phoneNumber,  user.id);
     const accessToken = this.generateAccessToken(refreshToken);
     return {
       refreshToken,
