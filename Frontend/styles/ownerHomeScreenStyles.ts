@@ -1,0 +1,177 @@
+import { Colors } from "@/constants/Colors";
+import { StyleSheet } from "react-native";
+
+export const ownerHomeScreenStyles = () => {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+            paddingTop: 28,
+        },
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingBottom: 10,
+            paddingHorizontal: 20,
+            backgroundColor: '#FFFFFF',
+            borderBottomWidth: 1,
+            borderBottomColor: '#E5E7EB',
+        },
+        companyName: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: '#111827',
+            textAlign: 'center',
+            marginLeft: 34,
+        },
+        dateText: {
+            fontSize: 14,
+            color: '#6B7280',
+        },
+        headerActions: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+        },
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: Colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        avatarText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
+        },
+        mainStatsContainer: {
+            padding: 20,
+            alignItems: 'center',
+        },
+        circleContainer: {
+            width: 200,
+            height: 200,
+        },
+        circleOuter: {
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: '#10B981',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+        },
+        circleInner: {
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: '#FFFFFF',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        mainHours: {
+            fontSize: 32,
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: 4,
+        },
+        mainHoursLabel: {
+            fontSize: 12,
+            color: '#6B7280',
+            textAlign: 'center',
+        },
+        mainHoursSubLabel: {
+            fontSize: 11,
+            color: '#9CA3AF',
+            textAlign: 'center',
+        },
+        statsGrid: {
+            flexDirection: 'column',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            width: '60%',
+        },
+        statCard: {
+            flex: 1,
+            minWidth: '47%',
+            backgroundColor: '#FFFFFF',
+            padding: 16,
+            borderRadius: 12,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+        },
+        statHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        trendContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+        },
+        trendText: {
+            fontSize: 12,
+            color: '#10B981',
+            fontWeight: '600',
+        },
+        statValue: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: 4,
+        },
+        statLabel: {
+            fontSize: 14,
+            color: '#6B7280',
+        },
+        section: {
+            padding: 20,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: 16,
+        },
+        quickActionsGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 12,
+        },
+        quickActionCard: {
+            flex: 1,
+            minWidth: '40%',
+            backgroundColor: '#FFFFFF',
+            padding: 16,
+            borderRadius: 12,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+        },
+        quickActionIcon: {
+            width: 56,
+            height: 56,
+            borderRadius: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        quickActionTitle: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#374151',
+            textAlign: 'center',
+        },
+    });
+}
