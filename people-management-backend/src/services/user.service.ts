@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -13,8 +14,25 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const employee = this.userRepository.create(createUserDto);
-    return this.userRepository.save(employee);
+    console.log(createUserDto);
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+    const now = new Date();
+
+    const user = this.userRepository.create({
+      companyId: createUserDto.company_id,
+      departmentId: createUserDto.department_id,
+      designationId: createUserDto.designation_id,
+      email: createUserDto.email,
+      employeeCode: createUserDto.employee_code,
+      fullName: createUserDto.full_name,
+      joiningDate: createUserDto.joining_date,
+      phoneNumber: createUserDto.phone_number,
+      roleId: createUserDto.role_id,
+      createdAt: now.toISOString(),
+      password: hashedPassword,
+    });
+    return this.userRepository.save(user);
   }
 
   findAll(): Promise<User[]> {
@@ -41,5 +59,9 @@ export class UserService {
     }
     employee.isDeleted = true;
     const result = this.userRepository.save(employee);
+  }
+
+  async findByPhone(phoneNumber: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 }
