@@ -1,5 +1,5 @@
 -- Create companies table
-CREATE TABLE companies (
+CREATE TABLE IF NOT EXISTS companies (
   company_id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255),
@@ -9,27 +9,27 @@ CREATE TABLE companies (
 );
 
 -- Create roles table
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
   role_id SERIAL PRIMARY KEY,
   role_name VARCHAR(100) NOT NULL
 );
 
 -- Create departments table
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
   department_id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   company_id INT REFERENCES companies(company_id)
 );
 
 -- Create designations table
-CREATE TABLE designations (
+CREATE TABLE IF NOT EXISTS designations (
   designation_id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   company_id INT REFERENCES companies(company_id)
 );
 
 -- Create employees table
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
   employee_id SERIAL PRIMARY KEY,
   company_id INT REFERENCES companies(company_id),
   role_id INT REFERENCES roles(role_id),
@@ -47,7 +47,7 @@ CREATE TABLE employees (
 );
 
 -- Create shift_timings table
-CREATE TABLE shift_timings (
+CREATE TABLE IF NOT EXISTS shift_timings (
   shift_id SERIAL PRIMARY KEY,
   company_id INT REFERENCES companies(company_id),
   shift_name VARCHAR(100),
@@ -57,15 +57,16 @@ CREATE TABLE shift_timings (
 );
 
 -- Create leave_types table
-CREATE TABLE leave_types (
+CREATE TABLE IF NOT EXISTS leave_types (
   leave_type_id SERIAL PRIMARY KEY,
   company_id INT REFERENCES companies(company_id),
   type_name VARCHAR(100) NOT NULL,
-  description TEXT
+  description TEXT,
+  leave_balance INT
 );
 
 -- Create holidays table
-CREATE TABLE holidays (
+CREATE TABLE IF NOT EXISTS holidays (
   holiday_id SERIAL PRIMARY KEY,
   company_id INT REFERENCES companies(company_id),
   holiday_date DATE NOT NULL,
@@ -74,7 +75,7 @@ CREATE TABLE holidays (
 );
 
 -- Create attendance table
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
   attendance_id SERIAL PRIMARY KEY,
   employee_id INT REFERENCES employees(employee_id),
   punch_in TIMESTAMP,
@@ -93,7 +94,7 @@ CREATE TABLE attendance (
 );
 
 -- Create leave_applications table
-CREATE TABLE leave_applications (
+CREATE TABLE IF NOT EXISTS leave_applications (
   leave_id SERIAL PRIMARY KEY,
   employee_id INT REFERENCES employees(employee_id),
   leave_type_id INT REFERENCES leave_types(leave_type_id),
@@ -106,7 +107,7 @@ CREATE TABLE leave_applications (
 );
 
 -- Create leave_balances table
-CREATE TABLE leave_balances (
+CREATE TABLE IF NOT EXISTS leave_balances (
   balance_id SERIAL PRIMARY KEY,
   employee_id INT REFERENCES employees(employee_id),
   leave_type_id INT REFERENCES leave_types(leave_type_id),
@@ -114,3 +115,7 @@ CREATE TABLE leave_balances (
   balance DECIMAL(5,2) DEFAULT 0,
   carried_forward DECIMAL(5,2) DEFAULT 0
 );
+
+-- Ensure column exists
+ALTER TABLE leave_types
+ADD COLUMN IF NOT EXISTS leave_balance INT;
