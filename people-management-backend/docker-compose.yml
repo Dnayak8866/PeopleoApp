@@ -5,9 +5,9 @@ services:
     image: postgres:15
     container_name: postgres_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: PeopleO
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -17,8 +17,8 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PG_USERNAME}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -33,11 +33,11 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_NAME: PeopleO
+      DATABASE_HOST: ${DB_HOST}
+      DATABASE_PORT: ${DB_PORT}
+      DATABASE_USER: ${DB_USERNAME}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      DATABASE_NAME: ${DB_NAME}
     command: npm run start:prod
 
 volumes:
