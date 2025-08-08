@@ -26,14 +26,14 @@ import { AuthService } from './services/auth.service';
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
-        console.log('🔍 DB_HOST:', configService.get('DB_HOST'));
+        console.log('DB_HOST:', configService.get('DB_HOST'));
         return {
           type: 'postgres',
-          host: 'postgres',// configService.get<string>('DB_HOST'),
-          port: parseInt(configService.get<string>('DB_PORT') || '5432', 10),
-          username: 'postgres' ,//configService.get<string>('DB_USERNAME'),
-          password:  'postgres' ,//configService.get<string>('DB_PASSWORD'),
-          database: 'PeopleO',// configService.get<string>('DB_NAME'),
+          host: configService.get<string>('DATABASE_HOST'),
+          port: parseInt(configService.get<string>('DATABASE_PORT') || '5432', 10),
+          username: configService.get<string>('DATABASE_USER'),
+          password:  configService.get<string>('DATABASE_PASSWORD'),
+          database: configService.get<string>('DATABASE_NAME'),
           autoLoadEntities: true,
           synchronize: false,
         };
