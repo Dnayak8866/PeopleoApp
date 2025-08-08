@@ -1,0 +1,29 @@
+Steps to install docker:
+1. Install Docker Desktop from https://www.docker.com/products/docker-desktop
+2. Follow the installation instructions for your operating system:
+	 - Windows: https://docs.docker.com/desktop/install/windows-install/
+	 - macOS: https://docs.docker.com/desktop/install/mac-install/
+	 - Linux: https://docs.docker.com/desktop/install/linux-install/
+
+steps to run the docker setup:
+1. Open a terminal or command prompt.
+2. Navigate to the `people-management-backend` directory.
+3. Run the command: `docker-compose up --build`
+4. Wait for the containers to start up. You should see logs indicating that PostgreSQL, pgAdmin, and the NestJS application are running.
+5. Open your web browser and go to `http://localhost:5050/login?next=/`.
+6. Log in to pgAdmin using the credentials:
+	 - Username: `admin@admin.com`
+	 - Password: `admin`
+7. Register a new server in pgAdmin:
+	 - Right-click on "Servers" and select "Register server"
+8. Enter the following details:
+	 - Name: `PeopleO`
+	 - Hostname/address: `postgres`
+	 - Username: `postgres`
+	 - Password: `postgres`
+9. Click "Save" to register the server.
+10. In pgAdmin, navigate to the `PeopleO` database.
+11. Open the Query Tool and run the following SQL files from the `people-management-backend` folder:
+	 - `schema.sql`
+	 - `dummy_data.sql`
+12. After running the SQL files, you should see the schema and dummy data populated in the `PeopleO` database.
