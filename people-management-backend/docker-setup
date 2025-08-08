@@ -7,7 +7,7 @@ Steps to install docker:
 
 steps to run the docker setup:
 1. Open a terminal or command prompt.
-2. Navigate to the `people-management-backend/docker-setup` directory.
+2. Navigate to the `people-management-backend` directory.
 3. Run the command: `docker-compose up --build`
 4. Wait for the containers to start up. You should see logs indicating that PostgreSQL, pgAdmin, and the NestJS application are running.
 5. Open your web browser and go to `http://localhost:5050/login?next=/`.
@@ -15,7 +15,7 @@ steps to run the docker setup:
 	 - Username: `admin@admin.com`
 	 - Password: `admin`
 7. Register a new server in pgAdmin:
-	 - Right-click on "Servers" and select "Create" > "Server".
+	 - Right-click on "Servers" and select "Register server"
 8. Enter the following details:
 	 - Name: `PeopleO`
 	 - Hostname/address: `postgres`
