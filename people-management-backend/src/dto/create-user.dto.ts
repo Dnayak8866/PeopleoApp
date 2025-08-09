@@ -1,60 +1,70 @@
-import { IsEmail, IsNotEmpty, IsString, IsNumber, IsBoolean, IsDate, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsDateString,
+  IsBoolean,
+  IsInt,
+  IsPhoneNumber,
+  MinLength,
+} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  @IsNumber()
   @IsNotEmpty()
-  id: number;
-
   @IsString()
-  @IsNotEmpty()
-  firstName: string;
+   @ApiProperty({ example: 'John Doe', description: 'The name of the user' })
+  full_name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
-
-  @IsString()
-  jobTitle: string;
-
-  @IsNumber()
-  phone: number;
-
+  @IsOptional()
   @IsEmail()
-  email: string;
+   @ApiProperty({ example: 'abs@gmail.com', description: 'The email id of the user' })
+  email?: string;
 
+  @IsOptional()
+  @IsPhoneNumber(undefined)
+  @ApiProperty({ example: '+1234567890', description: 'The phone number of the user', required: false })
+  phone_number?: string;
+
+  @IsOptional()
   @IsString()
-  gender: string;
+  @ApiProperty({ example: 'EMP001', description: 'The employee code', required: false })
+  employee_code?: string;
 
-  @IsDate()
-  dob: Date;
+  @IsOptional()
+  @IsDateString()
+  @ApiProperty({ example: '2023-01-01', description: 'The joining date', required: false })
+  joining_date?: string;
 
-  @IsDate()
-  joiningDate: Date;
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({ example: true, description: 'Is the user active?', required: false })
+  is_active?: boolean;
 
+  @IsNotEmpty()
   @IsInt()
-  roleId: number; // references Role.id
+  @ApiProperty({ example: 1, description: 'The company ID' })
+  company_id: number;
 
-  @IsString()
-  AddressLine1: string;
+  @IsNotEmpty()
+  @IsInt()
+  @ApiProperty({ example: 2, description: 'The role ID' })
+  role_id: number;
 
-  @IsString()
-  AddressLine2: string;
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 3, description: 'The department ID', required: false })
+  department_id?: number;
 
-  @IsString()
-  City: string;
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 4, description: 'The designation ID', required: false })
+  designation_id?: number;
 
+  @IsNotEmpty()
+  @MinLength(6)
   @IsString()
-  State: string;
-
-  @IsString()
-  Country: string;
-
-  @IsString()
-  Zipcode: string;
-
-  @IsString()
-  AadharNumber: string;
-
-  @IsString()
-  PANNumber: string;
+  @ApiProperty({ example: 'password123', description: 'The password for the user' })
+  password: string;
 }
