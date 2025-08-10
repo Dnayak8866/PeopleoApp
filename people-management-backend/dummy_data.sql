@@ -30,12 +30,12 @@ VALUES
   (1, 'Night Shift', '22:00:00', '06:00:00', TRUE);
 
 -- Insert leave types
-INSERT INTO leave_types (company_id, type_name, description)
+INSERT INTO leave_types (company_id, type_name, description, leave_balance)
 VALUES 
-  (1, 'Casual Leave', 'Casual leave for personal matters'),
-  (1, 'Sick Leave', 'Leave for medical issues'),
-  (1, 'Earned Leave', 'Annual earned leave'),
-  (1, 'Maternity Leave', 'Leave for maternity support');
+  (1, 'Casual Leave', 'Casual leave for personal matters', 7),
+  (1, 'Sick Leave', 'Leave for medical issues', 5),
+  (1, 'Earned Leave', 'Annual earned leave', 10),
+  (1, 'Maternity Leave', 'Leave for maternity support', 90);
 
 -- Insert holidays
 INSERT INTO holidays (company_id, holiday_date, name, is_optional)
