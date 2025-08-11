@@ -7,6 +7,14 @@ import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 
+import {LeaveTypeService} from './services/leave-type.service';
+import { LeaveType } from './entities/leave-type.entity';
+import { LeaveTypeController } from './controllers/leave-type.controller';
+
+import {ShiftTimingService} from './services/shift-timing.service';
+import { ShiftTiming } from './entities/shift-timing.entity';
+import { ShiftTimingController } from './controllers/shift-timing.controller';
+
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './controllers/auth.controller';
@@ -40,13 +48,15 @@ import { AuthService } from './services/auth.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role])
+    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming]),
   ],
-  controllers: [UserController, AuthController],
-  providers: [UserService, AuthService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController],
+  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes('user');
+    consumer.apply(AuthMiddleware).forRoutes('leave-types');
+    consumer.apply(AuthMiddleware).forRoutes('shift-timings');
   }
 }
