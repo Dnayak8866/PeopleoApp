@@ -7,6 +7,7 @@ import {
   IsInt
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateShiftTimingDto {
   @IsNotEmpty()
@@ -35,24 +36,4 @@ export class CreateShiftTimingDto {
   is_night_shift?: boolean;
 }
 
-export class UpdateShiftTimingDto {
-  @IsOptional()
-  @IsString()
-  @ApiProperty({ example: 'Evening Shift', description: 'The name of the shift', required: false })
-  shift_name?: string;
-
-  @IsOptional()
-  @IsDateString()
-  @ApiProperty({ example: '18:00:00', description: 'Shift start time', required: false })
-  from_time?: string;
-
-  @IsOptional()
-  @IsDateString()
-  @ApiProperty({ example: '22:00:00', description: 'Shift end time', required: false })
-  to_time?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  @ApiProperty({ example: true, description: 'Is this a night shift?', required: false })
-  is_night_shift?: boolean;
-}
+export class UpdateShiftTimingDto extends PartialType(CreateShiftTimingDto) {}

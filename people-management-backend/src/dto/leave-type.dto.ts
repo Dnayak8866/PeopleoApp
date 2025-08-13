@@ -5,6 +5,7 @@ import {
   IsInt,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateLeaveTypeDto {
   @IsNotEmpty()
@@ -27,19 +28,4 @@ export class CreateLeaveTypeDto {
   leave_balance?: number;
 }
 
-export class UpdateLeaveTypeDto {
-  @IsOptional()
-  @IsString()
-  @ApiProperty({ example: 'Sick Leave', description: 'The name of the leave type', required: false })
-  type_name?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiProperty({ example: 'Leave for health issues', description: 'Description of the leave type', required: false })
-  description?: string;
-
-  @IsOptional()
-  @IsInt()
-  @ApiProperty({ example: 15, description: 'Updated leave balance for the leave type', required: false })
-  leave_balance?: number;
-}
+export class UpdateLeaveTypeDto extends PartialType(CreateLeaveTypeDto) {}
