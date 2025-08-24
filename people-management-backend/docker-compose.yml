@@ -38,6 +38,9 @@ services:
       DATABASE_USER: ${DB_USERNAME}
       DATABASE_PASSWORD: ${DB_PASSWORD}
       DATABASE_NAME: ${DB_NAME}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     command: npm run start:prod
 
 volumes:

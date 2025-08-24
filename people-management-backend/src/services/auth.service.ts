@@ -15,7 +15,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(phone);
     if (!user) {
       throw new UnauthorizedException('No user found');
-    }else if(await bcrypt.compare(password, user.password)){
+    }else if(!await bcrypt.compare(password, user.password)) {
       throw new UnauthorizedException('Invalid Credentials');
     }
     return user;
