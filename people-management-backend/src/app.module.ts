@@ -15,6 +15,18 @@ import {ShiftTimingService} from './services/shift-timing.service';
 import { ShiftTiming } from './entities/shift-timing.entity';
 import { ShiftTimingController } from './controllers/shift-timing.controller';
 
+import { HolidayService } from './services/holiday.service';
+import { Holiday } from './entities/holiday.entity';
+import { HolidayController } from './controllers/holiday.controller';
+
+import { DepartmentService } from './services/department.service';
+import { Department } from './entities/department.entity';
+import { DepartmentController } from './controllers/department.controller';
+
+import { DesignationService } from './services/designation.service';
+import { Designation } from './entities/designation.entity';
+import { DesignationController } from './controllers/designation.controller';
+
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './controllers/auth.controller';
@@ -34,7 +46,6 @@ import { AuthService } from './services/auth.service';
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
-        console.log('DB_HOST:', configService.get('DB_HOST'));
         return {
           type: 'postgres',
           host: configService.get<string>('DATABASE_HOST'),
@@ -48,15 +59,18 @@ import { AuthService } from './services/auth.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming]),
+    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation]),
   ],
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController],
-  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController],
+  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes('user');
     consumer.apply(AuthMiddleware).forRoutes('leave-types');
     consumer.apply(AuthMiddleware).forRoutes('shift-timings');
+    consumer.apply(AuthMiddleware).forRoutes('holidays');
+    consumer.apply(AuthMiddleware).forRoutes('departments');
+    consumer.apply(AuthMiddleware).forRoutes('designations');
   }
 }

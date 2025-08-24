@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { LeaveTypeService } from '../services/leave-type.service';
 import { CreateLeaveTypeDto, UpdateLeaveTypeDto } from '../dto/leave-type.dto';
-import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('leave-types')
 @Controller('leave-types')
+@ApiBearerAuth('access-token')
 export class LeaveTypeController {
   constructor(private readonly leaveTypeService: LeaveTypeService) {}
 
