@@ -19,6 +19,8 @@ import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
+import { SalaryCountdownController } from './controllers/salary-countdown.controller';
+import { SalaryCountdownService } from './services/salary-countdown.service';
 
 @Module({
   imports: [
@@ -50,13 +52,15 @@ import { AuthService } from './services/auth.service';
     }),
     TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming]),
   ],
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController],
-  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, SalaryCountdownController],
+  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService, SalaryCountdownService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes('user');
     consumer.apply(AuthMiddleware).forRoutes('leave-types');
     consumer.apply(AuthMiddleware).forRoutes('shift-timings');
+    // consumer.apply(AuthMiddleware).forRoutes('salary-countdown');
+    
   }
 }

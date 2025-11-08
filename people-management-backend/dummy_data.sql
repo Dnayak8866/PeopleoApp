@@ -45,3 +45,33 @@ VALUES
   (1, '2025-08-15', 'Independence Day', FALSE),
   (1, '2025-10-02', 'Gandhi Jayanti', TRUE),
   (1, '2025-12-25', 'Christmas', FALSE);
+
+--admin employee
+INSERT INTO employees (
+    company_id,
+    role_id,
+    department_id,
+    designation_id,
+    full_name,
+    email,
+    phone_number,
+	password,
+    employee_code,
+    joining_date,
+    is_active,
+    created_at
+) VALUES (
+    1,                               -- company_id
+    1,                               -- role_id
+    1,                               -- department_id
+    2,                               -- designation_id
+    'John Doe',                      -- full_name
+    'john.doe@example.com',          -- email
+    '+91-9876543210',                -- phone_number
+	123456789,						 -- password
+    'EMP001',                        -- employee_code
+    '2024-05-10',                    -- joining_date
+    TRUE,                            -- is_active
+    NOW()                            -- created_at
+);
+
