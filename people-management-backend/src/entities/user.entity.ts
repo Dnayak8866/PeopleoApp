@@ -50,7 +50,10 @@ export class User {
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  @Column({ type: 'varchar', select: false }) // Exclude password from default queries
+  // @Column({ type: 'varchar', select: false }) // Exclude password from default queries
+  // password: string;
+
+  @Column({ type: 'varchar', select: true }) // Exclude password from default queries
   password: string;
 
   @Column({ name: 'is_deleted', type: 'boolean', default: false })

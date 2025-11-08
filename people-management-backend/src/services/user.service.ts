@@ -3,8 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserDto } from '../dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -13,22 +12,23 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    console.log(createUserDto);
+  async create(UserDto: UserDto): Promise<User> {
+    console.log(UserDto);
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+    const hashedPassword = await bcrypt.hash(UserDto.password, saltRounds);
+    console.log('Hashed Password: ', hashedPassword);
     const now = new Date();
 
     const user = this.userRepository.create({
-      companyId: createUserDto.company_id,
-      departmentId: createUserDto.department_id,
-      designationId: createUserDto.designation_id,
-      email: createUserDto.email,
-      employeeCode: createUserDto.employee_code,
-      fullName: createUserDto.full_name,
-      joiningDate: createUserDto.joining_date,
-      phoneNumber: createUserDto.phone_number,
-      roleId: createUserDto.role_id,
+      companyId: UserDto.company_id,
+      departmentId: UserDto.department_id,
+      designationId: UserDto.designation_id,
+      email: UserDto.email,
+      employeeCode: UserDto.employee_code,
+      fullName: UserDto.full_name,
+      joiningDate: UserDto.joining_date,
+      phoneNumber: UserDto.phone_number,
+      roleId: UserDto.role_id,
       createdAt: now.toISOString(),
       password: hashedPassword,
     });
@@ -45,7 +45,7 @@ export class UserService {
     return employee;  
   }
 
-  async update(id: number, updateEmployeeDto: UpdateUserDto): Promise<User> {
+  async update(id: number, updateEmployeeDto: UserDto): Promise<User> {
     const employee = await this.findOne(id);
     if (!employee) throw new NotFoundException(`User #${id} not found`);
     const updated = Object.assign(employee, updateEmployeeDto);
@@ -62,6 +62,7 @@ export class UserService {
   }
 
   async findByPhone(phoneNumber: string): Promise<User | null> {
+    console.log("phoneNumber", phoneNumber);
     return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 }
