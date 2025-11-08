@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ShiftTimingService } from '../services/shift-timing.service';
-import { CreateShiftTimingDto, UpdateShiftTimingDto } from '../dto/shift-timing.dto';
+import { ShiftTimingDto } from '../dto/shift-timing.dto';
 import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('shift-timings')
@@ -9,8 +9,8 @@ export class ShiftTimingController {
   constructor(private readonly shiftTimingService: ShiftTimingService) {}
 
   @Post()
-  create(@Body() createShiftTimingDto: CreateShiftTimingDto) {
-    return this.shiftTimingService.create(createShiftTimingDto);
+  create(@Body() ShiftTimingDto: ShiftTimingDto) {
+    return this.shiftTimingService.create(ShiftTimingDto);
   }
 
   @Get()
@@ -24,8 +24,8 @@ export class ShiftTimingController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateShiftTimingDto: UpdateShiftTimingDto) {
-    return this.shiftTimingService.update(+id, updateShiftTimingDto);
+  update(@Param('id') id: string, @Body() ShiftTimingDto: ShiftTimingDto) {
+    return this.shiftTimingService.update(+id, ShiftTimingDto);
   }
 
   @Delete(':id')

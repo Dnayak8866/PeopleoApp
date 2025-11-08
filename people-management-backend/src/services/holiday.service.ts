@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Holiday } from '../entities/holiday.entity';
-import { CreateHolidayDto, UpdateHolidayDto } from '../dto/holiday.dto';
+import { HolidayDto } from '../dto/holiday.dto';
 
 @Injectable()
 export class HolidayService {
@@ -11,8 +11,8 @@ export class HolidayService {
     private holidayRepository: Repository<Holiday>,
   ) {}
 
-  async create(createHolidayDto: CreateHolidayDto): Promise<Holiday> {
-    const holiday = this.holidayRepository.create(createHolidayDto);
+  async create(HolidayDto: HolidayDto): Promise<Holiday> {
+    const holiday = this.holidayRepository.create(HolidayDto);
     return await this.holidayRepository.save(holiday);
   }
 
@@ -46,9 +46,9 @@ export class HolidayService {
     return holiday;
   }
 
-  async update(id: number, updateHolidayDto: UpdateHolidayDto): Promise<Holiday> {
+  async update(id: number, HolidayDto: HolidayDto): Promise<Holiday> {
     await this.findOne(id);
-    await this.holidayRepository.update(id, updateHolidayDto);
+    await this.holidayRepository.update(id, HolidayDto);
     return this.findOne(id);
   }
 

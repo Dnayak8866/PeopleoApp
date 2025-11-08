@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LeaveType } from '../entities/leave-type.entity';
-import { CreateLeaveTypeDto, UpdateLeaveTypeDto } from '../dto/leave-type.dto';
+import { LeaveTypeDto } from '../dto/leave-type.dto';
 
 @Injectable()
 export class LeaveTypeService {
@@ -11,8 +11,8 @@ export class LeaveTypeService {
     private leaveTypeRepository: Repository<LeaveType>,
   ) {}
 
-  async create(createLeaveTypeDto: CreateLeaveTypeDto): Promise<LeaveType> {
-    const leaveType = this.leaveTypeRepository.create(createLeaveTypeDto);
+  async create(LeaveTypeDto: LeaveTypeDto): Promise<LeaveType> {
+    const leaveType = this.leaveTypeRepository.create(LeaveTypeDto);
     return await this.leaveTypeRepository.save(leaveType);
   }
 
@@ -32,9 +32,9 @@ export class LeaveTypeService {
     return leaveType;
   }
 
-  async update(id: number, updateLeaveTypeDto: UpdateLeaveTypeDto): Promise<LeaveType> {
+  async update(id: number, LeaveTypeDto: LeaveTypeDto): Promise<LeaveType> {
     await this.findOne(id);
-    await this.leaveTypeRepository.update(id, updateLeaveTypeDto);
+    await this.leaveTypeRepository.update(id, LeaveTypeDto);
     return this.findOne(id);
   }
 

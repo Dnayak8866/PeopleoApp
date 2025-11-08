@@ -27,6 +27,10 @@ import { DesignationService } from './services/designation.service';
 import { Designation } from './entities/designation.entity';
 import { DesignationController } from './controllers/designation.controller';
 
+import { AttendanceService } from './services/attendance.service';
+import { AttendanceController } from './controllers/attendance.controller';
+import { Attendance } from './entities/attendance.entity';
+
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './controllers/auth.controller';
@@ -59,10 +63,10 @@ import { AuthService } from './services/auth.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation]),
+    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance]),
   ],
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController],
-  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController],
+  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
@@ -72,5 +76,6 @@ export class AppModule implements NestModule {
     consumer.apply(AuthMiddleware).forRoutes('holidays');
     consumer.apply(AuthMiddleware).forRoutes('departments');
     consumer.apply(AuthMiddleware).forRoutes('designations');
+    consumer.apply(AuthMiddleware).forRoutes('attendance');
   }
 }

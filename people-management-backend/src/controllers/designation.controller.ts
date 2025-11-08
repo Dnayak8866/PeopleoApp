@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { DesignationService } from '../services/designation.service';
-import { CreateDesignationDto, UpdateDesignationDto } from '../dto/designation.dto';
+import { DesignationDto } from '../dto/designation.dto';
 import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('designations')
@@ -10,12 +10,12 @@ export class DesignationController {
   constructor(private readonly designationService: DesignationService) {}
 
   @Post()
-  @ApiBody({ type: CreateDesignationDto })
+  @ApiBody({ type: DesignationDto })
   @ApiResponse({ status: 201, description: 'Designation created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 404, description: 'Designation not found.' })
-  create(@Body() createDesignationDto: CreateDesignationDto) {
-    return this.designationService.create(createDesignationDto);
+  create(@Body() DesignationDto: DesignationDto) {
+    return this.designationService.create(DesignationDto);
   }
 
   @Get()
@@ -38,12 +38,12 @@ export class DesignationController {
 
   @Put(':id')
   @ApiParam({ name: 'id', type: Number, description: 'Designation ID' })
-  @ApiBody({ type: UpdateDesignationDto })
+  @ApiBody({ type: DesignationDto })
   @ApiResponse({ status: 200, description: 'Designation updated successfully.' })
   @ApiResponse({ status: 404, description: 'Designation not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  update(@Param('id') id: string, @Body() updateDesignationDto: UpdateDesignationDto) {
-    return this.designationService.update(+id, updateDesignationDto);
+  update(@Param('id') id: string, @Body() DesignationDto: DesignationDto) {
+    return this.designationService.update(+id, DesignationDto);
   }
 
   @Delete(':id')

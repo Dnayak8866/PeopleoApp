@@ -5,9 +5,8 @@ import {
   IsInt,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PartialType } from '@nestjs/mapped-types';
 
-export class CreateDepartmentDto {
+export class DepartmentDto {
 
   @IsNotEmpty()
   @ApiProperty({ example: 'Human Resources', description: 'The name of the department' })
@@ -17,5 +16,3 @@ export class CreateDepartmentDto {
   @ApiProperty({ example: 1, description: 'The company ID' })
   company_id: number;
 }
-
-export class UpdateDepartmentDto extends PartialType(CreateDepartmentDto)  {}

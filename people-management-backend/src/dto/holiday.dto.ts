@@ -9,7 +9,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { PartialType } from '@nestjs/mapped-types';
 
-export class CreateHolidayDto {
+export class HolidayDto {
     @IsNotEmpty()
     @IsInt()
     @ApiProperty({ example: 1, description: 'The company ID' })
@@ -30,5 +30,3 @@ export class CreateHolidayDto {
     @ApiProperty({ example: false, description: 'Is this a optional holiday?', required: false })
     is_optional?: boolean;
 }
-
-export class UpdateHolidayDto extends PartialType(CreateHolidayDto) {}

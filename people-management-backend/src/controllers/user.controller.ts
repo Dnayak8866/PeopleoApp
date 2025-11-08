@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { UserService } from '../services/user.service';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserDto } from '../dto/user.dto';
 import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('User')
@@ -10,10 +9,10 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post()
-  @ApiBody({ type: CreateUserDto })
+  @ApiBody({ type: UserDto })
   @ApiResponse({ status: 201, description: 'User created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  create(@Body() dto: CreateUserDto) {
+  create(@Body() dto: UserDto) {
     return this.userService.create(dto);
   }
 
@@ -33,10 +32,10 @@ export class UserController {
 
   @Patch(':id')
   @ApiParam({ name: 'id', type: Number, description: 'User ID' })
-  @ApiBody({ type: UpdateUserDto })
+  @ApiBody({ type: UserDto })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UserDto) {
     return this.userService.update(id, dto);
   }
 

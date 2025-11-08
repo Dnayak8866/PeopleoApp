@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { DepartmentService } from '../services/department.service';
-import { CreateDepartmentDto, UpdateDepartmentDto } from '../dto/department.dto';
+import { DepartmentDto } from '../dto/department.dto';
 import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('departments')
@@ -10,11 +10,11 @@ export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
   @Post()
-  @ApiBody({ type: CreateDepartmentDto })
+  @ApiBody({ type: DepartmentDto })
   @ApiResponse({ status: 201, description: 'Department created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  create(@Body() createDepartmentDto: CreateDepartmentDto) {
-    return this.departmentService.create(createDepartmentDto);
+  create(@Body() DepartmentDto: DepartmentDto) {
+    return this.departmentService.create(DepartmentDto);
   }
 
   @Get()
@@ -37,12 +37,12 @@ export class DepartmentController {
 
   @Put(':id')
   @ApiParam({ name: 'id', type: Number, description: 'Department ID' })
-  @ApiBody({ type: UpdateDepartmentDto })
+  @ApiBody({ type: DepartmentDto })
   @ApiResponse({ status: 200, description: 'Department updated successfully.' })
   @ApiResponse({ status: 404, description: 'Department not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
-    return this.departmentService.update(+id, updateDepartmentDto);
+  update(@Param('id') id: string, @Body() DepartmentDto: DepartmentDto) {
+    return this.departmentService.update(+id, DepartmentDto);
   }
 
   @Delete(':id')

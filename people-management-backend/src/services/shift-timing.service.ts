@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ShiftTiming } from '../entities/shift-timing.entity';
-import { CreateShiftTimingDto, UpdateShiftTimingDto } from '../dto/shift-timing.dto';
+import { ShiftTimingDto } from '../dto/shift-timing.dto';
 
 @Injectable()
 export class ShiftTimingService {
@@ -11,8 +11,8 @@ export class ShiftTimingService {
     private shiftTimingRepository: Repository<ShiftTiming>,
   ) {}
 
-  async create(createShiftTimingDto: CreateShiftTimingDto): Promise<ShiftTiming> {
-    const shiftTiming = this.shiftTimingRepository.create(createShiftTimingDto);
+  async create(ShiftTimingDto: ShiftTimingDto): Promise<ShiftTiming> {
+    const shiftTiming = this.shiftTimingRepository.create(ShiftTimingDto);
     return await this.shiftTimingRepository.save(shiftTiming);
   }
 
@@ -32,9 +32,9 @@ export class ShiftTimingService {
     return shiftTiming;
   }
 
-  async update(id: number, updateShiftTimingDto: UpdateShiftTimingDto): Promise<ShiftTiming> {
+  async update(id: number, ShiftTimingDto: ShiftTimingDto): Promise<ShiftTiming> {
     const shiftTiming = await this.findOne(id);
-    await this.shiftTimingRepository.update(id, updateShiftTimingDto);
+    await this.shiftTimingRepository.update(id, ShiftTimingDto);
     return await this.findOne(id);
   }
 

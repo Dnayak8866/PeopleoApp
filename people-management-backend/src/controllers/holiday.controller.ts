@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { HolidayService } from '../services/holiday.service';
-import { CreateHolidayDto, UpdateHolidayDto } from '../dto/holiday.dto';
+import { HolidayDto } from '../dto/holiday.dto';
 import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('holidays')
@@ -10,11 +10,11 @@ export class HolidayController {
   constructor(private readonly holidayService: HolidayService) {}
 
   @Post()
-  @ApiBody({ type: CreateHolidayDto })
+  @ApiBody({ type: HolidayDto })
   @ApiResponse({ status: 201, description: 'Holiday created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  create(@Body() createHolidayDto: CreateHolidayDto) {
-    return this.holidayService.create(createHolidayDto);
+  create(@Body() HolidayDto: HolidayDto) {
+    return this.holidayService.create(HolidayDto);
   }
 
   @Get()
@@ -51,12 +51,12 @@ export class HolidayController {
 
   @Put(':id')
   @ApiParam({ name: 'id', type: Number, description: 'Holiday ID' })
-  @ApiBody({ type: UpdateHolidayDto })
+  @ApiBody({ type: HolidayDto })
   @ApiResponse({ status: 200, description: 'Holiday updated successfully.' })
   @ApiResponse({ status: 404, description: 'Holiday not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  update(@Param('id') id: string, @Body() updateHolidayDto: UpdateHolidayDto) {
-    return this.holidayService.update(+id, updateHolidayDto);
+  update(@Param('id') id: string, @Body() HolidayDto: HolidayDto) {
+    return this.holidayService.update(+id, HolidayDto);
   }
 
   @Delete(':id')

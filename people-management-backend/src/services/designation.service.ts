@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Designation } from '../entities/designation.entity';
-import { CreateDesignationDto, UpdateDesignationDto } from '../dto/designation.dto';
+import { DesignationDto } from '../dto/designation.dto';
 
 @Injectable()
 export class DesignationService {
@@ -11,8 +11,8 @@ export class DesignationService {
     private designationRepository: Repository<Designation>,
   ) {}
 
-  async create(createDesignationDto: CreateDesignationDto): Promise<Designation> {
-    const designation = this.designationRepository.create(createDesignationDto);
+  async create(DesignationDto: DesignationDto): Promise<Designation> {
+    const designation = this.designationRepository.create(DesignationDto);
     return await this.designationRepository.save(designation);
   }
 
@@ -34,9 +34,9 @@ export class DesignationService {
     return designation;
   }
 
-  async update(id: number, updateDesignationDto: UpdateDesignationDto): Promise<Designation> {
+  async update(id: number, DesignationDto: DesignationDto): Promise<Designation> {
     await this.findOne(id);
-    await this.designationRepository.update(id, updateDesignationDto);
+    await this.designationRepository.update(id, DesignationDto);
     return this.findOne(id);
   }
 

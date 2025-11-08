@@ -24,6 +24,7 @@ export class AuthService {
   //Step 2: Generate Refresh Token
   generateRefreshToken(phone: string, userId: number) {
     const payload = { sub: userId, phone: phone};
+    console.log('Payload for Refresh Token: ', payload);
     const refreshToken = this.jwtService.sign(
       payload,
       {
@@ -31,7 +32,8 @@ export class AuthService {
         expiresIn: '1D',
       }
     );
-    
+    console.log('Refresh Token: ', refreshToken);
+    console.log('process.env.JWT_REFRESH_SECRET: ', process.env.JWT_REFRESH_SECRET);
     return refreshToken;
   }
 
@@ -63,6 +65,7 @@ export class AuthService {
   async login(phone: string, password: string) {
     const user = await this.validateUser(phone, password);
     const refreshToken = this.generateRefreshToken(user.phoneNumber,  user.id);
+    console.log('Refresh Token: ', refreshToken);
     const accessToken = this.generateAccessToken(refreshToken);
     return {
       refreshToken,
