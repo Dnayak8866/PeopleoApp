@@ -27,3 +27,4 @@ steps to run the docker setup:
 	 - `schema.sql`
 	 - `dummy_data.sql`
 12. After running the SQL files, you should see the schema and dummy data populated in the `PeopleO` database.
+13. Run the project. Swagger link is `http://localhost:3000/swagger`

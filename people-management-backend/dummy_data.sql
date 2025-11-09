@@ -42,6 +42,7 @@ INSERT INTO holidays (company_id, holiday_date, name, is_optional)
 VALUES 
   (1, '2025-01-01', 'New Year''s Day', FALSE),
   (1, '2025-01-26', 'Republic Day', FALSE),
+  (1, '2025-05-01', 'Maharashtra Day', FALSE),
   (1, '2025-08-15', 'Independence Day', FALSE),
   (1, '2025-10-02', 'Gandhi Jayanti', TRUE),
   (1, '2025-12-25', 'Christmas', FALSE);
