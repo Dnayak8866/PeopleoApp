@@ -1,3 +1,21 @@
+-- Combined drop and create script for PostgreSQL
+-- Drops existing tables (children first) then recreates schema.
+
+BEGIN;
+
+-- DROP existing tables in correct order to avoid FK issues
+DROP TABLE IF EXISTS attendance CASCADE;
+DROP TABLE IF EXISTS leave_applications CASCADE;
+DROP TABLE IF EXISTS leave_balances CASCADE;
+DROP TABLE IF EXISTS holidays CASCADE;
+DROP TABLE IF EXISTS shift_timings CASCADE;
+DROP TABLE IF EXISTS employees CASCADE;
+DROP TABLE IF EXISTS leave_types CASCADE;
+DROP TABLE IF EXISTS departments CASCADE;
+DROP TABLE IF EXISTS designations CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
+DROP TABLE IF EXISTS companies CASCADE;
+
 -- Create companies table
 CREATE TABLE IF NOT EXISTS companies (
   company_id SERIAL PRIMARY KEY,
@@ -18,23 +36,23 @@ CREATE TABLE IF NOT EXISTS roles (
 CREATE TABLE IF NOT EXISTS departments (
   department_id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  company_id INT REFERENCES companies(company_id)
+  company_id INT REFERENCES companies(company_id) ON DELETE CASCADE
 );
 
 -- Create designations table
 CREATE TABLE IF NOT EXISTS designations (
   designation_id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  company_id INT REFERENCES companies(company_id)
+  company_id INT REFERENCES companies(company_id) ON DELETE CASCADE
 );
 
 -- Create employees table
 CREATE TABLE IF NOT EXISTS employees (
   employee_id SERIAL PRIMARY KEY,
-  company_id INT REFERENCES companies(company_id),
-  role_id INT REFERENCES roles(role_id),
-  department_id INT REFERENCES departments(department_id),
-  designation_id INT REFERENCES designations(designation_id),
+  company_id INT REFERENCES companies(company_id) ON DELETE SET NULL,
+  role_id INT REFERENCES roles(role_id) ON DELETE SET NULL,
+  department_id INT REFERENCES departments(department_id) ON DELETE SET NULL,
+  designation_id INT REFERENCES designations(designation_id) ON DELETE SET NULL,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE,
   phone_number VARCHAR(20),
@@ -116,6 +134,10 @@ CREATE TABLE IF NOT EXISTS leave_balances (
   carried_forward DECIMAL(5,2) DEFAULT 0
 );
 
--- Ensure column exists
+COMMIT;
 ALTER TABLE leave_types
 ADD COLUMN IF NOT EXISTS leave_balance INT;
+
+BEGIN;
+
+
