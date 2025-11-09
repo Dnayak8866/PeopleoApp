@@ -60,7 +60,7 @@ export class AppModule implements NestModule {
     consumer.apply(AuthMiddleware).forRoutes('user');
     consumer.apply(AuthMiddleware).forRoutes('leave-types');
     consumer.apply(AuthMiddleware).forRoutes('shift-timings');
-    // consumer.apply(AuthMiddleware).forRoutes('salary-countdown');
+    consumer.apply(AuthMiddleware).forRoutes('salary-countdown');
     
   }
 }
