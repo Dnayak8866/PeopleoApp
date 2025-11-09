@@ -10,7 +10,17 @@ async function bootstrap() {
     .setTitle('People Management API')
     .setDescription('API documentation for People Management Backend')
     .setVersion('1.0')
-    .addBearerAuth() // If you have JWT auth
+    .addBearerAuth(
+      { 
+        description: `Please enter token in following format: Bearer <JWT>`,
+        name: 'Authorization',
+        bearerFormat: 'Bearer', 
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header'
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

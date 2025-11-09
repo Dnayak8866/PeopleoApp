@@ -7,7 +7,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { PartialType } from '@nestjs/mapped-types';
 
-export class CreateLeaveTypeDto {
+export class LeaveTypeDto {
   @IsNotEmpty()
   @ApiProperty({ example: 1, description: 'The company ID' })
   company_id: number;
@@ -27,5 +27,3 @@ export class CreateLeaveTypeDto {
   @ApiProperty({ example: 10, description: 'Leave balance for the leave type', required: false })
   leave_balance?: number;
 }
-
-export class UpdateLeaveTypeDto extends PartialType(CreateLeaveTypeDto) {}

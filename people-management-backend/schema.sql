@@ -82,10 +82,10 @@ CREATE TABLE IF NOT EXISTS attendance (
   punch_out TIMESTAMP,
   punch_in_latitude DECIMAL(9,6),
   punch_in_longitude DECIMAL(9,6),
-  punch_in_photo TEXT,
+  punch_in_photo TEXT, --Base 64 encoded image
   punch_out_latitude DECIMAL(9,6),
   punch_out_longitude DECIMAL(9,6),
-  punch_out_photo TEXT,
+  punch_out_photo TEXT, --Base 64 encoded image
   shift_id INT REFERENCES shift_timings(shift_id),
   attendance_date DATE NOT NULL,
   working_hours INTERVAL,
