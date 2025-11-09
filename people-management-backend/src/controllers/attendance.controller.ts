@@ -1,9 +1,10 @@
-import { Controller, Post, Body, UploadedFiles, UseInterceptors, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFiles, UseInterceptors, Param, Get, Query } from '@nestjs/common';
 import { AttendanceService } from '../services/attendance.service';
 import { AttendanceDto } from '../dto/attendance.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
-import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { AttendancePercentageQueryDto } from '../dto/attendance-percentage-query.dto';
 
 @ApiTags('attendance')
 @ApiBearerAuth('access-token')
@@ -23,6 +24,20 @@ export class AttendanceController {
   ) {
     // Expect files[0] = punch_in_photo, files[1] = punch_out_photo
     return this.attendanceService.create(dto, files?.[0], files?.[1]);
+  }
+
+  
+
+  @Get('percentage')
+  @ApiOperation({ summary: 'Get employee attendance percentage for a month excluding holidays' })
+  @ApiQuery({ name: 'employeeId', required: true, description: 'Employee ID' })
+  @ApiQuery({ name: 'month', required: true, description: 'Month (1-12) to calculate for' })
+  @ApiQuery({ name: 'year', required: false, description: 'Year (defaults to current year)' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Company ID to filter holidays (optional)' })
+  @ApiResponse({ status: 200, description: 'Returns attendance percentage excluding holidays' })
+  async getEmployeePercentage(@Query() q: AttendancePercentageQueryDto) {
+    const year = q.year ?? new Date().getFullYear();
+    return this.attendanceService.getEmployeeMonthlyPercentage(q.employeeId, q.month, year, q.companyId);
   }
 
   @Get(':id')
