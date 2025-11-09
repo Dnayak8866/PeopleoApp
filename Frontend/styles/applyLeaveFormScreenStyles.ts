@@ -1,0 +1,227 @@
+import { Colors } from "@/constants/Colors";
+import { StyleSheet } from "react-native";
+
+export const applyLeaveFormScreenStyles = () => {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#ffffff',
+        },
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            backgroundColor: '#ffffff',
+            borderBottomWidth: 1,
+            borderBottomColor: '#e5e7eb',
+        },
+        backButton: {
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        headerTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#111827',
+            flex: 1,
+            textAlign: 'center',
+            marginLeft: -40,
+        },
+        headerRight: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+        },
+        notificationButton: {
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        profileAvatar: {
+            width: 40,
+            height: 40,
+            backgroundColor: '#f3b4d3',
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        profileInitial: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#ffffff',
+        },
+        scrollView: {
+            flex: 1,
+        },
+        content: {
+            padding: 20,
+        },
+        sectionTitle: {
+            fontSize: 20,
+            fontWeight: '600',
+            color: '#111827',
+            marginBottom: 16,
+        },
+        balanceContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 12,
+            marginBottom: 32,
+        },
+        balanceCard: {
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            padding: 16,
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '48%',
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 1,
+            gap: 8,
+        },
+        balanceIcon: {
+            borderRadius: 16,
+            padding: 6,
+        },
+        balanceInfo: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+        },
+        balanceLabel: {
+            fontSize: 14,
+            color: '#6b7280',
+            marginBottom: 4,
+        },
+        balanceValue: {
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            gap: 4,
+        },
+        balanceNumber: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: '#3b82f6',
+        },
+        balanceDays: {
+            fontSize: 14,
+            color: '#6b7280',
+        },
+        formContainer: {
+            gap: 20,
+            borderTopWidth: 1,
+            borderColor: '#EBEBEAFF',
+            boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F',
+            padding: 14,
+            borderRadius: 12,
+        },
+        inputGroup: {
+            gap: 8,
+        },
+        inputLabel: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: '#000000',
+        },
+        dateInput: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#F7F7F7FF',
+            borderRadius: 8,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: '#EBEBEAFF',
+            gap: 12,
+            boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F'
+        },
+        dateInputText: {
+            fontSize: 16,
+            color: '#9ca3af',
+            flex: 1,
+        },
+        dropdown: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#ffffff',
+            borderRadius: 8,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
+        },
+        dropdownText: {
+            fontSize: 16,
+            color: '#111827',
+        },
+        durationContainer: {
+            flexDirection: 'row',
+            gap: 12,
+            backgroundColor: '#F7F7F7FF',
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: '#EBEBEAFF',
+            padding: 5,
+        },
+        durationButton: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 8,
+            padding: 16,
+            // borderWidth: 1,
+            // borderColor: '#e5e7eb',
+            gap: 8,
+        },
+        durationButtonActive: {
+            backgroundColor: '#6366f1',
+            borderColor: '#6366f1',
+        },
+        durationButtonText: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: '#6b7280',
+        },
+        durationButtonTextActive: {
+            color: '#ffffff',
+        },
+        textArea: {
+            backgroundColor: '#F7F7F7FF',
+            borderRadius: 8,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: '#EBEBEAFF',
+            fontSize: 16,
+            color: '#111827',
+            minHeight: 120,
+            boxShadow: '0px 0px 5px #EBEBEA33',
+            paddingLeft: 12,
+        },
+        submitButton: {
+            backgroundColor: Colors.primary,
+            borderRadius: 8,
+            padding: 16,
+            alignItems: 'center',
+            marginTop: 12,
+            boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F'
+        },
+        submitButtonText: {
+            fontSize: 16,
+            fontWeight: '800',
+            color: '#ffffff',
+        },
+    });
+}

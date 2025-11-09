@@ -1,18 +1,22 @@
+import { RadialChart } from '@/components/RadialCharts';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
+import { ownerHomeScreenStyles } from '@/styles/ownerHomeScreenStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowUp, Bell, CalendarDays, ChartLine, ClipboardCheck, Dot, MailPlus, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    SafeAreaView,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
+
+
+
 
 const Status = ({ label, value, trend, iconColor }: {
   label: string;
@@ -23,7 +27,7 @@ const Status = ({ label, value, trend, iconColor }: {
   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', height: 40, width: '50%' }}>
     <Dot size={60} color={iconColor} />
     <Text>{label}: </Text>
-    <Text>{value} {trend && <ArrowUp size={15} color={'green'} />}<Text style={{ fontSize: 10, color: 'green', fontWeight:'700', lineHeight:11 }}>{trend}</Text></Text>
+    <Text>{value} {trend && <ArrowUp size={15} color={'green'} />}<Text style={{ fontSize: 10, color: 'green', fontWeight: '700', lineHeight: 11 }}>{trend}</Text></Text>
   </View>
 );
 
@@ -55,11 +59,18 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(getToday()); // Default to today's date
   const [currentData, setCurrentData] = useState<WorkingData>(mockData[0]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const { logout } = useAuth();
+  const styles = ownerHomeScreenStyles();
 
   useEffect(() => {
     const data = mockData.find(d => d.date === selectedDate) || mockData[0];
     setCurrentData(data);
   }, [selectedDate]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   const getDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -71,10 +82,10 @@ export default function HomePage() {
   };
 
   const chartData = [
-    { value:10, color: '#F59E0B', strokeColor: '#000000' },
-    { value:10, color: '#EF4444' },
-    { value:10, color: Colors.primary },
-    { value:80, color: '#10B981' },
+    { percentage: 40, color: '#22C55E', label: 'Present' },
+    { percentage: 30, color: '#EAB308', label: 'On Leave' },
+    { percentage: 20, color: '#3B82F6', label: 'Late Check-in' },
+    { percentage: 10, color: '#EF4444', label: 'Absent' },
   ];
 
   const QuickActionCard = ({ icon: Icon, title, onPress, iconColor = Colors.primary }: {
@@ -97,7 +108,7 @@ export default function HomePage() {
         <View style={styles.header}>
           <Text style={styles.companyName}>TechCorp Solutions</Text>
           <View style={styles.headerActions}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout}>
               <Bell size={24} color="#6B7280" />
             </TouchableOpacity>
             <View style={styles.avatar}>
@@ -106,7 +117,7 @@ export default function HomePage() {
           </View>
         </View>
 
-        <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection:'row', gap:4, marginBottom:20 }} onPress={() => setShowDatePicker(true)}>
+        <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection: 'row', gap: 4, marginBottom: 20 }} onPress={() => setShowDatePicker(true)}>
           <CalendarDays size={24} color="#6B7280" />
           <Text>{getDisplayDate(selectedDate)}</Text>
         </TouchableOpacity>
@@ -137,15 +148,19 @@ export default function HomePage() {
             </View>
           </View>
         </View> */}
-        <View style={{ marginTop: 5, alignSelf:'center' }}>
-          <PieChart
+        <View style={{ marginTop: 5 }}>
+          <RadialChart
             data={chartData}
-            donut
-            innerRadius={80}
-            />
+            centerValue={currentData.workingHours}
+            centerLabel="hrs"
+            centerSubtitle="Avg. Working Hours"
+            centerSubsubtitle="(Yesterday)"
+            size={240}
+            strokeWidth={20}
+          />
         </View>
 
-        <View style={{ flex: 1, justifyContent: 'flex-start', width: '80%', alignSelf: 'flex-start', marginLeft:20 }}>
+        <View style={{ flex: 1, justifyContent: 'flex-start', width: '80%', alignSelf: 'flex-start', marginLeft: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', }}>
             <Status label='Present' value='20' iconColor='#10B981' trend='5%' />
             <Status label='Absent' value='5' iconColor='#EF4444' />
@@ -191,176 +206,3 @@ export default function HomePage() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingTop: 28,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  companyName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    textAlign: 'center',
-    marginLeft: 34,
-  },
-  dateText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  mainStatsContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  circleContainer: {
-    width: 200,
-    height: 200,
-  },
-  circleOuter: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  circleInner: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainHours: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  mainHoursLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  mainHoursSubLabel: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  statsGrid: {
-    flexDirection: 'column',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    width: '60%',
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '47%',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  trendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  trendText: {
-    fontSize: 12,
-    color: '#10B981',
-    fontWeight: '600',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  quickActionCard: {
-    flex: 1,
-    minWidth: '40%',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  quickActionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    textAlign: 'center',
-  },
-});

@@ -5,7 +5,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 const { width } = Dimensions.get('window');
 
 interface ChartData {
-  percentage: number; // This should be the actual percentage (0-100)
+  percentage: number;
   color: string;
   label: string;
 }
