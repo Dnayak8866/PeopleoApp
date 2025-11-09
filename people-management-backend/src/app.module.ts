@@ -30,6 +30,7 @@ import { DesignationController } from './controllers/designation.controller';
 import { AttendanceService } from './services/attendance.service';
 import { AttendanceController } from './controllers/attendance.controller';
 import { Attendance } from './entities/attendance.entity';
+import { LeaveApplication } from './entities/leave-application.entity';
 
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
@@ -65,7 +66,7 @@ import { SalaryCountdownService } from './services/salary-countdown.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance]),
+  TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication]),
   ],
 
   controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController,SalaryCountdownController],
