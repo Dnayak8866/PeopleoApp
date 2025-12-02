@@ -1,4 +1,3 @@
-import { RadialChart } from '@/components/RadialCharts';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { ownerHomeScreenStyles } from '@/styles/ownerHomeScreenStyles';
@@ -8,16 +7,13 @@ import { StatusBar } from 'expo-status-bar';
 import { ArrowUp, Bell, CalendarDays, ChartLine, ClipboardCheck, Dot, MailPlus, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View
+  SafeAreaView,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-
-
-
-
+import { PieChart } from 'react-native-gifted-charts';
 const Status = ({ label, value, trend, iconColor }: {
   label: string;
   value: string | number;
@@ -82,10 +78,10 @@ export default function HomePage() {
   };
 
   const chartData = [
-    { percentage: 40, color: '#22C55E', label: 'Present' },
-    { percentage: 30, color: '#EAB308', label: 'On Leave' },
-    { percentage: 20, color: '#3B82F6', label: 'Late Check-in' },
-    { percentage: 10, color: '#EF4444', label: 'Absent' },
+    { value: 10, color: '#F59E0B', strokeColor: '#000000' },
+    { value: 10, color: '#EF4444' },
+    { value: 10, color: Colors.primary },
+    { value: 80, color: '#10B981' },
   ];
 
   const QuickActionCard = ({ icon: Icon, title, onPress, iconColor = Colors.primary }: {
@@ -104,19 +100,18 @@ export default function HomePage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.companyName}>TechCorp Solutions</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={handleLogout}>
-              <Bell size={24} color="#6B7280" />
-            </TouchableOpacity>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>JD</Text>
-            </View>
+      <View style={styles.header}>
+        <Text style={styles.companyName}>TechCorp Solutions</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={handleLogout}>
+            <Bell size={24} color="#6B7280" />
+          </TouchableOpacity>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>JD</Text>
           </View>
         </View>
-
+      </View>
+      <ScrollView contentContainerStyle={{flex: 1}}>
         <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection: 'row', gap: 4, marginBottom: 20 }} onPress={() => setShowDatePicker(true)}>
           <CalendarDays size={24} color="#6B7280" />
           <Text>{getDisplayDate(selectedDate)}</Text>
@@ -148,15 +143,24 @@ export default function HomePage() {
             </View>
           </View>
         </View> */}
-        <View style={{ marginTop: 5 }}>
-          <RadialChart
+        <View style={{ marginTop: 5, alignItems: 'center' }}>
+          <PieChart
             data={chartData}
-            centerValue={currentData.workingHours}
-            centerLabel="hrs"
-            centerSubtitle="Avg. Working Hours"
-            centerSubsubtitle="(Yesterday)"
-            size={240}
-            strokeWidth={20}
+            donut
+            showText
+            textColor="white"
+            radius={120}
+            innerRadius={80}
+            textSize={12}
+            centerLabelComponent={() => (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: '#111827' }}>
+                  {currentData.workingHours.toFixed(1)} <Text style={{ fontSize: 18, fontWeight: '500', color: '#6B7280' }}>hrs</Text>
+                </Text>
+                <Text style={{ fontSize: 13, fontWeight: '500', color: '#6B7280', marginTop: 4 }}>Avg. Working Hours</Text>
+                <Text style={{ fontSize: 11, fontWeight: '400', color: '#9CA3AF', marginTop: 2 }}>(Yesterday)</Text>
+              </View>
+            )}
           />
         </View>
 

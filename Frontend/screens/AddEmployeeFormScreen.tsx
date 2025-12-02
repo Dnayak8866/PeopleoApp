@@ -1,4 +1,4 @@
-import { createEmployee } from '@/api/employees';
+import { createEmployee } from '@/services/api/employees';
 import { Colors } from '@/constants/Colors';
 import { addEmployeeScreenStyles } from '@/styles/addEmployeeScreenStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';

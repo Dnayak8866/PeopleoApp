@@ -2,7 +2,7 @@ import api from './apiService';
 
 export const getEmployees = async () => {
   try {
-    const response = await api.get('/users');
+    const response = await api.get('/user');
     return response.data;
   } catch (error) {
     console.error('Failed to fetch employees:', error);

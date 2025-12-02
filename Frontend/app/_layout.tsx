@@ -6,6 +6,7 @@ import LoginScreen from '@/app/(auth)/login';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import SplashScreen from '@/screens/SplashScreen';
 import { useState } from 'react';
+import { MasterDataProvider } from '@/context/MasterDataContext';
 
 let splashShown = false;
 
@@ -24,7 +25,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <AppNavigator showSplash={showSplash} onSplashComplete={handleSplashComplete} />
+      <MasterDataProvider>
+        <AppNavigator showSplash={showSplash} onSplashComplete={handleSplashComplete} />
+      </MasterDataProvider>
     </AuthProvider>
   );
 }
@@ -55,7 +58,7 @@ function AppNavigator({ showSplash, onSplashComplete }: AppNavigatorProps) {
         <Stack.Screen name="employee/apply-leave" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
     </>
   );
 }

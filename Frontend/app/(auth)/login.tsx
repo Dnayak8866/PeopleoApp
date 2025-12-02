@@ -1,16 +1,10 @@
-import { login } from '@/api/auth';
 import PinInput from '@/components/PinInput';
 import { Colors } from '@/constants/Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
+import { validatePhone as validatePhoneApi } from '@/services/api/auth';
 import { useRouter } from 'expo-router';
-import { jwtDecode } from 'jwt-decode';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-interface UserJwt {
-  role: string;
-  [key: string]: any;
-}
 
 export default function LoginScreen() {
   const [step, setStep] = useState(1);
@@ -19,8 +13,9 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { login: authLogin, userDetails } = useAuth();
 
-  const validatePhone = () => {
+  const validatePhoneFormat = () => {
     if (!/^\d{10}$/.test(phone)) {
       setError('Please enter a valid 10-digit phone number.');
       return false;
@@ -29,9 +24,23 @@ export default function LoginScreen() {
     return true;
   };
 
-  const handlePhoneSubmit = () => {
-    if (validatePhone()) {
-      setStep(2);
+  const handlePhoneSubmit = async () => {
+    if (!validatePhoneFormat()) return;
+
+    setLoading(true);
+    try {
+      const result = await validatePhoneApi(phone);
+      if (result.valid) {
+        setError('');
+        setStep(2);
+      } else {
+        setError('Phone number not found. Please check and try again.');
+      }
+    } catch (error) {
+      console.error('Phone validation error:', error);
+      setError('Phone number not found. Please check and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,22 +57,25 @@ export default function LoginScreen() {
     if (!validatePin()) return;
     setLoading(true);
     try {
-      const response = await login(phone, pin);
-      const { accessToken, refreshToken } = response.data;
+      const success = await authLogin(phone, pin);
 
-      const userInfo = jwtDecode<UserJwt>(accessToken);
-
-      await AsyncStorage.setItem('accessToken', accessToken);
-      await AsyncStorage.setItem('refreshToken', refreshToken);
-      await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
-      setError('');
-      
-      if (phone == '1234567890') {
-        router.replace('/(owner)/home');
+      if (success) {
+        setError('');
+        // Wait a bit for userDetails to be set
+        setTimeout(() => {
+          // Route based on roleId (1 = owner/admin, 2 = employee)
+          // You can adjust this logic based on your role IDs
+          if (userDetails?.roleId === 1) {
+            router.replace('/(owner)/home');
+          } else {
+            router.replace('/(employee)/home');
+          }
+        }, 100);
       } else {
-        router.replace('/(employee)/home');
+        setError('Login failed. Please check your credentials.');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -92,7 +104,7 @@ export default function LoginScreen() {
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <TouchableOpacity style={styles.button} onPress={handlePhoneSubmit} disabled={loading}>
-              <Text style={styles.buttonText}>{loading ? 'Loading...' : 'Next'}</Text>
+              <Text style={styles.buttonText}>{loading ? 'Validating...' : 'Next'}</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -106,7 +118,7 @@ export default function LoginScreen() {
             <TouchableOpacity style={styles.button} onPress={handlePinSubmit} disabled={loading || pin.length !== 6}>
               <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.backLink} onPress={() => { setStep(1); setError(''); }} disabled={loading}>
+            <TouchableOpacity style={styles.backLink} onPress={() => { setStep(1); setError(''); setPin(''); }} disabled={loading}>
               <Text style={styles.backText}>Back to phone</Text>
             </TouchableOpacity>
           </>

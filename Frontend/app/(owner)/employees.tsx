@@ -26,7 +26,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { getEmployees } from '../../api/employees';
+import { getEmployees } from '../../services/api/employees';
 
 interface Employee {
   id: string;
@@ -135,6 +135,7 @@ export default function EmployeesScreen() {
       setIsLoading(true);
       getEmployees()
         .then((data) => {
+          console.log("data",data)
           if (isActive && Array.isArray(data)) {
             setEmployees(data);
           } else if (isActive) {
@@ -154,8 +155,8 @@ export default function EmployeesScreen() {
   );
 
   const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchText.toLowerCase())
+    employee?.name?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
+    employee?.position?.toLowerCase()?.includes(searchText?.toLowerCase())
   );
 
   const toggleSelectAll = () => {

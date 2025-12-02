@@ -223,5 +223,25 @@ export const applyLeaveFormScreenStyles = () => {
             fontWeight: '800',
             color: '#ffffff',
         },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        calendarContainer: {
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            padding: 20,
+            width: '70%',
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+        },
     });
 }

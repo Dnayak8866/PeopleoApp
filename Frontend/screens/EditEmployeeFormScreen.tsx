@@ -1,4 +1,4 @@
-import { updateEmployee } from '@/api/employees';
+import { updateEmployee } from '@/services/api/employees';
 import { editEmployeeScreenStyles } from '@/styles/editEmployeeScreenStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
