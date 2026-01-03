@@ -50,12 +50,18 @@ export class User {
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  // @Column({ type: 'varchar', select: false }) // Exclude password from default queries
-  // password: string;
-
-  @Column({ type: 'varchar', select: true }) // Exclude password from default queries
+  @Column({ type: 'varchar', select: true, nullable: true }) // Exclude password from default queries
   password: string;
 
   @Column({ name: 'is_deleted', type: 'boolean', default: false })
   isDeleted: boolean;
+
+  @Column({ name: 'shift_id', type: 'int', nullable: true })
+  shiftId: number;
+
+  @Column({ name: 'dob', type: 'date', nullable: true })
+  dob: Date;
+
+  @Column({ name: 'gender', type: 'varchar', length: 10, nullable: true })
+  gender: string;
 }

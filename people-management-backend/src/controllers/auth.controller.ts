@@ -1,19 +1,33 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { LoginRequestDto, LoginResponseDto } from '../dto/login.dto';
+import { HomePageDetailsDto } from '../dto/home-page.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
+
+  @Post('validate-phone')
+  @ApiBody({ schema: { properties: { phone: { type: 'string', example: '1234567890' } } } })
+  @ApiResponse({ status: 200, description: 'Phone number is valid and exists.', schema: { properties: { valid: { type: 'boolean' }, message: { type: 'string' } } } })
+  @ApiResponse({ status: 404, description: 'Phone number not found.' })
+  async validatePhone(@Body() body: { phone: string }) {
+    try {
+      await this.authService.validatePhone(body.phone);
+      return { valid: true, message: 'Phone number found' };
+    } catch (error) {
+      return { valid: false, message: error.message };
+    }
+  }
 
   @Post('login')
-  @ApiBody({ schema: { properties: { phone: { type: 'string' }, password: { type: 'string' } } } })
-  @ApiResponse({ status: 201, description: 'User logged in successfully.' })
+  @ApiBody({ type: LoginRequestDto })
+  @ApiResponse({ status: 201, description: 'User logged in successfully.', type: LoginResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  login(@Body() body: { phone: string, password: string }) {
-    // Add user validity and generate access and refresh token 
-    return this.authService.login(body.phone, body.password);
+  async login(@Body() loginDto: LoginRequestDto): Promise<LoginResponseDto> {
+    return this.authService.login(loginDto.phone, loginDto.password);
   }
 
   @Post('accessToken')
@@ -21,6 +35,14 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Access token generated successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   generateAccessToken(@Body() body: { refreshToken: string }) {
-    return { accessToken: this.authService.generateAccessToken(body.refreshToken)};
+    return { accessToken: this.authService.generateAccessToken(body.refreshToken) };
+  }
+
+  @Post('home-page-details')
+  @ApiBody({ schema: { properties: { userId: { type: 'number', example: 1 }, companyId: { type: 'number', example: 1 } } } })
+  @ApiResponse({ status: 200, description: 'Home page details fetched successfully.', type: HomePageDetailsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async getHomePageDetails(@Body() body: { userId: number; companyId: number }): Promise<HomePageDetailsDto> {
+    return this.authService.getHomePageDetails(body.userId, body.companyId);
   }
 }

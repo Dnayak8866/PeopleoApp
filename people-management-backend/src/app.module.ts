@@ -6,12 +6,13 @@ import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
+import { RoleService } from './services/role.service';
 
-import {LeaveTypeService} from './services/leave-type.service';
+import { LeaveTypeService } from './services/leave-type.service';
 import { LeaveType } from './entities/leave-type.entity';
 import { LeaveTypeController } from './controllers/leave-type.controller';
 
-import {ShiftTimingService} from './services/shift-timing.service';
+import { ShiftTimingService } from './services/shift-timing.service';
 import { ShiftTiming } from './entities/shift-timing.entity';
 import { ShiftTimingController } from './controllers/shift-timing.controller';
 
@@ -31,6 +32,8 @@ import { AttendanceService } from './services/attendance.service';
 import { AttendanceController } from './controllers/attendance.controller';
 import { Attendance } from './entities/attendance.entity';
 import { LeaveApplication } from './entities/leave-application.entity';
+import { Company } from './entities/company.entity';
+import { CompanyService } from './services/company.service';
 
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
@@ -38,6 +41,7 @@ import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { SalaryCountdownController } from './controllers/salary-countdown.controller';
 import { SalaryCountdownService } from './services/salary-countdown.service';
+import { UserDetails } from './entities/user-details.entity';
 
 @Module({
   imports: [
@@ -66,11 +70,11 @@ import { SalaryCountdownService } from './services/salary-countdown.service';
       },
       inject: [ConfigService],
     }),
-  TypeOrmModule.forFeature([User, Role, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication]),
+  TypeOrmModule.forFeature([User, Role, Company, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication, UserDetails]),
   ],
 
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController,SalaryCountdownController],
-  providers: [UserService, AuthService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService,SalaryCountdownService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController, SalaryCountdownController],
+  providers: [UserService, AuthService, CompanyService, RoleService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService, SalaryCountdownService],
 
 })
 export class AppModule implements NestModule {

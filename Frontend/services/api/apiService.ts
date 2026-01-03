@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { router } from 'expo-router';
 import { getAccessToken } from './auth';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = process.env.API_URI;
+const API_BASE_URL = Constants?.expoConfig?.extra?.apiUri;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
