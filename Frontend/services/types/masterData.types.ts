@@ -1,14 +1,13 @@
 export interface Role {
   id: number;
-  name: string;
+  roleName: string;
   description?: string;
-  companyId: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Designation {
-  id: number;
+  designation_id: number;
   name: string;
   description?: string;
   companyId: number;
@@ -17,7 +16,7 @@ export interface Designation {
 }
 
 export interface Department {
-  id: number;
+  department_id: number;
   name: string;
   description?: string;
   companyId: number;
@@ -36,12 +35,12 @@ export interface LeaveType {
 }
 
 export interface ShiftTiming {
-  id: number;
-  name: string;
-  startTime: string; // e.g. "09:00"
-  endTime: string; // e.g. "17:00"
-  description?: string;
-  companyId: number;
+  shift_id: number;
+  shift_name: string;
+  from_time: string; // e.g. "09:00:00"
+  to_time: string; // e.g. "17:00:00"
+  is_night_shift: boolean;
+  company_id: number;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -3,21 +3,25 @@ import { useRouter } from 'expo-router';
 import { Bell, LocateFixed } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import {
-    Animated,
-    SafeAreaView,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 import Hand from '@/assets/images/icons/hand';
 import { useAuth } from '@/context/AuthContext';
 import { homeScreenStyles } from '@/styles/employeeHomeScreenStyles';
+import { Avatar } from '@/components/Avatar';
+import { useMasterDataContext } from '@/context/MasterDataContext';
 
 export default function ClockInScreen() {
   const router = useRouter();
   const { logout } = useAuth();
-  const styles = homeScreenStyles()
+  const styles = homeScreenStyles();
+  const { userDetails } = useAuth();
+  const { companyDetails } = useMasterDataContext();
 
   const now = new Date();
   const timeString = now.toLocaleTimeString('en-US', {
@@ -82,14 +86,15 @@ export default function ClockInScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, John Doe!</Text>
+        <Text style={styles.greeting}>Hello, {userDetails?.fullName}</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
             <Bell size={24} color="#666" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.avatar} onPress={() => router.push('/reports')}>
-            <Text style={styles.avatarText}>JD</Text>
-          </TouchableOpacity>
+          <Avatar
+            fullName={userDetails?.fullName || 'User'}
+            size={40}
+          />
         </View>
       </View>
 

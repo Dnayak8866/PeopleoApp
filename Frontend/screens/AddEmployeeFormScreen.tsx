@@ -23,16 +23,19 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useMasterDataContext } from '@/context/MasterDataContext';
+import { formatToOptions } from '@/utils/utils';
 
 interface FormData {
-  empName: string;
-  phoneNumber: string;
+  full_name: string;
+  phone_number: string;
+  email: string;
   gender: string;
   dob: string;
-  department: string;
-  designation: string;
-  joiningDate: string;
-  selectedShift: string;
+  department_id: string;
+  designation_id: string;
+  joining_date: string;
+  shift_id: string;
 }
 
 interface ValidationErrors {
@@ -40,59 +43,30 @@ interface ValidationErrors {
 }
 
 interface DropdownItem {
-  label: string;
+  id: string;
   value: string;
 }
 
-const JOB_TITLES: DropdownItem[] = [
-  { label: 'Software Engineer', value: 'software_engineer' },
-  { label: 'Senior Software Engineer', value: 'senior_software_engineer' },
-  { label: 'Team Lead', value: 'team_lead' },
-  { label: 'Project Manager', value: 'project_manager' },
-  { label: 'Product Manager', value: 'product_manager' },
-  { label: 'UI/UX Designer', value: 'ui_ux_designer' },
-  { label: 'DevOps Engineer', value: 'devops_engineer' },
-  { label: 'Quality Assurance', value: 'quality_assurance' },
-  { label: 'Business Analyst', value: 'business_analyst' },
-  { label: 'Data Analyst', value: 'data_analyst' },
-  { label: 'HR Manager', value: 'hr_manager' },
-  { label: 'Finance Manager', value: 'finance_manager' },
-  { label: 'Marketing Manager', value: 'marketing_manager' },
-  { label: 'Sales Executive', value: 'sales_executive' },
-  { label: 'Customer Support', value: 'customer_support' },
-];
-
 const GENDERS: DropdownItem[] = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
-  { label: 'Prefer not to say', value: 'prefer_not_to_say' },
+  { value: 'Male', id: 'male' },
+  { value: 'Female', id: 'female' },
+  { value: 'Other', id: 'other' },
+  { value: 'Prefer not to say', id: 'prefer_not_to_say' },
 ];
 
-const DEPARTMENTS: DropdownItem[] = [
-  { label: 'Engineering', value: 'engineering' },
-  { label: 'Human Resources', value: 'hr' },
-  { label: 'Finance', value: 'finance' },
-  { label: 'Marketing', value: 'marketing' },
-  { label: 'Sales', value: 'sales' },
-  { label: 'Customer Support', value: 'customer_support' },
-  { label: 'Operations', value: 'operations' },
-  { label: 'IT', value: 'it' },
-  { label: 'Legal', value: 'legal' },
-  { label: 'Product', value: 'product' },
-];
 
 export default function AddEmployeeScreen() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    empName: '',
-    phoneNumber: '',
+    full_name: '',
+    phone_number: '',
+    email: '',
     gender: '',
     dob: '',
-    department: '',
-    designation: '',
-    joiningDate: '',
-    selectedShift: '',
+    department_id: '',
+    designation_id: '',
+    joining_date: '',
+    shift_id: '',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -103,7 +77,9 @@ export default function AddEmployeeScreen() {
   const [showJoiningDatePicker, setShowJoiningDatePicker] = useState(false);
   const [datePickerDate, setDatePickerDate] = useState(new Date());
   const styles = addEmployeeScreenStyles();
-
+  const { designations = [], departments = [], shiftTimings = [] } = useMasterDataContext();
+  const DEPARTMENTS = formatToOptions(departments, 'department_id', 'name');
+  const DESIGNATIONS = formatToOptions(designations, 'designation_id', 'name');
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -114,16 +90,22 @@ export default function AddEmployeeScreen() {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    if (!formData.empName.trim()) {
-      newErrors.empName = 'Full name is required';
-    } else if (formData.empName.trim().length < 2) {
-      newErrors.empName = 'Full name must be at least 2 characters';
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = 'Full name is required';
+    } else if (formData.full_name.trim().length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters';
     }
 
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phoneNumber.trim())) {
+    if (!formData.phone_number.trim()) {
+      newErrors.phone_number = 'Phone number is required';
+    } else if (!/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phone_number.trim())) {
       newErrors.phoneNumber = 'Please enter a valid phone number';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (!formData.gender) {
@@ -141,25 +123,25 @@ export default function AddEmployeeScreen() {
       }
     }
 
-    if (!formData.joiningDate) {
-      newErrors.joiningDate = 'Joining date is required';
+    if (!formData.joining_date) {
+      newErrors.joining_date = 'Joining date is required';
     } else {
-      const joiningDate = new Date(formData.joiningDate);
+      const joiningDate = new Date(formData.joining_date);
       const today = new Date();
       if (joiningDate > today) {
         newErrors.joiningDate = 'Joining date cannot be in the future';
       }
     }
 
-    if (!formData.selectedShift) {
-      newErrors.selectedShift = 'Please select a shift';
+    if (!formData.shift_id) {
+      newErrors.shift = 'Please select a shift';
     }
 
-    if (!formData.department) {
+    if (!formData.department_id) {
       newErrors.department = 'Department is required';
     }
 
-    if (!formData.designation) {
+    if (!formData.designation_id) {
       newErrors.designation = 'Designation is required';
     }
 
@@ -205,13 +187,13 @@ export default function AddEmployeeScreen() {
     setShowJoiningDatePicker(false);
     if (selectedDate) {
       const formattedDate = selectedDate.toISOString().split('T')[0];
-      handleInputChange('joiningDate', formattedDate);
+      handleInputChange('joining_date', formattedDate);
     }
   };
 
   const renderSection = (title: string, children: React.ReactNode, icon?: React.ReactNode) => (
     <View style={styles.section}>
-      <View style={{flexDirection:'row', marginHorizontal:20, alignItems:'center', marginBottom:10}}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 20, alignItems: 'center', marginBottom: 10 }}>
         {icon && <View style={styles.inputIcon}>{icon}</View>}
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
@@ -244,9 +226,9 @@ export default function AddEmployeeScreen() {
 
   const getDropdownDisplayText = (field: keyof FormData, data: DropdownItem[], placeholder: string): string => {
     if (!formData[field]) return placeholder;
-    
-    const selectedItem = data.find(item => item.value === formData[field]);
-    return selectedItem ? selectedItem.label : placeholder;
+
+    const selectedItem = data.find(item => item.id === formData[field]);
+    return selectedItem ? selectedItem.value : placeholder;
   };
 
   const renderDropdown = (
@@ -271,28 +253,28 @@ export default function AddEmployeeScreen() {
           ]}>
             {displayText}
           </Text>
-          {showDropdown ? <ChevronUp size={20} color='#9CA3AF'/> : <ChevronDown size={20} color="#9CA3AF" />}
+          {showDropdown ? <ChevronUp size={20} color='#9CA3AF' /> : <ChevronDown size={20} color="#9CA3AF" />}
         </TouchableOpacity>
         {showDropdown && (
           <View style={styles.dropdownList}>
             <ScrollView style={{ maxHeight: 200 }}>
               {data.map((item) => (
                 <TouchableOpacity
-                  key={item.value}
+                  key={item.id}
                   style={[
                     styles.dropdownListItem,
-                    formData[field] === item.value && styles.dropdownListItemSelected
+                    formData[field] === item.id && styles.dropdownListItemSelected
                   ]}
                   onPress={() => {
-                    handleInputChange(field, item.value);
+                    handleInputChange(field, item.id);
                     onToggleDropdown(); // Close dropdown after selection
                   }}
                 >
                   <Text style={[
                     styles.dropdownListItemText,
-                    formData[field] === item.value && styles.dropdownListItemTextSelected
+                    formData[field] === item.id && styles.dropdownListItemTextSelected
                   ]}>
-                    {item.label}
+                    {item.value}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -337,6 +319,15 @@ export default function AddEmployeeScreen() {
     });
   };
 
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour} ${ampm}`;
+  };
+
   const closeAllDropdowns = () => {
     setShowGenderDropdown(false);
     setShowDepartmentDropdown(false);
@@ -347,11 +338,6 @@ export default function AddEmployeeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.container}>
-          {/* {(showGenderDropdown || showDepartmentDropdown || showDesignationDropdown) && (
-            <TouchableWithoutFeedback onPress={closeAllDropdowns}>
-              <View style={styles.overlay} />
-            </TouchableWithoutFeedback>
-          )} */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <ChevronLeft size={24} color="#374151" />
@@ -363,8 +349,9 @@ export default function AddEmployeeScreen() {
 
             {renderSection('Basic Details', (
               <>
-                {renderInput('empName', 'Employee Name', 'default', 30)}
-                {renderInput('phoneNumber', 'Mobile Number','phone-pad', 10)}
+                {renderInput('full_name', 'Employee Name', 'default', 30)}
+                {renderInput('phone_number', 'Mobile Number', 'phone-pad', 10)}
+                {renderInput('email', 'Email', 'email-address', 30)}
                 {renderDropdown(
                   'gender',
                   'Gender',
@@ -376,17 +363,17 @@ export default function AddEmployeeScreen() {
                     setShowDesignationDropdown(false);
                   }
                 )}
-                {renderDatePicker( 'dob', 'DOB', () => {
+                {renderDatePicker('dob', 'DOB', () => {
                   setDatePickerDate(formData.dob ? new Date(formData.dob) : new Date());
                   setShowDatePicker(true);
                 })}
               </>
-            ), <UserRound size={20} color={Colors.primary}/>)}
+            ), <UserRound size={20} color={Colors.primary} />)}
 
-            {renderSection('Job Details',(
+            {renderSection('Job Details', (
               <>
                 {renderDropdown(
-                  'department',
+                  'department_id',
                   'Department',
                   DEPARTMENTS,
                   showDepartmentDropdown,
@@ -397,9 +384,9 @@ export default function AddEmployeeScreen() {
                   }
                 )}
                 {renderDropdown(
-                  'designation',
+                  'designation_id',
                   'Designation',
-                  JOB_TITLES,
+                  DESIGNATIONS,
                   showDesignationDropdown,
                   () => {
                     setShowDesignationDropdown(!showDesignationDropdown);
@@ -407,86 +394,43 @@ export default function AddEmployeeScreen() {
                     setShowGenderDropdown(false);
                   }
                 )}
-                {renderDatePicker('joiningDate', 'Joining date', () => {
-                  setDatePickerDate(formData.joiningDate ? new Date(formData.joiningDate) : new Date());
+                {renderDatePicker('joining_date', 'Joining date', () => {
+                  setDatePickerDate(formData.joining_date ? new Date(formData.joining_date) : new Date());
                   setShowJoiningDatePicker(true);
                 })}
               </>
-            ), <Briefcase size={20} color={Colors.primary}/>)}
+            ), <Briefcase size={20} color={Colors.primary} />)}
 
             {renderSection('Working Hours', (
               <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.shiftRow}>
-                    <TouchableOpacity
-                      style={[
-                        styles.shiftButton,
-                        formData.selectedShift === 'morning' && styles.shiftButtonSelected,
-                      ]}
-                      onPress={() => {
-                        setFormData({ ...formData, selectedShift: 'morning' });
-                        if (errors.selectedShift) {
-                          setErrors(prev => ({ ...prev, selectedShift: '' }));
-                        }
-                      }}
-                    >
-                      <Text
+                    {shiftTimings.map((shift) => (
+                      <TouchableOpacity
+                        key={shift.shift_id}
                         style={[
-                          styles.shiftButtonText,
-                          formData.selectedShift === 'morning' && styles.shiftButtonTextSelected,
+                          styles.shiftButton,
+                          formData.shift_id === shift.shift_id.toString() && styles.shiftButtonSelected,
                         ]}
+                        onPress={() => {
+                          handleInputChange('shift_id', shift.shift_id.toString());
+                        }}
                       >
-                        (9 AM - 5 PM)
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.shiftButton,
-                        formData.selectedShift === 'evening' && styles.shiftButtonSelected,
-                      ]}
-                      onPress={() => {
-                        setFormData({ ...formData, selectedShift: 'evening' });
-                        if (errors.selectedShift) {
-                          setErrors(prev => ({ ...prev, selectedShift: '' }));
-                        }
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.shiftButtonText,
-                          formData.selectedShift === 'evening' && styles.shiftButtonTextSelected,
-                        ]}
-                      >
-                        (5 PM - 1 AM)
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.shiftButton,
-                        formData.selectedShift === 'night' && styles.shiftButtonSelected,
-                      ]}
-                      onPress={() => {
-                        setFormData({ ...formData, selectedShift: 'night' });
-                        if (errors.selectedShift) {
-                          setErrors(prev => ({ ...prev, selectedShift: '' }));
-                        }
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.shiftButtonText,
-                          formData.selectedShift === 'night' && styles.shiftButtonTextSelected,
-                        ]}
-                      >
-                        (1 AM - 9 AM)
-                      </Text>
-                    </TouchableOpacity>
+                        <Text
+                          style={[
+                            styles.shiftButtonText,
+                            formData.shift_id === shift.shift_id.toString() && styles.shiftButtonTextSelected,
+                          ]}
+                        >
+                          {`(${formatTime(shift.from_time)} - ${formatTime(shift.to_time)})`}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 </ScrollView>
                 {errors.selectedShift && <Text style={styles.errorText}>{errors.selectedShift}</Text>}
               </View>
-            ), <Clock10 size={20} color={Colors.primary}/>)}
+            ), <Clock10 size={20} color={Colors.primary} />)}
 
             <View style={styles.bottomSpacer} />
           </ScrollView>

@@ -1,8 +1,10 @@
-import { updateEmployee } from '@/services/api/employees';
+import { useMasterDataContext } from '@/context/MasterDataContext';
 import { editEmployeeScreenStyles } from '@/styles/editEmployeeScreenStyles';
+import { formatToOptions } from '@/utils/utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { getEmployeeDetailsById, updateEmployee } from '@/services/api/employees';
 import {
   Briefcase,
   CalendarDays,
@@ -15,7 +17,7 @@ import {
   Notebook,
   User
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Alert,
   Image,
@@ -31,13 +33,14 @@ import {
 
 interface FormData {
   profileImage: string;
-  fullName: string;
-  mobileNo: string;
+  full_name: string;
+  phone_number: string;
+  email: string;
   gender: string;
-  dateOfBirth: string;
-  department: string;
-  designation: string;
-  workingHours: string;
+  dob: string;
+  department_id: string;
+  designation_id: string;
+  shift_id: string;
   houseNo: string;
   areaLandmark: string;
   zipcode: string;
@@ -53,58 +56,37 @@ interface ValidationErrors {
 }
 
 interface DropdownItem {
-  label: string;
+  id: string | number;
   value: string;
 }
 
-const DEPARTMENTS: DropdownItem[] = [
-  { label: 'Engineering', value: 'engineering' },
-  { label: 'Human Resources', value: 'hr' },
-  { label: 'Marketing', value: 'marketing' },
-  { label: 'Sales', value: 'sales' },
-  { label: 'Finance', value: 'finance' },
-  { label: 'Operations', value: 'operations' },
-  { label: 'Customer Support', value: 'support' },
-];
 
-const DESIGNATIONS: DropdownItem[] = [
-  { label: 'Software Engineer', value: 'software_engineer' },
-  { label: 'Senior Software Engineer', value: 'senior_software_engineer' },
-  { label: 'Team Lead', value: 'team_lead' },
-  { label: 'Project Manager', value: 'project_manager' },
-  { label: 'Product Manager', value: 'product_manager' },
-  { label: 'UI/UX Designer', value: 'ui_ux_designer' },
-  { label: 'DevOps Engineer', value: 'devops_engineer' },
-  { label: 'Quality Assurance', value: 'quality_assurance' },
-  { label: 'Business Analyst', value: 'business_analyst' },
-  { label: 'Data Analyst', value: 'data_analyst' },
-];
+
+
 
 const GENDERS: DropdownItem[] = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
-  { label: 'Prefer not to say', value: 'prefer_not_to_say' },
+  { value: 'Male', id: 'male' },
+  { value: 'Female', id: 'female' },
+  { value: 'Other', id: 'other' },
+  { value: 'Prefer not to say', id: 'prefer_not_to_say' },
 ];
 
-const WORKING_HOURS = [
-  { label: '9 AM - 5 PM', value: '9am_5pm' },
-  { label: '11 PM - 7 PM', value: '11pm_7pm' },
-  { label: '1 PM - 9 PM', value: '1pm_9pm' },
-];
+
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const styles = editEmployeeScreenStyles();
   const [formData, setFormData] = useState<FormData>({
     profileImage: '',
-    fullName: '',
-    mobileNo: '',
+    full_name: '',
+    phone_number: '',
+    email: '',
     gender: '',
-    dateOfBirth: '',
-    department: '',
-    designation: '',
-    workingHours: '9am_5pm',
+    dob: '',
+    department_id: '',
+    designation_id: '',
+    shift_id: '',
     houseNo: '',
     areaLandmark: '',
     zipcode: '',
@@ -114,7 +96,7 @@ export default function EditProfileScreen() {
     aadharNumber: '',
     panNumber: '',
   });
-  
+
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   const [showDesignationDropdown, setShowDesignationDropdown] = useState(false);
@@ -122,6 +104,49 @@ export default function EditProfileScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerDate, setDatePickerDate] = useState(new Date());
   const [employeeId, setEmployeeId] = useState<string>('');
+  const { designations = [], departments = [], shiftTimings = [] } = useMasterDataContext();
+  const DEPARTMENTS = formatToOptions(departments, 'department_id', 'name');
+  const DESIGNATIONS = formatToOptions(designations, 'designation_id', 'name');
+
+  useEffect(() => {
+    if (id) {
+      setEmployeeId(id as string);
+      fetchEmployeeDetails(id as string);
+    }
+  }, [id]);
+
+  const fetchEmployeeDetails = async (empId: string) => {
+    try {
+      const data = await getEmployeeDetailsById(empId);
+      setFormData({
+        profileImage: data.avatar || '',
+        full_name: data.fullName || data.full_name || '',
+        phone_number: data.phoneNumber || data.phone_number || '',
+        email: data.email || '',
+        gender: data.gender || '',
+        dob: data.dob || '',
+        department_id: (data.departmentId || data.department_id) ? (data.departmentId || data.department_id).toString() : '',
+        designation_id: (data.designationId || data.designation_id) ? (data.designationId || data.designation_id).toString() : '',
+        shift_id: (data.shiftId || data.shift_id) ? (data.shiftId || data.shift_id).toString() : '',
+        houseNo: data.house_no || data.houseNo || '',
+        areaLandmark: data.area_landmark || data.areaLandmark || '',
+        zipcode: data.zipcode || '',
+        city: data.city || '',
+        state: data.state || '',
+        country: data.country || '',
+        aadharNumber: data.aadhar_number || data.aadharNumber || '',
+        panNumber: data.pan_number || data.panNumber || '',
+      });
+
+      if (data.dob) {
+        setDatePickerDate(new Date(data.dob));
+      }
+
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      Alert.alert('Error', 'Failed to fetch employee details');
+    }
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -145,11 +170,11 @@ export default function EditProfileScreen() {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    if (!formData.fullName.trim()) {
+    if (!formData.full_name.trim()) {
       newErrors.fullName = 'Employee name is required';
     }
 
-    if (!formData.mobileNo.trim()) {
+    if (!formData.phone_number.trim()) {
       newErrors.mobileNo = 'Mobile number is required';
     }
 
@@ -157,15 +182,15 @@ export default function EditProfileScreen() {
       newErrors.gender = 'Gender is required';
     }
 
-    if (!formData.dateOfBirth) {
+    if (!formData.dob) {
       newErrors.dateOfBirth = 'Date of birth is required';
     }
 
-    if (!formData.department) {
+    if (!formData.department_id) {
       newErrors.department = 'Department is required';
     }
 
-    if (!formData.designation) {
+    if (!formData.designation_id) {
       newErrors.designation = 'Designation is required';
     }
 
@@ -173,13 +198,32 @@ export default function EditProfileScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleUpdate = async() => {
+  const handleUpdate = async () => {
     if (!validateForm()) {
       Alert.alert('Validation Error', 'Please fill all required fields');
       return;
     }
     try {
-      await updateEmployee(employeeId, formData);
+      const payload = {
+        full_name: formData.full_name,
+        phone_number: formData.phone_number,
+        gender: formData.gender,
+        dob: formData.dob,
+        department_id: formData.department_id,
+        designation_id: formData.designation_id,
+        shift_id: formData.shift_id,
+        house_no: formData.houseNo,
+        area_landmark: formData.areaLandmark,
+        zipcode: formData.zipcode,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        aadhar_number: formData.aadharNumber,
+        pan_number: formData.panNumber,
+        avatar: formData.profileImage,
+      };
+
+      await updateEmployee(employeeId, payload);
       Alert.alert(
         'Success',
         'Profile updated successfully!',
@@ -195,7 +239,7 @@ export default function EditProfileScreen() {
     setShowDatePicker(false);
     if (selectedDate) {
       const formattedDate = selectedDate.toISOString().split('T')[0];
-      handleInputChange('dateOfBirth', formattedDate);
+      handleInputChange('dob', formattedDate);
     }
   };
 
@@ -249,23 +293,23 @@ export default function EditProfileScreen() {
         ]}>
           {formData[field] ? getSelectedLabel(field) : placeholder}
         </Text>
-        {showDropdown ? <ChevronUp size={20} color='#9CA3AF'/> : <ChevronDown size={20} color="#9CA3AF" />}
+        {showDropdown ? <ChevronUp size={20} color='#9CA3AF' /> : <ChevronDown size={20} color="#9CA3AF" />}
       </TouchableOpacity>
       {showDropdown && data && (
         <View style={styles.dropdownList}>
           <ScrollView style={{ maxHeight: 200 }}>
             {data.map((item, idx) => (
               <TouchableOpacity
-                key={item.value}
+                key={item.id}
                 style={styles.dropdownListItem}
                 onPress={() => {
-                  onSelect?.(item.value);
+                  onSelect?.(item.id.toString());
                   if (field === 'gender') setShowGenderDropdown(false);
-                  if (field === 'department') setShowDepartmentDropdown(false);
-                  if (field === 'designation') setShowDesignationDropdown(false);
+                  if (field === 'department_id') setShowDepartmentDropdown(false);
+                  if (field === 'designation_id') setShowDesignationDropdown(false);
                 }}
               >
-                <Text style={styles.dropdownListItemText}>{item.label}</Text>
+                <Text style={styles.dropdownListItemText}>{item.value}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -298,17 +342,18 @@ export default function EditProfileScreen() {
   );
 
   const getSelectedLabel = (field: keyof FormData): string => {
-    if (field === 'department') {
-      return DEPARTMENTS.find(item => item.value === formData[field])?.label || '';
+    if (field === 'department_id') {
+      return DEPARTMENTS.find(item => item.id == formData[field])?.value || '';
     }
-    if (field === 'designation') {
-      return DESIGNATIONS.find(item => item.value === formData[field])?.label || '';
+    if (field === 'designation_id') {
+      return DESIGNATIONS.find(item => item.id == formData[field])?.value || '';
     }
     if (field === 'gender') {
-      return GENDERS.find(item => item.value === formData[field])?.label || '';
+      return GENDERS.find(item => item.id == formData[field])?.value || '';
     }
-    if (field === 'workingHours') {
-      return WORKING_HOURS.find(item => item.value === formData[field])?.label || '';
+    if (field === 'shift_id') {
+      const shift = shiftTimings.find((item: any) => item.shift_id.toString() === formData[field]);
+      return shift ? `${shift.shift_name} (${shift.from_time.slice(0, 5)} - ${shift.to_time.slice(0, 5)})` : '';
     }
     return formData[field];
   };
@@ -337,7 +382,7 @@ export default function EditProfileScreen() {
               <View style={styles.overlay} />
             </TouchableWithoutFeedback>
           )}
-          
+
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <ChevronLeft size={24} color="#374151" />
@@ -345,8 +390,8 @@ export default function EditProfileScreen() {
             <Text style={styles.headerTitle}>Edit Profile</Text>
           </View>
 
-          <ScrollView 
-            style={styles.scrollView} 
+          <ScrollView
+            style={styles.scrollView}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
           >
@@ -366,13 +411,14 @@ export default function EditProfileScreen() {
             <View style={styles.formContainer}>
               {renderSection('Basic details', <User size={20} color="#6366F1" />, (
                 <>
-                  {renderInput('Employee Name', 'fullName')}
-                  {renderInput('Mobile No', 'mobileNo', 'phone-pad')}
-                  {renderDropdown('gender','Gender',() => setShowGenderDropdown((prev) => !prev),
+                  {renderInput('Employee Name', 'full_name')}
+                  {renderInput('Mobile No', 'phone_number', 'phone-pad')}
+                  {renderInput('Email', 'email')}
+                  {renderDropdown('gender', 'Gender', () => setShowGenderDropdown((prev) => !prev),
                     GENDERS, showGenderDropdown, (value) => handleInputChange('gender', value)
                   )}
-                  {renderDatePicker('DOB', 'dateOfBirth', () => {
-                    setDatePickerDate(formData.dateOfBirth ? new Date(formData.dateOfBirth) : new Date());
+                  {renderDatePicker('DOB', 'dob', () => {
+                    setDatePickerDate(formData.dob ? new Date(formData.dob) : new Date());
                     setShowDatePicker(true);
                   })}
                 </>
@@ -381,7 +427,7 @@ export default function EditProfileScreen() {
               {renderSection('Job Details', <Briefcase size={20} color="#6366F1" />, (
                 <>
                   {renderDropdown(
-                    'department',
+                    'department_id',
                     'Department',
                     () => {
                       setShowDepartmentDropdown((prev) => !prev);
@@ -390,10 +436,10 @@ export default function EditProfileScreen() {
                     },
                     DEPARTMENTS,
                     showDepartmentDropdown,
-                    (value) => handleInputChange('department', value)
+                    (value) => handleInputChange('department_id', value)
                   )}
                   {renderDropdown(
-                    'designation',
+                    'designation_id',
                     'Designation',
                     () => {
                       setShowDesignationDropdown((prev) => !prev);
@@ -402,29 +448,30 @@ export default function EditProfileScreen() {
                     },
                     DESIGNATIONS,
                     showDesignationDropdown,
-                    (value) => handleInputChange('designation', value)
+                    (value) => handleInputChange('designation_id', value)
                   )}
                 </>
               ))}
 
               {renderSection('Working hours', <Clock10 size={20} color="#6366F1" />, (
                 <View style={styles.workingHoursContainer}>
-                  {WORKING_HOURS.map((shift, index) => (
+                  {shiftTimings.map((shift: any, index: number) => (
                     <TouchableOpacity
                       key={index}
                       style={[
                         styles.workingHourButton,
-                        formData.workingHours === shift.value && styles.workingHourButtonSelected,
+                        formData.shift_id === shift.shift_id.toString() && styles.workingHourButtonSelected,
                       ]}
-                      onPress={() => handleInputChange('workingHours', shift.value)}
+                      onPress={() => handleInputChange('shift_id', shift.shift_id.toString())}
                     >
                       <Text
                         style={[
                           styles.workingHourText,
-                          formData.workingHours === shift.value && styles.workingHourTextSelected,
+                          formData.shift_id === shift.shift_id.toString() && styles.workingHourTextSelected,
                         ]}
                       >
-                        {shift.label}
+                        {/* Format time logic needed here if not already available, reusing simple string for now if possible or raw time */}
+                        {shift.shift_name} ({shift.from_time.slice(0, 5)} - {shift.to_time.slice(0, 5)})
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -437,47 +484,47 @@ export default function EditProfileScreen() {
                   {renderInput('Area Landmark', 'areaLandmark')}
                   <View style={styles.rowInputs}>
                     <View style={styles.halfInput}>
-                        <TextInput
-                          style={[styles.input, errors.zipcode && styles.inputError]}
-                          placeholder="Zipcode"
-                          placeholderTextColor="#9CA3AF"
-                          value={formData.zipcode}
-                          onChangeText={(value) => handleInputChange('zipcode', value)}
-                          keyboardType="numeric"
-                        />
-                        {errors.zipcode && <Text style={styles.errorText}>{errors.zipcode}</Text>}
+                      <TextInput
+                        style={[styles.input, errors.zipcode && styles.inputError]}
+                        placeholder="Zipcode"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.zipcode}
+                        onChangeText={(value) => handleInputChange('zipcode', value)}
+                        keyboardType="numeric"
+                      />
+                      {errors.zipcode && <Text style={styles.errorText}>{errors.zipcode}</Text>}
                     </View>
                     <View style={styles.halfInput}>
-                        <TextInput
-                          style={[styles.input, errors.city && styles.inputError]}
-                          placeholder="City"
-                          placeholderTextColor="#9CA3AF"
-                          value={formData.city}
-                          onChangeText={(value) => handleInputChange('city', value)}
-                        />
-                        {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+                      <TextInput
+                        style={[styles.input, errors.city && styles.inputError]}
+                        placeholder="City"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.city}
+                        onChangeText={(value) => handleInputChange('city', value)}
+                      />
+                      {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
                     </View>
                   </View>
                   <View style={styles.rowInputs}>
                     <View style={styles.halfInput}>
-                        <TextInput
-                          style={[styles.input, errors.state && styles.inputError]}
-                          placeholder="State"
-                          placeholderTextColor="#9CA3AF"
-                          value={formData.state}
-                          onChangeText={(value) => handleInputChange('state', value)}
-                        />
-                        {errors.state && <Text style={styles.errorText}>{errors.state}</Text>}
+                      <TextInput
+                        style={[styles.input, errors.state && styles.inputError]}
+                        placeholder="State"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.state}
+                        onChangeText={(value) => handleInputChange('state', value)}
+                      />
+                      {errors.state && <Text style={styles.errorText}>{errors.state}</Text>}
                     </View>
                     <View style={styles.halfInput}>
-                        <TextInput
-                          style={[styles.input, errors.country && styles.inputError]}
-                          placeholder="Country"
-                          placeholderTextColor="#9CA3AF"
-                          value={formData.country}
-                          onChangeText={(value) => handleInputChange('country', value)}
-                        />
-                        {errors.country && <Text style={styles.errorText}>{errors.country}</Text>}
+                      <TextInput
+                        style={[styles.input, errors.country && styles.inputError]}
+                        placeholder="Country"
+                        placeholderTextColor="#9CA3AF"
+                        value={formData.country}
+                        onChangeText={(value) => handleInputChange('country', value)}
+                      />
+                      {errors.country && <Text style={styles.errorText}>{errors.country}</Text>}
                     </View>
                   </View>
                 </>

@@ -1,6 +1,8 @@
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
+import { useMasterDataContext } from '@/context/MasterDataContext';
 import { ownerHomeScreenStyles } from '@/styles/ownerHomeScreenStyles';
+import { Avatar } from '@/components/Avatar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -55,7 +57,8 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(getToday()); // Default to today's date
   const [currentData, setCurrentData] = useState<WorkingData>(mockData[0]);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const { logout } = useAuth();
+  const { logout, userDetails } = useAuth();
+  const { companyDetails } = useMasterDataContext();
   const styles = ownerHomeScreenStyles();
 
   useEffect(() => {
@@ -101,21 +104,22 @@ export default function HomePage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.companyName}>TechCorp Solutions</Text>
+        <Text style={styles.companyName}>{companyDetails?.name || 'Loading...'}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleLogout}>
+          <TouchableOpacity onPress={() => handleLogout()}>
             <Bell size={24} color="#6B7280" />
           </TouchableOpacity>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>JD</Text>
-          </View>
+          <Avatar
+            fullName={userDetails?.fullName || 'User'}
+            size={40}
+          />
         </View>
       </View>
-      <ScrollView contentContainerStyle={{flex: 1}}>
+      <ScrollView contentContainerStyle={{ flex: 1 }}>
         <TouchableOpacity style={{ backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', borderRadius: 10, marginTop: 5, padding: 6, boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F', borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection: 'row', gap: 4, marginBottom: 20 }} onPress={() => setShowDatePicker(true)}>
           <CalendarDays size={24} color="#6B7280" />
           <Text>{getDisplayDate(selectedDate)}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity >
 
         {showDatePicker && (
           <DateTimePicker
@@ -130,7 +134,8 @@ export default function HomePage() {
               }
             }}
           />
-        )}
+        )
+        }
 
         {/* <View style={styles.mainStatsContainer}>
           <View style={styles.circleContainer}>
@@ -205,8 +210,8 @@ export default function HomePage() {
             />
           </View>
         </View>
-      </ScrollView>
+      </ScrollView >
       <StatusBar style="dark" />
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }

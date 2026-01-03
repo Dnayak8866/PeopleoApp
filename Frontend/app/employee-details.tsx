@@ -1,4 +1,7 @@
+import { Avatar } from '@/components/Avatar';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
+import { useMasterDataContext } from '@/context/MasterDataContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Bell, Calendar, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Timer } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -39,7 +42,7 @@ const statusColors = {
   Absent: { background: '#FEF4F4FF', color: '#EB5757FF' },
   Late: { background: '#FFFBEBFF', color: '#F7B500FF' },
   Leave: { background: '#DBEAFEFF', color: '#1D4ED8FF' },
-   Holiday: { background: '#F3F4F6FF', color: '#636AE8FF' },
+  Holiday: { background: '#F3F4F6FF', color: '#636AE8FF' },
 };
 
 
@@ -119,7 +122,9 @@ const monthlySummary: MonthlySummary = {
 export default function EmployeeDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [currentDate, setCurrentDate] = useState(new Date(2023, 10)); // November 2023
+  const [currentDate, setCurrentDate] = useState(new Date(2023, 10));
+  const { userDetails } = useAuth();
+  const { companyDetails } = useMasterDataContext();
 
   const employee = {
     id: '1',
@@ -148,12 +153,12 @@ export default function EmployeeDetailsScreen() {
           <View style={styles.timeRow}>
             <View style={styles.timeItem}>
               <LogIn size={16} color="#1D4ED8FF" />
-              <Text style={[styles.timeLabel, {marginLeft:8}]}>In:</Text>
+              <Text style={[styles.timeLabel, { marginLeft: 8 }]}>In:</Text>
               <Text style={styles.timeValue}>{attendance.entryTime || 'N/A'}</Text>
             </View>
             <View style={styles.timeItem}>
               <LogOut size={16} color="#FF5724FF" />
-              <Text style={[styles.timeLabel, {marginLeft:8}]}>Out:</Text>
+              <Text style={[styles.timeLabel, { marginLeft: 8 }]}>Out:</Text>
               <Text style={styles.timeValue}>{attendance.exitTime || 'N/A'}</Text>
             </View>
             <View style={styles.workingHoursRow}>
@@ -165,7 +170,7 @@ export default function EmployeeDetailsScreen() {
         </View>
         <View style={styles.dayInfo}>
           <View style={[styles.statusBadge, { backgroundColor: statusColors[attendance.status].background }]}>
-            <Text style={[styles.statusText, {color:statusColors[attendance.status].color}]}>{attendance.status}</Text>
+            <Text style={[styles.statusText, { color: statusColors[attendance.status].color }]}>{attendance.status}</Text>
           </View>
         </View>
       </View>
@@ -175,14 +180,15 @@ export default function EmployeeDetailsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>TechCorp Solutions</Text>
+        <Text style={styles.headerTitle}>{companyDetails?.name}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity>
             <Bell size={24} color="#6B7280" />
           </TouchableOpacity>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>JD</Text>
-          </View>
+          <Avatar
+            fullName={userDetails?.fullName || 'User'}
+            size={40}
+          />
         </View>
       </View>
 
@@ -394,7 +400,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#636AE8FF',
-    padding:6,
+    padding: 6,
     paddingHorizontal: 10,
     borderRadius: 14,
     backgroundColor: Colors.primaryLight,
@@ -419,7 +425,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flex:1,
+    flex: 1,
   },
   dateSection: {
     flexDirection: 'row',
@@ -432,8 +438,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
   },
-  dayInfo: { 
-    
+  dayInfo: {
+
   },
   dayText: {
     fontSize: 12,

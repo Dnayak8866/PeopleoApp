@@ -33,7 +33,7 @@ export default function RootLayout() {
 }
 
 function AppNavigator({ showSplash, onSplashComplete }: AppNavigatorProps) {
-  const { user, loading } = useAuth();
+  const { userId, loading } = useAuth();
 
 
   if (showSplash) {
@@ -44,13 +44,15 @@ function AppNavigator({ showSplash, onSplashComplete }: AppNavigatorProps) {
     return null;
   }
 
-  if (!user) {
+  if (!userId) {
     return <LoginScreen />;
   }
 
   return (
     <>
       <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="loader" options={{ headerShown: false }} />
         <Stack.Screen name="(employee)" options={{ headerShown: false }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false }} />
         <Stack.Screen name="employee/add" options={{ headerShown: false }} />

@@ -3,6 +3,7 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { validatePhone as validatePhoneApi } from '@/services/api/auth';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -13,7 +14,7 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login: authLogin, userDetails } = useAuth();
+  const { login: authLogin } = useAuth();
 
   const validatePhoneFormat = () => {
     if (!/^\d{10}$/.test(phone)) {
@@ -61,16 +62,7 @@ export default function LoginScreen() {
 
       if (success) {
         setError('');
-        // Wait a bit for userDetails to be set
-        setTimeout(() => {
-          // Route based on roleId (1 = owner/admin, 2 = employee)
-          // You can adjust this logic based on your role IDs
-          if (userDetails?.roleId === 1) {
-            router.replace('/(owner)/home');
-          } else {
-            router.replace('/(employee)/home');
-          }
-        }, 100);
+        router.replace('/loader');
       } else {
         setError('Login failed. Please check your credentials.');
       }
@@ -124,6 +116,7 @@ export default function LoginScreen() {
           </>
         )}
       </View>
+      <StatusBar style="dark" />
     </KeyboardAvoidingView>
   );
 }

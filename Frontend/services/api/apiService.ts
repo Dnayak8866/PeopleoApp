@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { router } from 'expo-router';
 import { getAccessToken } from './auth';
 
-const API_BASE_URL = process.env.API_URI || 'http://192.168.1.28:3000';
+const API_BASE_URL = process.env.API_URI;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,6 +45,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Check if the error comes from the refresh token endpoint itself
+    if (originalRequest.url?.includes('/auth/accessToken')) {
+      // Refresh token failed or expired
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('refreshToken');
+      await AsyncStorage.removeItem('userInfo');
+      router.replace('/(auth)/login');
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
@@ -61,7 +73,7 @@ api.interceptors.response.use(
         await AsyncStorage.removeItem('accessToken');
         await AsyncStorage.removeItem('refreshToken');
         await AsyncStorage.removeItem('userInfo');
-        // router.navigate('/login'); // Redirect to login page
+        router.replace('/(auth)/login');
       }
     }
     return Promise.reject(error);

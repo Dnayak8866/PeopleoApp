@@ -1,37 +1,44 @@
 import { Colors } from '@/constants/Colors';
 import { employeeListScreenStyles } from '@/styles/employeeListScreenStyles';
+import { Avatar } from '@/components/Avatar';
 import Checkbox from 'expo-checkbox';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
-    Bell,
-    Edit,
-    Mail,
-    MessageCircle,
-    Phone,
-    Search,
-    Trash2,
-    UserPlus
+  Bell,
+  Edit,
+  Mail,
+  MessageCircle,
+  Phone,
+  Search,
+  Trash2,
+  UserPlus
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Animated,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { getEmployees } from '../../services/api/employees';
+import { getEmployees, deleteEmployee } from '../../services/api/employees';
+import { getPositionNameById } from '@/utils/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useMasterDataContext } from '@/context/MasterDataContext';
+import * as Linking from 'expo-linking';
 
 interface Employee {
   id: string;
-  name: string;
-  position: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  designationId: number;
   avatar?: string;
   initials?: string;
   backgroundColor?: string;
@@ -68,14 +75,14 @@ const SkeletonItem = () => {
   return (
     <View style={styles.employeeCard}>
       <Animated.View style={[styles.skeletonCheckbox, { opacity }]} />
-      
+
       <Animated.View style={[styles.skeletonAvatar, { opacity }]} />
-      
+
       <View style={styles.employeeInfo}>
         <Animated.View style={[styles.skeletonName, { opacity }]} />
         <Animated.View style={[styles.skeletonPosition, { opacity }]} />
       </View>
-      
+
       <View style={styles.actionButtons}>
         {[...Array(5)].map((_, index) => (
           <Animated.View key={index} style={[styles.skeletonActionButton, { opacity }]} />
@@ -93,41 +100,9 @@ export default function EmployeesScreen() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const router = useRouter();
   const styles = employeeListScreenStyles();
+  const { userDetails } = useAuth();
+  const { designations } = useMasterDataContext();
 
-  const dummyEmployees: Employee[] = [
-    {
-      id: '1',
-      name: 'Alice Jo',
-      position: 'Software Engineer',
-      initials: 'AJ',
-      backgroundColor: '#14B8A6',
-    },
-    {
-      id: '2',
-      name: 'John Doe',
-      position: 'Product Manager',
-      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-    {
-      id: '3',
-      name: 'Sophia Chen',
-      position: 'UX Designer',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-    {
-      id: '4',
-      name: 'Robert Davis',
-      position: 'Marketing',
-      initials: 'RD',
-      backgroundColor: '#9CA3AF',
-    },
-    {
-      id: '5',
-      name: 'Isabella Martinez',
-      position: 'HR Business Partner',
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-    },
-  ];
 
   useFocusEffect(
     React.useCallback(() => {
@@ -135,15 +110,15 @@ export default function EmployeesScreen() {
       setIsLoading(true);
       getEmployees()
         .then((data) => {
-          console.log("data",data)
+          console.log("data", data)
           if (isActive && Array.isArray(data)) {
             setEmployees(data);
           } else if (isActive) {
-            setEmployees(dummyEmployees);
+            setEmployees([]);
           }
         })
         .catch((error) => {
-          setEmployees(dummyEmployees);
+          setEmployees([]);
         })
         .finally(() => {
           if (isActive) setIsLoading(false);
@@ -155,8 +130,7 @@ export default function EmployeesScreen() {
   );
 
   const filteredEmployees = employees.filter(employee =>
-    employee?.name?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
-    employee?.position?.toLowerCase()?.includes(searchText?.toLowerCase())
+    employee?.fullName?.toLowerCase()?.includes(searchText?.toLowerCase())
   );
 
   const toggleSelectAll = () => {
@@ -180,23 +154,36 @@ export default function EmployeesScreen() {
   };
 
   const handleCall = (employee: Employee) => {
-    Alert.alert('Call', `Calling ${employee.name}`);
+    Linking.openURL(`tel:${employee.phoneNumber}`);
   };
 
   const handleMessage = (employee: Employee) => {
-    Alert.alert('Message', `Messaging ${employee.name}`);
+    Linking.openURL(`sms:${employee.phoneNumber}`);
+  };
+
+  const handleEmail = (employee: Employee) => {
+    Linking.openURL(`mailto:${employee.email}`);
   };
 
   const handleDelete = (employee: Employee) => {
     Alert.alert(
       'Delete Employee',
-      `Are you sure you want to delete ${employee.name}?`,
+      `Are you sure you want to delete ${employee.fullName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete', style: 'destructive', onPress: () => {
-            Alert.alert('Deleted', `${employee.name} has been removed`);
-          }
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteEmployee(employee.id);
+              setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
+              Alert.alert('Deleted', `${employee.fullName} has been removed`);
+            } catch (error) {
+              console.error('Failed to delete employee:', error);
+              Alert.alert('Error', 'Failed to delete employee. Please try again.');
+            }
+          },
         },
       ]
     );
@@ -207,7 +194,7 @@ export default function EmployeesScreen() {
   };
 
   const renderAvatar = (employee: Employee) => {
-    if (employee.avatar) {
+    if (employee?.avatar) {
       return (
         <Image
           source={{ uri: employee.avatar }}
@@ -217,9 +204,11 @@ export default function EmployeesScreen() {
     }
 
     return (
-      <View style={[styles.avatarPlaceholder, { backgroundColor: employee.backgroundColor }]}>
-        <Text style={styles.avatarText}>{employee.initials}</Text>
-      </View>
+      <Avatar
+        fullName={employee.fullName}
+        backgroundColor={employee.backgroundColor}
+        style={styles.avatarPlaceholder}
+      />
     );
   };
 
@@ -231,7 +220,7 @@ export default function EmployeesScreen() {
             <Animated.View style={styles.skeletonCheckbox} />
             <Animated.View style={styles.skeletonSelectAllText} />
           </View>
-          
+
           {[...Array(5)].map((_, index) => (
             <SkeletonItem key={index} />
           ))}
@@ -263,8 +252,8 @@ export default function EmployeesScreen() {
             {renderAvatar(employee)}
 
             <View style={styles.employeeInfo}>
-              <Text style={styles.employeeName}>{employee.name}</Text>
-              <Text style={styles.employeePosition}>{employee.position}</Text>
+              <Text style={styles.employeeName}>{employee.fullName}</Text>
+              <Text style={styles.employeePosition}>{getPositionNameById(employee.designationId, designations)}</Text>
             </View>
 
             <View style={styles.actionButtons}>
@@ -282,13 +271,13 @@ export default function EmployeesScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleDelete(employee)}
+                onPress={() => handleEmail(employee)}
               >
                 <Mail size={16} color="#EF4444" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleDelete(employee)}
+                onPress={() => router.push({ pathname: '/employee/edit', params: { id: employee.id } })}
               >
                 <Edit size={16} color="grey" />
               </TouchableOpacity>
@@ -306,16 +295,17 @@ export default function EmployeesScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF'}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Employees</Text>
           <TouchableOpacity style={styles.notificationButton}>
             <Bell size={24} color="#374151" />
           </TouchableOpacity>
-          <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>JD</Text>
-          </View>
+          <Avatar
+            fullName={userDetails?.fullName || 'User'}
+            size={40}
+          />
         </View>
 
         <View style={styles.searchContainer}>
@@ -350,5 +340,5 @@ export default function EmployeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  
+
 });

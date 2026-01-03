@@ -6,6 +6,7 @@ export const editEmployeeScreenStyles = () => {
         safeArea: {
             flex: 1,
             backgroundColor: '#F8F9FA',
+            paddingTop: 20,
         },
         container: {
             flex: 1,

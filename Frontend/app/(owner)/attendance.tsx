@@ -1,4 +1,6 @@
+import { Avatar } from '@/components/Avatar';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 import { attendanceScreenStyles } from '@/styles/attendanceScreenStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
@@ -94,6 +96,7 @@ export default function AttendanceScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const styles = attendanceScreenStyles();
+  const { userDetails } = useAuth();
 
   function getToday() {
     const d = new Date();
@@ -188,17 +191,17 @@ export default function AttendanceScreen() {
     const selectedDay = new Date(selectedDate).getDate();
     const daysInMonth = getMonthDays(selectedDate);
     const selectedIndex = daysInMonth.indexOf(selectedDay);
-    
+
     if (selectedIndex !== -1) {
       // Calculate the scroll position
       // Each day takes up approximately 44px (36px width + 8px margin)
       const itemWidth = 44;
       const scrollPosition = selectedIndex * itemWidth - 40; // Offset to center
-      
+
       setTimeout(() => {
-        scrollRef.current?.scrollTo({ 
-          x: Math.max(0, scrollPosition), 
-          animated: true 
+        scrollRef.current?.scrollTo({
+          x: Math.max(0, scrollPosition),
+          animated: true
         });
       }, 100);
     }
@@ -214,9 +217,10 @@ export default function AttendanceScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Daily Attendance</Text>
-          <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>JD</Text>
-          </View>
+          <Avatar
+            fullName={userDetails?.fullName || 'User'}
+            size={40}
+          />
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -227,11 +231,11 @@ export default function AttendanceScreen() {
               </TouchableOpacity>
               <Text style={{ marginLeft: 4, fontWeight: '600' }}>{getDisplayDate(selectedDate)}</Text>
             </View>
-            
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              ref={scrollRef} 
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              ref={scrollRef}
               style={{ marginVertical: 8 }}
               contentContainerStyle={{ paddingHorizontal: 8 }}
             >
@@ -320,5 +324,5 @@ export default function AttendanceScreen() {
 }
 
 const styles = StyleSheet.create({
-  
+
 });

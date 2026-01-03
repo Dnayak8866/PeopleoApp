@@ -12,7 +12,7 @@ export const getEmployees = async () => {
 
 export const getEmployeeDetailsById = async (id: any) => {
   try {
-    const response = await api.get(`/users/${id}`);
+    const response = await api.get(`/user/${id}`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch employee:', error);
@@ -22,6 +22,8 @@ export const getEmployeeDetailsById = async (id: any) => {
 
 export const createEmployee = async (employeeData: any) => {
   try {
+    employeeData.company_id = 1;
+    employeeData.role_id = 2;
     const response = await api.post('/user', employeeData);
     return response.data;
   } catch (error) {
