@@ -18,16 +18,17 @@ export class AttendanceService {
     punch_out_photo?: Multer.File,
   ): Promise<Attendance> {
     // Check for duplicate attendance
-    const exists = await this.attendanceRepository.findOne({
-      where: {
-        employee: { id: dto.employee_id }, // Pass relation object
-        attendance_date: dto.attendance_date,
-      },
-    });
-    if (exists) throw new ConflictException('Attendance already marked for this date');
+    // const exists = await this.attendanceRepository.findOne({
+    //   where: {
+    //     employee: { id: dto.employee_id }, // Pass relation object
+    //     attendance_date: dto.attendance_date,
+    //   },
+    // });
+    // if (exists) throw new ConflictException('Attendance already marked for this date');
 
     const attendance = this.attendanceRepository.create({
       ...dto,
+        employee: dto.employee_id ? { id: dto.employee_id } : undefined,
       punch_in_photo: punch_in_photo ? punch_in_photo.buffer.toString('base64') : undefined,
       punch_out_photo: punch_out_photo ? punch_out_photo.buffer.toString('base64') : undefined,
     });
@@ -41,5 +42,12 @@ export class AttendanceService {
     });
     if (!attendance) throw new NotFoundException('Attendance not found');
     return attendance;
+  }
+
+    async updateAttendanceStatus(id: number, status: string): Promise<Attendance> {
+    const attendance = await this.attendanceRepository.findOne({ where: { attendance_id: id } });
+    if (!attendance) throw new NotFoundException('Attendance not found');
+    attendance.status = status;
+    return this.attendanceRepository.save(attendance);
   }
 }

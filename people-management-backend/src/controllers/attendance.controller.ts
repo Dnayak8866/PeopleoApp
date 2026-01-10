@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UploadedFiles, UseInterceptors, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFiles, UseInterceptors, Param, Get, Patch } from '@nestjs/common';
 import { AttendanceService } from '../services/attendance.service';
 import { AttendanceDto } from '../dto/attendance.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -33,5 +33,14 @@ export class AttendanceController {
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   async findOne(@Param('id') id: string) {
     return this.attendanceService.findOne(+id);
+  }
+
+  @Patch(':id/status')
+  @ApiBody({ schema: { properties: { status: { type: 'string', example: 'In' } } } })
+  async updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string
+  ) {
+    return this.attendanceService.updateAttendanceStatus(+id, status);
   }
 }
