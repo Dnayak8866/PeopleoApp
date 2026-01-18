@@ -1,6 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
-import api from './apiService';
+import api, { API_BASE_URL } from './apiService';
 import { LoginResponse, HomePageDetails } from '../types/auth';
 
 export const validatePhone = async (phone: string): Promise<{ valid: boolean; message: string }> => {
@@ -26,9 +26,6 @@ export const login = async (phone: string, pin: string): Promise<LoginResponse> 
     throw error;
   }
 };
-
-
-const API_BASE_URL = process.env.API_URI || 'http://192.168.1.36:3000';
 
 export const getAccessToken = async (refreshToken: string) => {
   try {

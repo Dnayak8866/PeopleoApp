@@ -18,8 +18,6 @@ export class AuthMiddleware implements NestMiddleware {
 
     // 3. Extract the token string (removes 'Bearer ')
     const token = authHeader.split(' ')[1];
-    console.log('token: ', token);
-    console.log('Access secret key: ', process.env.JWT_ACCESS_SECRET);
     try {
       // 4. Verify the token using the secret
       const payload = this.jwtService.verify(token, {

@@ -5,6 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 
@@ -64,4 +65,7 @@ export class User {
 
   @Column({ name: 'gender', type: 'varchar', length: 10, nullable: true })
   gender: string;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

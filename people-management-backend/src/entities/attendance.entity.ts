@@ -11,36 +11,35 @@ export class Attendance {
   @JoinColumn({ name: 'employee_id' })
   employee: User;
 
+  @Column({ type: 'date' })
+  attendance_date: Date;
+
+  @Column({ type: 'int', default: 1 })
+  session_number: number;
+
   @Column({ type: 'timestamp', nullable: true })
   punch_in: Date;
 
   @Column({ type: 'timestamp', nullable: true })
   punch_out: Date;
 
-  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   punch_in_latitude: number;
 
-  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   punch_in_longitude: number;
 
-  @Column({ type: 'text', nullable: true })
-  punch_in_photo: string;
+  @Column({ type: 'boolean', default: true })
+  is_punch_in_from_office: boolean;
 
-  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   punch_out_latitude: number;
 
-  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
   punch_out_longitude: number;
 
-  @Column({ type: 'text', nullable: true })
-  punch_out_photo: string;
-
-  @ManyToOne(() => ShiftTiming)
-  @JoinColumn({ name: 'shift_id' })
-  shift: ShiftTiming;
-
-  @Column({ type: 'date' })
-  attendance_date: Date;
+  @Column({ type: 'boolean', default: true })
+  is_punch_out_from_office: boolean;
 
   @Column({ type: 'interval', nullable: true })
   working_hours: string;

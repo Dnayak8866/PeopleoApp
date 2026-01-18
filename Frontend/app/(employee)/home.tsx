@@ -1,13 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Bell, LocateFixed } from 'lucide-react-native';
-import React, { useRef } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Bell, LocateFixed, LogOut } from 'lucide-react-native';
+import React, { useRef, useState, useCallback, use } from 'react';
 import {
   Animated,
   SafeAreaView,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Alert
 } from 'react-native';
 
 import Hand from '@/assets/images/icons/hand';
@@ -15,13 +16,21 @@ import { useAuth } from '@/context/AuthContext';
 import { homeScreenStyles } from '@/styles/employeeHomeScreenStyles';
 import { Avatar } from '@/components/Avatar';
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import { punchIn, punchOut, getTodaySessionStatus } from '@/services/api/attendace';
+import { StatusBar } from 'expo-status-bar';
+import { HeaderAvatar } from '@/components/HeaderAvatar';
 
-export default function ClockInScreen() {
+export default function HomeScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const styles = homeScreenStyles();
   const { userDetails } = useAuth();
   const { companyDetails } = useMasterDataContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPunchedIn, setIsPunchedIn] = useState(false);
+  const [punchInTime, setPunchInTime] = useState<Date | null>(null);
+
+  console.log("userDetails:", userDetails);
 
   const now = new Date();
   const timeString = now.toLocaleTimeString('en-US', {
@@ -37,6 +46,30 @@ export default function ClockInScreen() {
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  // Check session status on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      if (userDetails?.id) {
+        checkTodaySessionStatus();
+      }
+    }, [userDetails?.id])
+  );
+
+  const checkTodaySessionStatus = async () => {
+    try {
+      if (!userDetails?.id) return;
+
+      const status = await getTodaySessionStatus(userDetails.id);
+      setIsPunchedIn(status.hasActivePunch);
+      if (status.punchIn) {
+        setPunchInTime(new Date(status.punchIn));
+      }
+    } catch (error) {
+      console.error('Failed to check session status:', error);
+      // Silently fail - not critical
+    }
+  };
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -64,11 +97,78 @@ export default function ClockInScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Call appropriate punch API
+    if (isPunchedIn) {
+      handlePunchOut();
+    } else {
+      handlePunchIn();
+    }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/login');
+  const handlePunchIn = async () => {
+    if (isLoading) return;
+
+    try {
+      setIsLoading(true);
+
+      if (!userDetails?.id) {
+        Alert.alert('Error', 'User information not available');
+        return;
+      }
+
+      const attendanceData = {
+        employee_id: userDetails.id,
+        attendance_date: new Date(),
+      };
+
+      await punchIn(attendanceData);
+
+      setIsPunchedIn(true);
+      setPunchInTime(new Date());
+
+      Alert.alert('Success', 'Punched in successfully!', [
+        { text: 'OK' }
+      ]);
+    } catch (error: any) {
+      console.error('Punch in error:', error);
+      const errorMessage = error?.response?.data?.message || error.message || 'Failed to punch in';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePunchOut = async () => {
+    if (isLoading) return;
+
+    try {
+      setIsLoading(true);
+
+      if (!userDetails?.id) {
+        Alert.alert('Error', 'User information not available');
+        return;
+      }
+
+      const attendanceData = {
+        employee_id: userDetails.id,
+        attendance_date: new Date(),
+      };
+
+      await punchOut(attendanceData);
+
+      setIsPunchedIn(false);
+
+      Alert.alert('Success', 'Punched out successfully!', [
+        { text: 'OK' }
+      ]);
+    } catch (error: any) {
+      console.error('Punch out error:', error);
+      const errorMessage = error?.response?.data?.message || error.message || 'Failed to punch out';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const StatCard = ({ label, value, borderColor }: { label: string; value: string; borderColor: string }) => (
@@ -88,13 +188,10 @@ export default function ClockInScreen() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, {userDetails?.fullName}</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => { }}>
             <Bell size={24} color="#666" />
           </TouchableOpacity>
-          <Avatar
-            fullName={userDetails?.fullName || 'User'}
-            size={40}
-          />
+          <HeaderAvatar size={40} />
         </View>
       </View>
 
@@ -108,6 +205,7 @@ export default function ClockInScreen() {
       <View style={styles.punchSection}>
         <TouchableOpacity
           activeOpacity={1}
+          disabled={isLoading}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={styles.punchButton}>
@@ -133,16 +231,27 @@ export default function ClockInScreen() {
                 ]}
               />
               <LinearGradient
-                colors={['#1CC8A5', '#2563EB']}
+                colors={isPunchedIn ? ['#EF4444', '#DC2626'] : ['#1CC8A5', '#2563EB']}
                 style={styles.gradientButton}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}>
-                <Hand width={130} height={120} color="white" />
+                {isPunchedIn ? (
+                  <LogOut width={130} height={120} color="white" />
+                ) : (
+                  <Hand width={130} height={120} color="white" />
+                )}
               </LinearGradient>
             </View>
           </Animated.View>
         </TouchableOpacity>
-        <Text style={styles.punchText}>Punch In</Text>
+        <Text style={styles.punchText}>
+          {isLoading ? 'Processing...' : isPunchedIn ? 'Punch Out' : 'Punch In'}
+        </Text>
+        {isPunchedIn && punchInTime && (
+          <Text style={[styles.punchText, { fontSize: 12, color: '#666' }]}>
+            In at {punchInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        )}
       </View>
 
       {/* Location */}
@@ -161,6 +270,7 @@ export default function ClockInScreen() {
         <View style={styles.divider} />
         <StatCard label="Salary Countdown" value="05" borderColor="#EC4899" />
       </View>
+      <StatusBar style="dark" />
     </SafeAreaView>
   );
 }

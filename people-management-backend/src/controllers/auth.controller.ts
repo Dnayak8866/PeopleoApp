@@ -9,19 +9,6 @@ import { HomePageDetailsDto } from '../dto/home-page.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @Post('validate-phone')
-  @ApiBody({ schema: { properties: { phone: { type: 'string', example: '1234567890' } } } })
-  @ApiResponse({ status: 200, description: 'Phone number is valid and exists.', schema: { properties: { valid: { type: 'boolean' }, message: { type: 'string' } } } })
-  @ApiResponse({ status: 404, description: 'Phone number not found.' })
-  async validatePhone(@Body() body: { phone: string }) {
-    try {
-      await this.authService.validatePhone(body.phone);
-      return { valid: true, message: 'Phone number found' };
-    } catch (error) {
-      return { valid: false, message: error.message };
-    }
-  }
-
   @Post('login')
   @ApiBody({ type: LoginRequestDto })
   @ApiResponse({ status: 201, description: 'User logged in successfully.', type: LoginResponseDto })

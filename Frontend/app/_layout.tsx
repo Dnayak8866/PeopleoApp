@@ -1,19 +1,14 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-
-import LoginScreen from '@/app/(auth)/login';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import SplashScreen from '@/screens/SplashScreen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MasterDataProvider } from '@/context/MasterDataContext';
+import { ActivityIndicator, View } from 'react-native';
+import { Colors } from '@/constants/Colors';
 
 let splashShown = false;
-
-type AppNavigatorProps = {
-  showSplash: boolean;
-  onSplashComplete: () => void;
-};
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(!splashShown);
@@ -32,20 +27,47 @@ export default function RootLayout() {
   );
 }
 
-function AppNavigator({ showSplash, onSplashComplete }: AppNavigatorProps) {
+function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; onSplashComplete: () => void }) {
   const { userId, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
+  useEffect(() => {
+    if (showSplash) {
+      setIsNavigationReady(false);
+      return;
+    }
+
+    if (loading) {
+      setIsNavigationReady(false);
+      return;
+    }
+
+    // Auth restoration is complete, now handle routing
+    setIsNavigationReady(true);
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!userId && !inAuthGroup) {
+      // User is not authenticated and not in auth group, redirect to login
+      router.replace('/(auth)/login');
+    } else if (userId && inAuthGroup) {
+      // User is authenticated but in auth group, redirect to loader
+      router.replace('/loader');
+    }
+  }, [userId, loading, showSplash, segments]);
 
   if (showSplash) {
     return <SplashScreen onAnimationComplete={onSplashComplete} />;
   }
 
   if (loading) {
-    return null;
-  }
-
-  if (!userId) {
-    return <LoginScreen />;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
   return (

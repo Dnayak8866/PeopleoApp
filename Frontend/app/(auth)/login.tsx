@@ -1,65 +1,45 @@
-import PinInput from '@/components/PinInput';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
-import { validatePhone as validatePhoneApi } from '@/services/api/auth';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function LoginScreen() {
-  const [step, setStep] = useState(1);
-  const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login: authLogin } = useAuth();
 
-  const validatePhoneFormat = () => {
-    if (!/^\d{10}$/.test(phone)) {
-      setError('Please enter a valid 10-digit phone number.');
-      return false;
+  const handleLogin = async () => {
+    if (!employeeId.trim()) {
+      setError('Please enter your Employee ID or Email.');
+      return;
     }
-    setError('');
-    return true;
-  };
-
-  const handlePhoneSubmit = async () => {
-    if (!validatePhoneFormat()) return;
+    if (!password.trim()) {
+      setError('Please enter your password.');
+      return;
+    }
 
     setLoading(true);
-    try {
-      const result = await validatePhoneApi(phone);
-      if (result.valid) {
-        setError('');
-        setStep(2);
-      } else {
-        setError('Phone number not found. Please check and try again.');
-      }
-    } catch (error) {
-      console.error('Phone validation error:', error);
-      setError('Phone number not found. Please check and try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const validatePin = () => {
-    if (!/^\d{6}$/.test(pin)) {
-      setError('PIN must be 6 digits.');
-      return false;
-    }
     setError('');
-    return true;
-  };
 
-  const handlePinSubmit = async () => {
-    if (!validatePin()) return;
-    setLoading(true);
     try {
-      const success = await authLogin(phone, pin);
-
+      const success = await authLogin(employeeId, password);
       if (success) {
         setError('');
         router.replace('/loader');
@@ -74,48 +54,123 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = () => {
+    console.log('Forgot password pressed');
+  };
+
+  const handleContactSupport = () => {
+    console.log('Contact HR Support pressed');
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>Sign In</Text>
-        {step === 1 ? (
-          <>
-            <Text style={styles.label}>Phone Number</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Fingerprint Icon */}
+        <View style={styles.iconContainer}>
+          <View style={styles.iconBackground}>
+            <Ionicons name="finger-print" size={40} color={Colors.primary} />
+          </View>
+        </View>
+
+        {/* Title Section */}
+        <Text style={styles.title}>Employee Login</Text>
+        <Text style={styles.subtitle}>Welcome back! Please enter your details.</Text>
+
+        {/* Login Card */}
+        <View style={styles.card}>
+          {/* Employee ID or Email Field */}
+          <Text style={styles.label}>Phone Number</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={20} color="#A0AEC0" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter your phone number"
+              placeholder="Enter Phone Number"
               placeholderTextColor="#A0AEC0"
-              keyboardType="phone-pad"
-              maxLength={10}
-              value={phone}
-              onChangeText={setPhone}
-              autoFocus
+              value={employeeId}
+              onChangeText={setEmployeeId}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="numeric"
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={handlePhoneSubmit} disabled={loading}>
-              <Text style={styles.buttonText}>{loading ? 'Validating...' : 'Next'}</Text>
+          </View>
+
+          {/* Password Field */}
+          <View style={styles.passwordHeader}>
+            <Text style={styles.label}>Password</Text>
+            <TouchableOpacity onPress={handleForgotPassword}>
+              <Text style={styles.forgotPassword}>Forgot Password?</Text>
             </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <Text style={styles.label}>Enter 6-Digit PIN</Text>
-            <PinInput
-              onChangePin={setPin}
-              boxStyle={{ marginBottom: 16 }}
+          </View>
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color="#A0AEC0" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor="#A0AEC0"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={handlePinSubmit} disabled={loading || pin.length !== 6}>
-              <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                size={22}
+                color="#A0AEC0"
+              />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.backLink} onPress={() => { setStep(1); setError(''); setPin(''); }} disabled={loading}>
-              <Text style={styles.backText}>Back to phone</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+          </View>
+
+          {/* Remember Me Checkbox */}
+          <TouchableOpacity
+            style={styles.rememberContainer}
+            onPress={() => setRememberMe(!rememberMe)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && (
+                <Ionicons name="checkmark" size={14} color="#fff" />
+              )}
+            </View>
+            <Text style={styles.rememberText}>Remember me for 30 days</Text>
+          </TouchableOpacity>
+
+          {/* Error Message */}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          {/* Login Button */}
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? 'Logging in...' : 'Login'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact Support Section */}
+        <View style={styles.supportContainer}>
+          <Text style={styles.supportText}>Having trouble logging in?</Text>
+          <TouchableOpacity onPress={handleContactSupport}>
+            <Text style={styles.supportLink}>Contact HR Support</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
       <StatusBar style="dark" />
     </KeyboardAvoidingView>
   );
@@ -125,80 +180,175 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    marginBottom: 24,
+  },
+  iconBackground: {
+    width: 90,
+    height: 90,
+    borderRadius: 20,
+    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
-    elevation: 6,
-    alignItems: 'stretch',
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: Colors.primary,
-    marginBottom: 24,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  label: {
-    fontSize: 16,
     color: Colors.primaryText,
     marginBottom: 8,
-    fontWeight: '500',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 32,
+    textAlign: 'center',
+  },
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primaryText,
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    marginBottom: 20,
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    backgroundColor: '#F7F8FA',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
     color: Colors.primaryText,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
     paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
   },
-  buttonText: {
+  eyeIcon: {
+    padding: 4,
+  },
+  passwordHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  forgotPassword: {
+    fontSize: 13,
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  rememberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  rememberText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  error: {
+    color: '#EF4444',
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'left',
+  },
+  loginButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+  loginButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  error: {
-    color: '#EB5757',
-    marginBottom: 8,
-    fontSize: 14,
-    textAlign: 'left',
-  },
-  backLink: {
-    marginTop: 16,
+  supportContainer: {
     alignItems: 'center',
+    marginTop: 32,
   },
-  backText: {
+  supportText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  supportLink: {
+    fontSize: 14,
     color: Colors.primary,
-    fontSize: 15,
-    fontWeight: '500',
-    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  footer: {
+    fontSize: 12,
+    color: '#D1D5DB',
+    marginTop: 40,
+    letterSpacing: 1,
+  },
+  darkModeToggle: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+  },
+  darkModeButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

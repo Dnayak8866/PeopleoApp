@@ -1,5 +1,5 @@
 import { login as loginApi } from '@/services/api/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { jwtDecode } from 'jwt-decode';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -42,13 +42,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore auth state from AsyncStorage
+  // Restore auth state from SecureStore
   useEffect(() => {
     const restoreAuth = async () => {
       setLoading(true);
       try {
-        const storedAccessToken = await AsyncStorage.getItem('accessToken');
-        const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+        const storedAccessToken = await SecureStore.getItemAsync('accessToken');
+        const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
 
         if (storedAccessToken) {
           setAccessToken(storedAccessToken);
@@ -75,10 +75,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await loginApi(phone, pin);
       const { accessToken, refreshToken } = response;
       const decoded = jwtDecode<DecodedAccessToken>(accessToken);
-      await AsyncStorage.setItem('accessToken', accessToken);
-      await AsyncStorage.setItem('refreshToken', refreshToken);
-      await AsyncStorage.setItem('companyId', decoded.companyId.toString());
-      await AsyncStorage.setItem('userId', decoded.sub.toString());
+      await SecureStore.setItemAsync('accessToken', accessToken);
+      await SecureStore.setItemAsync('refreshToken', refreshToken);
+      await SecureStore.setItemAsync('companyId', decoded.companyId.toString());
+      await SecureStore.setItemAsync('userId', decoded.sub.toString());
 
       setAccessToken(accessToken);
       setRefreshToken(refreshToken);
@@ -100,10 +100,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout function
   const logout = async () => {
     setLoading(true);
-    await AsyncStorage.removeItem('accessToken');
-    await AsyncStorage.removeItem('refreshToken');
-    await AsyncStorage.removeItem('companyId');
-    await AsyncStorage.removeItem('userId');
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+    await SecureStore.deleteItemAsync('companyId');
+    await SecureStore.deleteItemAsync('userId');
     setUserId(null);
     setCompanyId(null);
     setAccessToken(null);

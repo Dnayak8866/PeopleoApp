@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import { ownerHomeScreenStyles } from '@/styles/ownerHomeScreenStyles';
 import { Avatar } from '@/components/Avatar';
+import { HeaderAvatar } from '@/components/HeaderAvatar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -109,10 +110,7 @@ export default function HomePage() {
           <TouchableOpacity onPress={() => handleLogout()}>
             <Bell size={24} color="#6B7280" />
           </TouchableOpacity>
-          <Avatar
-            fullName={userDetails?.fullName || 'User'}
-            size={40}
-          />
+          <HeaderAvatar size={40} />
         </View>
       </View>
       <ScrollView contentContainerStyle={{ flex: 1 }}>
