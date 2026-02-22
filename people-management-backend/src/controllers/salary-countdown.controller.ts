@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Param } from '@nestjs/common';
 import { SalaryCountdownService } from '../services/salary-countdown.service';
 import { SalaryCountdownQueryDto } from '../dto/salary-countdown-query.dto';
 import { ApiTags, ApiResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
@@ -6,7 +6,7 @@ import { ApiTags, ApiResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 @ApiTags('Salary Countdown')
 @Controller('salary-countdown')
 export class SalaryCountdownController {
-  constructor(private readonly svc: SalaryCountdownService) {}
+  constructor(private readonly svc: SalaryCountdownService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get days remaining until next salary date' })
@@ -16,5 +16,12 @@ export class SalaryCountdownController {
   get(@Query() query: SalaryCountdownQueryDto) {
     const salaryDay = query.salaryDay ?? 1;
     return this.svc.getCountdown(salaryDay);
+  }
+
+  @Get(':day')
+  @ApiOperation({ summary: 'Get days remaining until next salary date with day in path' })
+  @ApiResponse({ status: 200, description: 'Days remaining returned.' })
+  getWithParam(@Param('day') day: string) {
+    return this.svc.getCountdown(+day);
   }
 }

@@ -10,7 +10,7 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(UserDto: UserDto): Promise<User> {
     // const saltRounds = 10;
@@ -32,6 +32,7 @@ export class UserService {
       joiningDate: UserDto.joining_date,
       phoneNumber: UserDto.phone_number,
       roleId: UserDto.role_id,
+      shiftId: UserDto.shift_id,
       createdAt: now.toISOString(),
       // password: hashedPassword,
     });
@@ -45,7 +46,7 @@ export class UserService {
   async findOne(id: number): Promise<User> {
     const employee = await this.userRepository.findOneBy({ id });
     if (!employee) throw new NotFoundException(`User #${id} not found`);
-    return employee;  
+    return employee;
   }
 
   async update(id: number, updateEmployeeDto: UserDto): Promise<User> {
@@ -57,7 +58,7 @@ export class UserService {
 
   async remove(id: number): Promise<void> {
     const employee = await this.findOne(id);
-    if(!employee){
+    if (!employee) {
       throw new NotFoundException(`User #${id} not found`);
     }
     employee.isDeleted = true;

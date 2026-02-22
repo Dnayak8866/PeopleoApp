@@ -16,7 +16,7 @@ export const HeaderAvatar: React.FC<HeaderAvatarProps> = ({ size = 40 }) => {
 
     const handleLogout = async () => {
         await logout();
-        router.replace('/login');
+        router.replace('/(auth)/login');
     };
 
     return (

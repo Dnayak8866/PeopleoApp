@@ -1,262 +1,348 @@
-import { reportsScreenStyles } from '@/styles/reportsScreenStyles';
-import { StatusBar } from 'expo-status-bar';
-import { Bell, Briefcase, CalendarX, ChevronDown, Clock, Download, Share, UserCheck, Users, UserX } from 'lucide-react-native';
-import { Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { BarChart, LineChart } from 'react-native-chart-kit';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  UserCheck,
+  UserX,
+  Clock,
+  Briefcase,
+  TrendingUp
+} from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+import { Colors } from '@/constants/Colors';
+import { getCompanyStats } from '@/services/api/attendance';
+import { LineChart, BarChart } from 'react-native-gifted-charts';
+import { HeaderAvatar } from '@/components/HeaderAvatar';
 
-const screenWidth = Dimensions.get('window').width;
+const { width } = Dimensions.get('window');
 
-export default function ReportsScreen() {
-  const keyMetrics = [
-    { label: 'Attendance %', value: '93.5%', change: '+2%', changeType: 'positive', icon: <UserCheck size={24} color={'#16A34AFF'}/> },
-    { label: 'Total Employees', value: '250', change: 'No Change', changeType: 'neutral', icon: <Users size={24} color={'#2563EBFF'}/> },
-    { label: 'Absent %', value: '3.2%', change: '-0.5%', changeType: 'positive', icon: <UserX size={24} color={'#DC2626FF'}/> },
-    { label: 'On Leave %', value: '2.8%', change: '-0.3%', changeType: 'positive', icon: <CalendarX size={24} color={'#9333EAFF'}/> },
-    { label: 'Late Check-ins', value: '15%', change: '+2%', changeType: 'negative', icon: <Clock size={24} color={'#EA580CFF'}/> },
-    { label: 'Avg Work Hours', value: '40.5 hrs', change: '-0.5 hrs', changeType: 'negative', icon: <Briefcase size={24} color={'#0891B2FF'}/> },
+export default function OwnerReportsScreen() {
+  const { companyId } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const fetchData = useCallback(async () => {
+    if (!companyId) return;
+    setLoading(true);
+    try {
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const data = await getCompanyStats(companyId, month, year);
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to fetch company reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId, currentDate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const changeMonth = (delta: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    setCurrentDate(newDate);
+  };
+
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
 
-  const employees = [
-    { name: 'Alice Johnson', department: 'Development', hours: '165 hrs', avatar: 'AJ', color: '#007AFF' },
-    { name: 'Bob Williams', department: 'Development', hours: '158 hrs', avatar: 'BW', color: '#6D6D70' },
-    { name: 'Charlie Brown', department: 'HR', hours: '176 hrs', avatar: 'CB', color: '#007AFF' },
-    { name: 'Diana Prince', department: 'Marketing', hours: '140 hrs', avatar: 'DP', color: '#AF52DE' },
-  ];
+  if (loading && !stats) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
-  const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
-    style: {
-      borderRadius: 12,
-    },
-    propsForDots: {
-      r: '4',
-      strokeWidth: '2',
-      stroke: '#007AFF',
-    },
-    propsForBackgroundLines: {
-      strokeWidth: 1,
-      stroke: '#E5E5E7',
-      strokeDasharray: '',
-    },
-    propsForLabels: {
-      fontSize: 12,
-    },
-  };
+  // Process Trend Data for Chart
+  const lineData = stats?.trendData?.map((item: any) => ({
+    value: item.present,
+    dataPointText: item.present.toString(),
+    label: new Date(item.date).getDate().toString(),
+  })) || [];
 
-  const barChartConfig = {
-    ...chartConfig,
-    color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-    barPercentage: 0.7,
-    fillShadowGradient: '#FF3B30',
-    fillShadowGradientOpacity: 1,
-  };
+  const barData = stats?.trendData?.slice(-7).map((item: any) => ({
+    value: item.late,
+    label: new Date(item.date).getDate().toString(),
+    frontColor: '#F59E0B',
+  })) || [];
 
-  const attendanceTrendData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        data: [91.5, 93.2, 92.8, 94.1, 93.5, 94.2],
-        color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-        strokeWidth: 3,
-      },
-    ],
-  };
-
-  const lateCheckinsData = {
-    labels: ['HR', 'Sales', 'Marketing', 'Dev', 'Support'],
-    datasets: [
-      {
-        data: [12, 18, 15, 24, 10],
-      },
-    ],
-  };
-
-  const weeklyHoursData = {
-    labels: ['W1', 'W2', 'W3', 'W4'],
-    datasets: [
-      {
-        data: [39.5, 41.2, 40.8, 40.5],
-        color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-        strokeWidth: 3,
-      },
-    ],
-  };
-  const styles = reportsScreenStyles();
-
-  const MetricCard = ({ metric }: any) => (
+  const MetricCard = ({ label, value, icon: Icon, color, subValue }: any) => (
     <View style={styles.metricCard}>
-      <View style={styles.metricIcon}>
-        {metric.icon}
-        <Text style={styles.metricLabel}>{metric.label}</Text>
+      <View style={[styles.iconBox, { backgroundColor: color + '15' }]}>
+        <Icon size={22} color={color} />
       </View>
-      <Text style={styles.metricValue}>{metric.value}</Text>
-      <View style={{ 
-        backgroundColor: metric.changeType === 'positive' ? '#DCFCE7FF': metric.changeType === 'negative' ? '#FEE2E2FF': '#F3F4F6FF', 
-        paddingHorizontal: 8, 
-        paddingVertical: 6, 
-        borderRadius: 8 
-      }}>
-        <Text style={[
-          styles.metricChange,
-          { color: metric.changeType === 'positive' ? '#34C759' : metric.changeType === 'negative' ? '#FF3B30' : '#8E8E93' }
-        ]}>
-          {metric.change} {metric.changeType !== 'neutral' && 'vs Last Month'}
-        </Text>
+      <View style={styles.metricContent}>
+        <Text style={styles.metricLabel}>{label}</Text>
+        <Text style={styles.metricValue}>{value}</Text>
+        {subValue && <Text style={styles.metricSubValue}>{subValue}</Text>}
       </View>
-    </View>
-  );
-
-  const EmployeeItem = ({ employee }: any) => (
-    <View style={styles.employeeItem}>
-      <View style={[styles.avatar, { backgroundColor: employee.color }]}>
-        <Text style={styles.avatarText}>{employee.avatar}</Text>
-      </View>
-      <View style={styles.employeeInfo}>
-        <Text style={styles.employeeName}>{employee.name}</Text>
-        <Text style={styles.employeeDepartment}>{employee.department}</Text>
-      </View>
-      <Text style={styles.employeeHours}>{employee.hours}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Reports</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Bell size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <View style={styles.profileIcon}>
-            <Text style={styles.profileText}>HR</Text>
-          </View>
+        <View>
+          <Text style={styles.headerSubtitle}>Overview</Text>
+          <Text style={styles.headerTitle}>Company Reports</Text>
         </View>
+        <HeaderAvatar />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.dateSelector}>
-          <Text style={styles.dateText}>01 Jan - 31 Jan 2024</Text>
-          <ChevronDown size={20} color="#007AFF" />
-        </TouchableOpacity>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Month Selector */}
+        <View style={styles.monthSelector}>
+          <TouchableOpacity style={styles.navButton} onPress={() => changeMonth(-1)}>
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <View style={styles.dateDisplay}>
+            <CalendarDays size={20} color={Colors.primary} />
+            <Text style={styles.dateText}>
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.navButton} onPress={() => changeMonth(1)}>
+            <ChevronRight size={24} color="#374151" />
+          </TouchableOpacity>
+        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key Metrics</Text>
-          <View style={styles.metricsGrid}>
-            {keyMetrics.map((metric, index) => (
-              <MetricCard key={index} metric={metric} />
-            ))}
+        {/* Key Metrics Grid */}
+        <View style={styles.metricsGrid}>
+          <MetricCard
+            label="Avg. Attendance"
+            value={`${stats?.companySummary?.avgAttendance || 0}%`}
+            icon={TrendingUp}
+            color="#10B981"
+            subValue="Monthly Average"
+          />
+          <MetricCard
+            label="Total Present"
+            value={stats?.companySummary?.totalPresent || 0}
+            icon={UserCheck}
+            color={Colors.primary}
+            subValue="Man-days this month"
+          />
+          <MetricCard
+            label="Late Check-ins"
+            value={stats?.companySummary?.totalLate || 0}
+            icon={Clock}
+            color="#F59E0B"
+            subValue="Requires Attention"
+          />
+          <MetricCard
+            label="Avg. Work Hours"
+            value={`${stats?.companySummary?.avgWorkingHours || 0}h`}
+            icon={Briefcase}
+            color="#8B5CF6"
+            subValue="Per day average"
+          />
+        </View>
+
+        {/* Attendance Trend Line Chart */}
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Daily Attendance Trend</Text>
+          <View style={styles.chartContainer}>
+            {lineData.length > 0 ? (
+              <LineChart
+                data={lineData}
+                thickness={3}
+                color={Colors.primary}
+                noOfSections={4}
+                areaChart
+                startFillColor={Colors.primary}
+                startOpacity={0.2}
+                endOpacity={0.05}
+                spacing={Math.max(30, (width - 100) / lineData.length)}
+                initialSpacing={10}
+                yAxisColor="#F3F4F6"
+                xAxisColor="#F3F4F6"
+                yAxisTextStyle={{ color: '#9CA3AF', fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10 }}
+                hideDataPoints={lineData.length > 15}
+                dataPointsColor={Colors.primary}
+              />
+            ) : (
+              <Text style={styles.noData}>No data for this period</Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.divider} />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Attendance Analytics</Text>
-          
-          <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Attendance Trend</Text>
-              <View style={styles.chartActions}>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Download size={16} color="#8E8E93" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Share size={16} color="#8E8E93" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <LineChart
-              data={attendanceTrendData}
-              width={screenWidth - 72}
-              height={200}
-              chartConfig={chartConfig}
-              bezier
-              style={styles.chart}
-              withInnerLines={true}
-              withOuterLines={false}
-              withVerticalLines={false}
-              withHorizontalLines={true}
-              fromZero={false}
-              segments={4}
-            />
-          </View>
-
-          <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Late Check-ins by Department</Text>
-              <View style={styles.chartActions}>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Download size={16} color="#8E8E93" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Share size={16} color="#8E8E93" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <BarChart
-              data={lateCheckinsData}
-              width={screenWidth - 70}
-              height={200}
-              chartConfig={barChartConfig}
-              style={styles.chart}
-              showValuesOnTopOfBars={true}
-              withInnerLines={false}
-              withHorizontalLines={true}
-              fromZero={true}
-              segments={4}
-            />
-          </View>
-
-          <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Weekly Work Hour Trend</Text>
-              <View style={styles.chartActions}>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Download size={16} color="#8E8E93" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.chartAction}>
-                  <Share size={16} color="#8E8E93" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <LineChart
-              data={weeklyHoursData}
-              width={screenWidth - 72}
-              height={200}
-              chartConfig={chartConfig}
-              bezier
-              style={styles.chart}
-              withInnerLines={true}
-              withOuterLines={false}
-              withVerticalLines={false}
-              withHorizontalLines={true}
-              fromZero={false}
-              segments={4}
-            />
+        {/* Late Check-ins Bar Chart */}
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Late Check-ins (Last 7 Days)</Text>
+          <View style={styles.chartContainer}>
+            {barData.length > 0 ? (
+              <BarChart
+                data={barData}
+                barWidth={22}
+                spacing={15}
+                roundedTop
+                hideRules
+                yAxisThickness={0}
+                xAxisThickness={0}
+                yAxisTextStyle={{ color: '#9CA3AF', fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10 }}
+                noOfSections={3}
+              />
+            ) : (
+              <Text style={styles.noData}>No late records found</Text>
+            )}
           </View>
         </View>
 
-        <View style={[styles.section, {marginBottom:14}]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Employee Overview</Text>
-            <TouchableOpacity style={styles.sectionAction}>
-              <Download size={16} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.employeeList}>
-            {employees.map((employee, index) => (
-              <EmployeeItem key={index} employee={employee} />
-            ))}
-          </View>
-        </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
-      <StatusBar style="dark" />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  content: {
+    flex: 1,
+  },
+  monthSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 10,
+  },
+  navButton: {
+    padding: 5,
+    marginHorizontal: 15,
+  },
+  dateDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 8,
+  },
+  dateText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 14,
+    paddingBottom: 20,
+  },
+  metricCard: {
+    width: (width - 48) / 2,
+    backgroundColor: '#FFFFFF',
+    margin: 6,
+    padding: 16,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  metricContent: {
+    gap: 2,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  metricValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  metricSubValue: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  chartSection: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    padding: 24,
+    borderRadius: 32,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 4,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 20,
+  },
+  chartContainer: {
+    alignItems: 'center',
+    marginLeft: -20, // Adjust for chart left padding
+  },
+  noData: {
+    textAlign: 'center',
+    color: '#9CA3AF',
+    paddingVertical: 30,
+    fontSize: 14,
+  },
+});

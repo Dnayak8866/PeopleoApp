@@ -16,7 +16,9 @@ import { useAuth } from '@/context/AuthContext';
 import { homeScreenStyles } from '@/styles/employeeHomeScreenStyles';
 import { Avatar } from '@/components/Avatar';
 import { useMasterDataContext } from '@/context/MasterDataContext';
-import { punchIn, punchOut, getTodaySessionStatus } from '@/services/api/attendace';
+import { punchIn, punchOut, getTodaySessionStatus, getEmployeeAttendancePercentage } from '@/services/api/attendance';
+import { getEmployeeLeavesCount } from '@/services/api/leaves';
+import { getSalaryCountdown } from '@/services/api/salary';
 import { StatusBar } from 'expo-status-bar';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
 
@@ -30,31 +32,58 @@ export default function HomeScreen() {
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [punchInTime, setPunchInTime] = useState<Date | null>(null);
 
-  console.log("userDetails:", userDetails);
+  // Stats state
+  const [attendancePercent, setAttendancePercent] = useState<string>('--');
+  const [leavesTaken, setLeavesTaken] = useState<string>('--');
+  const [salaryDays, setSalaryDays] = useState<string>('--');
 
   const now = new Date();
   const timeString = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
+    hour: '2-digit', minute: '2-digit', hour12: true,
   });
   const dateString = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
+    weekday: 'long', month: 'short', day: 'numeric',
   });
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
-  // Check session status on screen focus
+  // Check session status and fetch stats on screen focus
   useFocusEffect(
     useCallback(() => {
       if (userDetails?.id) {
         checkTodaySessionStatus();
+        fetchStats();
       }
     }, [userDetails?.id])
   );
+
+  const fetchStats = async () => {
+    if (!userDetails?.id) return;
+    try {
+      const now = new Date();
+
+      // 1. Attendance % for current month
+      const attData = await getEmployeeAttendancePercentage(
+        userDetails.id,
+        now.getMonth() + 1,
+        now.getFullYear(),
+        userDetails.companyId
+      );
+      setAttendancePercent(`${Math.round(attData.percentage)}%`);
+
+      // 2. Leave count
+      const leaveData = await getEmployeeLeavesCount(userDetails.id);
+      setLeavesTaken(String(leaveData.total_leaves_taken).padStart(2, '0'));
+
+      // 3. Salary Countdown (defaulting to 1st of month)
+      const salaryData = await getSalaryCountdown(1);
+      setSalaryDays(String(salaryData.daysRemaining).padStart(2, '0'));
+
+    } catch (error) {
+      console.error('Failed to fetch employee stats:', error);
+    }
+  };
 
   const checkTodaySessionStatus = async () => {
     try {
@@ -188,7 +217,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, {userDetails?.fullName}</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => { }}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
             <Bell size={24} color="#666" />
           </TouchableOpacity>
           <HeaderAvatar size={40} />
@@ -264,11 +293,11 @@ export default function HomeScreen() {
 
       {/* Stats */}
       <View style={styles.statsSection}>
-        <StatCard label="Attendance" value="72%" borderColor="#3B82F6" />
+        <StatCard label="Attendance" value={attendancePercent} borderColor="#3B82F6" />
         <View style={styles.divider} />
-        <StatCard label="Leave Taken" value="03" borderColor="#8B5CF6" />
+        <StatCard label="Leave Taken" value={leavesTaken} borderColor="#8B5CF6" />
         <View style={styles.divider} />
-        <StatCard label="Salary Countdown" value="05" borderColor="#EC4899" />
+        <StatCard label="Salary Countdown" value={salaryDays} borderColor="#EC4899" />
       </View>
       <StatusBar style="dark" />
     </SafeAreaView>

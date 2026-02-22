@@ -33,6 +33,7 @@ import { AttendanceController } from './controllers/attendance.controller';
 import { Attendance } from './entities/attendance.entity';
 import { LeaveApplication } from './entities/leave-application.entity';
 import { Company } from './entities/company.entity';
+import { LeaveBalance } from './entities/leave-balance.entity';
 import { CompanyService } from './services/company.service';
 
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
@@ -42,6 +43,8 @@ import { AuthService } from './services/auth.service';
 import { SalaryCountdownController } from './controllers/salary-countdown.controller';
 import { SalaryCountdownService } from './services/salary-countdown.service';
 import { UserDetails } from './entities/user-details.entity';
+import { LeaveApplicationService } from './services/leaves.service';
+import { LeaveApplicationController } from './controllers/leaves.controller';
 
 @Module({
   imports: [
@@ -62,7 +65,7 @@ import { UserDetails } from './entities/user-details.entity';
           host: configService.get<string>('DATABASE_HOST'),
           port: parseInt(configService.get<string>('DATABASE_PORT') || '5432', 10),
           username: configService.get<string>('DATABASE_USER'),
-          password:  configService.get<string>('DATABASE_PASSWORD'),
+          password: configService.get<string>('DATABASE_PASSWORD'),
           database: configService.get<string>('DATABASE_NAME'),
           autoLoadEntities: true,
           synchronize: false,
@@ -70,11 +73,11 @@ import { UserDetails } from './entities/user-details.entity';
       },
       inject: [ConfigService],
     }),
-  TypeOrmModule.forFeature([User, Role, Company, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication, UserDetails]),
+    TypeOrmModule.forFeature([User, Role, Company, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication, UserDetails, LeaveBalance]),
   ],
 
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController, SalaryCountdownController],
-  providers: [UserService, AuthService, CompanyService, RoleService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService, SalaryCountdownService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController, SalaryCountdownController, LeaveApplicationController],
+  providers: [UserService, AuthService, CompanyService, RoleService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService, SalaryCountdownService, LeaveApplicationService],
 
 })
 export class AppModule implements NestModule {
@@ -87,5 +90,6 @@ export class AppModule implements NestModule {
     consumer.apply(AuthMiddleware).forRoutes('designations');
     consumer.apply(AuthMiddleware).forRoutes('attendance');
     consumer.apply(AuthMiddleware).forRoutes('salary-countdown');
+    consumer.apply(AuthMiddleware).forRoutes('leaves');
   }
 }

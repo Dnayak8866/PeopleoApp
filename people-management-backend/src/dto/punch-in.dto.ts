@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import { IsNumber, IsOptional, IsBoolean, IsDateString, IsString } from 'class-validator';
 
 export class PunchInDto {
   @IsNumber()
@@ -18,4 +18,8 @@ export class PunchInDto {
   @IsOptional()
   @IsBoolean()
   is_punch_in_from_office?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  shift_id?: number;
 }

@@ -14,12 +14,12 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UserDto {
   @IsNotEmpty()
   @IsString()
-   @ApiProperty({ example: 'John Doe', description: 'The name of the user' })
+  @ApiProperty({ example: 'John Doe', description: 'The name of the user' })
   full_name: string;
 
   @IsOptional()
   @IsEmail()
-   @ApiProperty({ example: 'abs@gmail.com', description: 'The email id of the user' })
+  @ApiProperty({ example: 'abs@gmail.com', description: 'The email id of the user' })
   email?: string;
 
   @IsOptional()
@@ -61,6 +61,11 @@ export class UserDto {
   @IsInt()
   @ApiProperty({ example: 4, description: 'The designation ID', required: false })
   designation_id?: number;
+
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 1, description: 'The shift ID', required: false })
+  shift_id?: number;
 
   @IsNotEmpty()
   @MinLength(6)

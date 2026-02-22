@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS leave_applications (
   to_date DATE NOT NULL,
   reason TEXT,
   status VARCHAR(50) DEFAULT 'Pending',
+  duration VARCHAR(20) DEFAULT 'Full Day',
   applied_at TIMESTAMP DEFAULT NOW(),
   approved_by INT REFERENCES employees(employee_id)
 );

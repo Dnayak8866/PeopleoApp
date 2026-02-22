@@ -14,3 +14,24 @@ export interface PunchOutData {
   punch_out_longitude?: number;
   is_punch_out_from_office?: boolean;
 }
+
+export interface DailySummary {
+  date: string;
+  totalEmployees: number;
+  present: number;
+  absent: number;
+  onLeave: number;
+  lateCheckIns: number;
+  avgWorkingHours: number;
+}
+
+export interface AttendanceEmployee {
+  id: number;
+  name: string;
+  designation: string;
+  avatar: string | null;
+  status: 'Present' | 'Absent' | 'Late' | 'Leave';
+  entryTime: string | null;
+  exitTime: string | null;
+  duration: string;
+}

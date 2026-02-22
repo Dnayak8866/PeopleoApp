@@ -5,8 +5,9 @@ import { attendanceScreenStyles } from '@/styles/attendanceScreenStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { CalendarDays, Clock, Filter, Hourglass, Search, Timer } from 'lucide-react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   ScrollView,
@@ -16,19 +17,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getAttendanceByDate, getDailyAttendanceSummary } from '@/services/api/attendance';
+import { AttendanceEmployee } from '@/services/types/attendance';
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Leave';
-
-interface Employee {
-  id: string;
-  name: string;
-  designation: string;
-  avatar: string;
-  status: AttendanceStatus;
-  entryTime: string | null;
-  exitTime: string | null;
-  duration: string;
-}
 
 interface DateItem {
   date: string;
@@ -40,68 +32,44 @@ interface DateItem {
   isSelected: boolean;
 }
 
-const employees: Employee[] = [
-  {
-    id: '1',
-    name: 'Alice Johnson',
-    designation: 'Software Engineer',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
-    status: 'Present',
-    entryTime: '09:00 AM',
-    exitTime: '05:00 PM',
-    duration: '8h:00m',
-  },
-  {
-    id: '2',
-    name: 'Charlie Brown',
-    designation: 'Product Manager',
-    avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
-    status: 'Absent',
-    entryTime: null,
-    exitTime: null,
-    duration: '0h:00m',
-  },
-  {
-    id: '3',
-    name: 'Bob Williams',
-    designation: 'HR Manager',
-    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
-    status: 'Late',
-    entryTime: '09:15 AM',
-    exitTime: '05:30 PM',
-    duration: '8h:15m',
-  },
-  {
-    id: '4',
-    name: 'Sarah Davis',
-    designation: 'UX Designer',
-    avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
-    status: 'Leave',
-    entryTime: null,
-    exitTime: null,
-    duration: '0h:00m',
-  },
-];
-
-const statusColors = {
+const statusColors: Record<AttendanceStatus, { background: string; color: string }> = {
   Present: { background: '#E6F8EDFF', color: '#4CAF50FF' },
   Absent: { background: '#FEF4F4FF', color: '#EB5757FF' },
   Late: { background: '#FFFBEBFF', color: '#F7B500FF' },
   Leave: { background: '#DBEAFEFF', color: '#1D4ED8FF' },
 };
 
+function getToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function AttendanceScreen() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [searchQuery, setSearchQuery] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [employees, setEmployees] = useState<AttendanceEmployee[]>([]);
+  const [loading, setLoading] = useState(false);
   const styles = attendanceScreenStyles();
   const { userDetails } = useAuth();
+  const scrollRef = useRef<ScrollView>(null);
 
-  function getToday() {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  };
+  const fetchAttendance = useCallback(async (date: string) => {
+    if (!userDetails?.companyId) return;
+    setLoading(true);
+    try {
+      const data = await getAttendanceByDate(date, userDetails.companyId);
+      setEmployees(data);
+    } catch (err) {
+      console.error('Failed to load attendance by date:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userDetails?.companyId]);
+
+  useEffect(() => {
+    fetchAttendance(selectedDate);
+  }, [selectedDate, fetchAttendance]);
 
   const getDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -131,26 +99,48 @@ export default function AttendanceScreen() {
       employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       employee.designation.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, employees]);
 
+  // Calculate average punch-in time from real data
   const averagePunchInTime = useMemo(() => {
-    const presentEmployees = employees.filter(emp => emp.status === 'Present' || emp.status === 'Late');
-    if (presentEmployees.length === 0) return 'N/A';
-    return '09:05 AM';
-  }, []);
+    const withPunchIn = employees.filter(emp => emp.entryTime);
+    if (withPunchIn.length === 0) return 'N/A';
+    // Parse "09:30 AM" style time to total minutes
+    const totalMinutes = withPunchIn.reduce((acc, emp) => {
+      if (!emp.entryTime) return acc;
+      const [time, period] = emp.entryTime.split(' ');
+      const [h, m] = time.split(':').map(Number);
+      let hours = h;
+      if (period === 'PM' && h !== 12) hours += 12;
+      if (period === 'AM' && h === 12) hours = 0;
+      return acc + (hours * 60 + m);
+    }, 0);
+    const avgMins = Math.round(totalMinutes / withPunchIn.length);
+    const h = Math.floor(avgMins / 60);
+    const m = avgMins % 60;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${period}`;
+  }, [employees]);
 
-  const renderEmployeeCard = (employee: Employee) => (
+  const renderEmployeeCard = (employee: AttendanceEmployee) => (
     <View key={employee.id} style={styles.employeeCard}>
       <View style={styles.employeeHeader}>
         <View style={styles.employeeInfo}>
-          <Image source={{ uri: employee.avatar }} style={styles.avatar} />
+          {employee.avatar ? (
+            <Image source={{ uri: employee.avatar }} style={styles.avatar} />
+          ) : (
+            <Avatar fullName={employee.name} size={42} />
+          )}
           <View style={styles.employeeDetails}>
             <Text style={styles.employeeName}>{employee.name}</Text>
-            <Text style={styles.employeeDesignation}>{employee.designation}</Text>
+            <Text style={styles.employeeDesignation}>{employee.designation || 'Employee'}</Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: statusColors[employee.status].background }]}>
-          <Text style={[styles.statusText, { color: statusColors[employee.status].color }]}>{employee.status}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: statusColors[employee.status]?.background ?? '#F3F4F6' }]}>
+          <Text style={[styles.statusText, { color: statusColors[employee.status]?.color ?? '#374151' }]}>
+            {employee.status}
+          </Text>
         </View>
       </View>
 
@@ -184,30 +174,19 @@ export default function AttendanceScreen() {
     </View>
   );
 
-  const scrollRef = useRef<ScrollView>(null);
-
-  // Fixed scrolling logic
   const scrollToSelectedDate = () => {
     const selectedDay = new Date(selectedDate).getDate();
     const daysInMonth = getMonthDays(selectedDate);
     const selectedIndex = daysInMonth.indexOf(selectedDay);
-
     if (selectedIndex !== -1) {
-      // Calculate the scroll position
-      // Each day takes up approximately 44px (36px width + 8px margin)
       const itemWidth = 44;
-      const scrollPosition = selectedIndex * itemWidth - 40; // Offset to center
-
+      const scrollPosition = selectedIndex * itemWidth - 40;
       setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          x: Math.max(0, scrollPosition),
-          animated: true
-        });
+        scrollRef.current?.scrollTo({ x: Math.max(0, scrollPosition), animated: true });
       }, 100);
     }
   };
 
-  // Scroll to selected date when it changes
   useEffect(() => {
     scrollToSelectedDate();
   }, [selectedDate]);
@@ -224,6 +203,7 @@ export default function AttendanceScreen() {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Date strip */}
           <View style={styles.dateSection}>
             <View style={styles.dateHeader}>
               <TouchableOpacity onPress={() => setShowDatePicker(true)}>
@@ -252,15 +232,10 @@ export default function AttendanceScreen() {
                     onPress={() => handleDateSelect(day)}
                     style={[
                       styles.dayButton,
-                      {
-                        backgroundColor: isSelected ? Colors.primary : '#F3F4F6',
-                      }
+                      { backgroundColor: isSelected ? Colors.primary : '#F3F4F6' }
                     ]}
                   >
-                    <Text style={[
-                      styles.dayButtonText,
-                      { color: isSelected ? '#FFFFFF' : '#374151' }
-                    ]}>
+                    <Text style={[styles.dayButtonText, { color: isSelected ? '#FFFFFF' : '#374151' }]}>
                       {day}
                     </Text>
                     {isToday && !isSelected && (
@@ -279,25 +254,25 @@ export default function AttendanceScreen() {
               display="default"
               onChange={(event, date) => {
                 setShowDatePicker(false);
-                if (date) {
-                  setSelectedDate(date.toISOString().slice(0, 10));
-                }
+                if (date) setSelectedDate(date.toISOString().slice(0, 10));
               }}
               maximumDate={new Date()}
             />
           )}
 
+          {/* Avg Punch-In */}
           <View style={styles.averageSection}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
               <Clock size={18} color={Colors.primary} />
               <Text style={styles.averageLabel}>Average Punch-In Time</Text>
             </View>
-            <Text style={styles.averageTime}>{averagePunchInTime}</Text>
+            <Text style={styles.averageTime}>{loading ? '...' : averagePunchInTime}</Text>
             <Text style={styles.averageSubtext}>
-              Calculated across all active employees today
+              Calculated across {employees.filter(e => e.entryTime).length} present employees
             </Text>
           </View>
 
+          {/* Search bar */}
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>
               <Search size={20} color="#9CA3AF" />
@@ -314,8 +289,22 @@ export default function AttendanceScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Employee cards */}
           <View style={styles.employeeList}>
-            {filteredEmployees.map(renderEmployeeCard)}
+            {loading ? (
+              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={{ marginTop: 10, color: '#6B7280' }}>Loading attendance...</Text>
+              </View>
+            ) : filteredEmployees.length === 0 ? (
+              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                <Text style={{ color: '#6B7280', fontSize: 15 }}>
+                  {searchQuery ? 'No employees match your search.' : 'No attendance records for this date.'}
+                </Text>
+              </View>
+            ) : (
+              filteredEmployees.map(renderEmployeeCard)
+            )}
           </View>
         </ScrollView>
       </View>
@@ -323,6 +312,4 @@ export default function AttendanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-
-});
+const styles = StyleSheet.create({});

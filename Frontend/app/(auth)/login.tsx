@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,7 +17,7 @@ import {
 } from 'react-native';
 
 export default function LoginScreen() {
-  const [employeeId, setEmployeeId] = useState('');
+  const [number, setNumber] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,12 +27,20 @@ export default function LoginScreen() {
   const { login: authLogin } = useAuth();
 
   const handleLogin = async () => {
-    if (!employeeId.trim()) {
-      setError('Please enter your Employee ID or Email.');
+    if (!number.trim()) {
+      setError('Please enter your phone number.');
+      return;
+    }
+    if (number?.length < 10) {
+      setError('Please enter a valid phone number.');
       return;
     }
     if (!password.trim()) {
       setError('Please enter your password.');
+      return;
+    }
+    if (password?.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -39,7 +48,7 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const success = await authLogin(employeeId, password);
+      const success = await authLogin(number, password);
       if (success) {
         setError('');
         router.replace('/loader');
@@ -55,12 +64,12 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    console.log('Forgot password pressed');
-  };
+    Alert.alert('Forgot Password feature will be available soon.');
+  }
 
   const handleContactSupport = () => {
-    console.log('Contact HR Support pressed');
-  };
+    Alert.alert('Contact HR Support feature will be available soon.');
+  }
 
   return (
     <KeyboardAvoidingView
@@ -72,15 +81,9 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Fingerprint Icon */}
-        <View style={styles.iconContainer}>
-          <View style={styles.iconBackground}>
-            <Ionicons name="finger-print" size={40} color={Colors.primary} />
-          </View>
-        </View>
 
         {/* Title Section */}
-        <Text style={styles.title}>Employee Login</Text>
+        <Text style={styles.title}>Peopleo Login</Text>
         <Text style={styles.subtitle}>Welcome back! Please enter your details.</Text>
 
         {/* Login Card */}
@@ -93,11 +96,12 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder="Enter Phone Number"
               placeholderTextColor="#A0AEC0"
-              value={employeeId}
-              onChangeText={setEmployeeId}
+              value={number}
+              onChangeText={setNumber}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="numeric"
+              maxLength={10}
             />
           </View>
 
@@ -119,6 +123,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               autoCapitalize="none"
               autoCorrect={false}
+              maxLength={16}
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
@@ -187,6 +192,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     marginBottom: 24,

@@ -7,7 +7,7 @@ import { ApiBody, ApiTags, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from
 @Controller('holidays')
 @ApiBearerAuth('access-token')
 export class HolidayController {
-  constructor(private readonly holidayService: HolidayService) {}
+  constructor(private readonly holidayService: HolidayService) { }
 
   @Post()
   @ApiBody({ type: HolidayDto })
@@ -23,7 +23,6 @@ export class HolidayController {
   @ApiResponse({ status: 404, description: 'Holidays not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   findAll(@Query('companyId') companyId: string) {
-    console.log('Company ID in HolidayController:', companyId);
     return this.holidayService.findAll(+companyId);
   }
 

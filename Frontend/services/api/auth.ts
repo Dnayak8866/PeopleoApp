@@ -15,7 +15,6 @@ export const validatePhone = async (phone: string): Promise<{ valid: boolean; me
 
 export const login = async (phone: string, pin: string): Promise<LoginResponse> => {
   try {
-    console.log("phone,pin", phone, pin);
     const response = await api.post('/auth/login', {
       phone,
       password: pin,

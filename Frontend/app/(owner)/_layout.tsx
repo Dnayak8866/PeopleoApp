@@ -41,34 +41,34 @@ export default function TabLayout() {
           />
         )
       }}>
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color }) => <Home size={28} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="employees"
-          options={{
-            title: 'Employees',
-            tabBarIcon: ({ color }) => <Users size={28} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="attendance"
-          options={{
-            title: 'Attendance',
-            tabBarIcon: ({ color }) => <CalendarCheck size={28} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="reports"
-          options={{
-            title: 'Reports',
-            tabBarIcon: ({ color }) => <ChartLine size={28} color={color} />,
-          }}
-        />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => <Home size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="employees"
+        options={{
+          title: 'Employees',
+          tabBarIcon: ({ color }) => <Users size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="attendance"
+        options={{
+          title: 'Attendance',
+          tabBarIcon: ({ color }) => <CalendarCheck size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: 'Reports',
+          tabBarIcon: ({ color }) => <ChartLine size={28} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

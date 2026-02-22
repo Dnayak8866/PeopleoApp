@@ -3,9 +3,13 @@ import { applyLeaveFormScreenStyles } from '@/styles/applyLeaveFormScreenStyles'
 import { router } from 'expo-router';
 import { Banknote, Bell, BriefcaseBusiness, CalendarDays, ChevronDown, ChevronLeft, HeartPulse, Moon, Sun } from 'lucide-react-native';
 import { useState } from 'react';
-import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/AuthContext';
+import { useMasterDataContext } from '@/context/MasterDataContext';
+import { applyLeave, getLeaveBalances } from '@/services/api/leaves';
+import { useEffect } from 'react';
 
 
 export default function ApplyLeaveFormScreen() {
@@ -17,9 +21,39 @@ export default function ApplyLeaveFormScreen() {
     const [showLeaveTypeDropdown, setShowLeaveTypeDropdown] = useState(false);
     const [duration, setDuration] = useState<'Full Day' | 'Half Day'>('Full Day');
     const [reason, setReason] = useState('');
+    const [selectedLeaveTypeId, setSelectedLeaveTypeId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [leaveBalances, setLeaveBalances] = useState<any[]>([]);
+    const [isLoadingBalances, setIsLoadingBalances] = useState(true);
+
+    const { userId, companyId } = useAuth();
+    const { leaveTypes } = useMasterDataContext();
     const styles = applyLeaveFormScreenStyles();
 
-    const leaveTypes = ['Casual Leave', 'Sick Leave', 'Earned Leave'];
+    useEffect(() => {
+        if (userId && companyId) {
+            fetchBalances();
+        }
+    }, [userId, companyId]);
+
+    useEffect(() => {
+        if (leaveTypes.length > 0 && !selectedLeaveTypeId) {
+            setLeaveType(leaveTypes[0].type_name);
+            setSelectedLeaveTypeId(leaveTypes[0].leave_type_id);
+        }
+    }, [leaveTypes]);
+
+    const fetchBalances = async () => {
+        try {
+            setIsLoadingBalances(true);
+            const data = await getLeaveBalances(userId!, companyId!);
+            setLeaveBalances(data);
+        } catch (error) {
+            console.error('Error fetching balances:', error);
+        } finally {
+            setIsLoadingBalances(false);
+        }
+    };
 
     const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
@@ -29,12 +63,10 @@ export default function ApplyLeaveFormScreen() {
         const selectedDate = new Date(day.timestamp);
         if (selectingDate === 'start') {
             setStartDate(selectedDate);
-            // If selecting start date after end date, update end date
             if (selectedDate > endDate) {
                 setEndDate(selectedDate);
             }
         } else {
-            // Don't allow end date before start date
             if (selectedDate >= startDate) {
                 setEndDate(selectedDate);
             }
@@ -42,17 +74,44 @@ export default function ApplyLeaveFormScreen() {
         setShowCalendar(false);
     };
 
-    const handleSubmit = () => {
-        // Handle form submission
-        console.log({
-            startDate: startDate.toLocaleDateString(),
-            endDate: endDate.toLocaleDateString(),
-            leaveType,
-            duration,
-            reason
-        });
-        console.log('Submitting leave application...');
-        router.back();
+    const handleSubmit = async () => {
+        if (!userId) {
+            Alert.alert('Error', 'User not authenticated');
+            return;
+        }
+
+        if (!selectedLeaveTypeId) {
+            Alert.alert('Error', 'Please select a leave type');
+            return;
+        }
+
+        if (!reason.trim()) {
+            Alert.alert('Error', 'Please enter a reason for leave');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            const leaveData = {
+                employee_id: userId,
+                leave_type_id: selectedLeaveTypeId,
+                from_date: formatDate(startDate),
+                to_date: formatDate(endDate),
+                reason: reason,
+                duration: duration,
+            };
+
+            await applyLeave(leaveData);
+            Alert.alert('Success', 'Leave application submitted successfully', [
+                { text: 'OK', onPress: () => router.push('/(employee)/leave') }
+            ]);
+        } catch (error: any) {
+            console.error('Failed to submit leave:', error);
+            const errorMessage = error.response?.data?.message || 'Failed to submit leave application. Please try again.';
+            Alert.alert('Error', errorMessage);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -66,7 +125,10 @@ export default function ApplyLeaveFormScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Apply for Leave</Text>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity style={styles.notificationButton}>
+                    <TouchableOpacity
+                        style={styles.notificationButton}
+                        onPress={() => router.push('/notifications')}
+                    >
                         <Bell size={24} color="#374151" />
                     </TouchableOpacity>
                     <View style={styles.profileAvatar}>
@@ -83,44 +145,45 @@ export default function ApplyLeaveFormScreen() {
                     <Text style={styles.sectionTitle}>Your Leave Balance</Text>
 
                     <View style={styles.balanceContainer}>
-                        <View style={styles.balanceCard}>
-                            <View style={styles.balanceInfo}>
-                                <View style={[styles.balanceIcon, { backgroundColor: '#0056B31A' }]}>
-                                    <BriefcaseBusiness size={24} color="#3b82f6" />
-                                </View>
-                                <Text style={styles.balanceLabel}>Casual Leave</Text>
-                            </View>
-                            <View style={styles.balanceValue}>
-                                <Text style={styles.balanceNumber}>5</Text>
-                                <Text style={styles.balanceDays}>days</Text>
-                            </View>
-                        </View>
+                        {isLoadingBalances ? (
+                            <ActivityIndicator size="small" color={Colors.primary} />
+                        ) : leaveBalances.length === 0 ? (
+                            <Text style={{ color: '#6b7280', textAlign: 'center', width: '100%', padding: 10 }}>No leave types found</Text>
+                        ) : (
+                            leaveBalances.map((balance) => {
+                                const isSick = balance.type_name.toLowerCase().includes('sick');
+                                const isEarned = balance.type_name.toLowerCase().includes('earned');
 
-                        <View style={styles.balanceCard}>
-                            <View style={[styles.balanceInfo]}>
-                                <View style={[styles.balanceIcon, { backgroundColor: '#22C55E1A' }]}>
-                                    <HeartPulse size={24} color="#0056B3FF" />
-                                </View>
-                                <Text style={styles.balanceLabel}>Sick Leave</Text>
-                            </View>
-                            <View style={styles.balanceValue}>
-                                <Text style={[styles.balanceNumber, { color: '#16A34AFF' }]}>3</Text>
-                                <Text style={styles.balanceDays}>days</Text>
-                            </View>
-                        </View>
+                                let icon = <BriefcaseBusiness size={24} color="#3b82f6" />;
+                                let iconBg = '#0056B31A';
+                                let numColor = '#3b82f6';
 
-                        <View style={styles.balanceCard}>
-                            <View style={[styles.balanceInfo]}>
-                                <View style={[styles.balanceIcon, { backgroundColor: '#F973161A' }]}>
-                                    <Banknote size={24} color="#3b82f6" />
-                                </View>
-                                <Text style={styles.balanceLabel}>Earned Leave</Text>
-                            </View>
-                            <View style={styles.balanceValue}>
-                                <Text style={[styles.balanceNumber, { color: '#ef4444' }]}>12</Text>
-                                <Text style={styles.balanceDays}>days</Text>
-                            </View>
-                        </View>
+                                if (isSick) {
+                                    icon = <HeartPulse size={24} color="#0056B3FF" />;
+                                    iconBg = '#22C55E1A';
+                                    numColor = '#16A34AFF';
+                                } else if (isEarned) {
+                                    icon = <Banknote size={24} color="#3b82f6" />;
+                                    iconBg = '#F973161A';
+                                    numColor = '#ef4444';
+                                }
+
+                                return (
+                                    <View key={balance.leave_type_id} style={styles.balanceCard}>
+                                        <View style={styles.balanceInfo}>
+                                            <View style={[styles.balanceIcon, { backgroundColor: iconBg }]}>
+                                                {icon}
+                                            </View>
+                                            <Text style={styles.balanceLabel}>{balance.type_name}</Text>
+                                        </View>
+                                        <View style={styles.balanceValue}>
+                                            <Text style={[styles.balanceNumber, { color: numColor }]}>{balance.remaining}</Text>
+                                            <Text style={styles.balanceDays}>days</Text>
+                                        </View>
+                                    </View>
+                                );
+                            })
+                        )}
                     </View>
 
                     <Text style={styles.sectionTitle}>Apply for Leave</Text>
@@ -226,14 +289,15 @@ export default function ApplyLeaveFormScreen() {
                             }}>
                                 {leaveTypes.map((type) => (
                                     <TouchableOpacity
-                                        key={type}
+                                        key={type.leave_type_id}
                                         style={{
                                             padding: 15,
                                             borderBottomWidth: type !== leaveTypes[leaveTypes.length - 1] ? 1 : 0,
                                             borderBottomColor: '#e5e7eb',
                                         }}
                                         onPress={() => {
-                                            setLeaveType(type);
+                                            setLeaveType(type.type_name);
+                                            setSelectedLeaveTypeId(type.leave_type_id);
                                             setShowLeaveTypeDropdown(false);
                                         }}
                                     >
@@ -241,7 +305,7 @@ export default function ApplyLeaveFormScreen() {
                                             color: '#374151',
                                             fontSize: 16,
                                         }}>
-                                            {type}
+                                            {type.type_name}
                                         </Text>
                                     </TouchableOpacity>
                                 ))}
@@ -300,8 +364,16 @@ export default function ApplyLeaveFormScreen() {
                         />
                     </View>
 
-                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                        <Text style={styles.submitButtonText}>Submit Leave Application</Text>
+                    <TouchableOpacity
+                        style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+                        onPress={handleSubmit}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.submitButtonText}>Submit Leave Application</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </ScrollView>

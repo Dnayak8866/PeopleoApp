@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, IsNull } from 'typeorm';
 import { Attendance } from '../entities/attendance.entity';
+import { User } from '../entities/user.entity';
 import { AttendanceDto } from '../dto/attendance.dto';
 import { PunchInDto } from '../dto/punch-in.dto';
 import { PunchOutDto } from '../dto/punch-out.dto';
@@ -14,9 +15,11 @@ export class AttendanceService {
   constructor(
     @InjectRepository(Attendance)
     private attendanceRepository: Repository<Attendance>,
-  @InjectRepository(Holiday)
-  private holidayRepository: Repository<Holiday>,
-  ) {}
+    @InjectRepository(Holiday)
+    private holidayRepository: Repository<Holiday>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) { }
 
   async create(
     dto: AttendanceDto,
@@ -37,7 +40,7 @@ export class AttendanceService {
     // Check if there's an incomplete session (punch-in without punch-out)
     const incompleteSession = await this.attendanceRepository.findOne({
       where: {
-        employee: { id: dto.employee_id },
+        employeeId: dto.employee_id,
         attendance_date: dto.attendance_date,
         punch_out: IsNull(),
       },
@@ -51,7 +54,7 @@ export class AttendanceService {
     // Get the next session number
     const lastSession = await this.attendanceRepository.findOne({
       where: {
-        employee: { id: dto.employee_id },
+        employeeId: dto.employee_id,
         attendance_date: dto.attendance_date,
       },
       order: { session_number: 'DESC' },
@@ -61,7 +64,9 @@ export class AttendanceService {
 
     // Create new punch-in session
     const attendance = this.attendanceRepository.create();
-    attendance.employee = { id: dto.employee_id } as any;
+    const user = await this.userRepository.findOne({ where: { id: dto.employee_id } });
+    attendance.employeeId = dto.employee_id;
+    attendance.shiftId = dto.shift_id ?? user?.shiftId ?? null;
     attendance.attendance_date = dto.attendance_date;
     attendance.session_number = nextSessionNumber;
     attendance.punch_in = new Date();
@@ -82,7 +87,7 @@ export class AttendanceService {
     // Find the incomplete session (punch-in without punch-out)
     const session = await this.attendanceRepository.findOne({
       where: {
-        employee: { id: dto.employee_id },
+        employeeId: dto.employee_id,
         attendance_date: dto.attendance_date,
         punch_out: IsNull(),
       },
@@ -124,7 +129,7 @@ export class AttendanceService {
 
     const activeSession = await this.attendanceRepository.findOne({
       where: {
-        employee: { id: employeeId },
+        employeeId: employeeId,
         attendance_date: today,
         punch_out: IsNull(),
       },
@@ -147,93 +152,185 @@ export class AttendanceService {
   }
 
   /**
-   * Returns day-wise attendance for an employee for a given month and year.
-   * Each day will contain punch_in, punch_out, working_hours and status
-   * status priority: Holiday > On Leave > Present > Absent
+   * Returns a daily attendance summary (present, absent, on-leave, late check-ins, avg working hours)
+   * for all employees of a given company on a specific date.
    */
-  // async getMonthlyAttendance(employee_id: number, month: number, year: number, company_id?: number) {
-  //   const startDate = new Date(year, month - 1, 1);
-  //   const endDate = new Date(year, month, 0); // last day of month
-  //   console.log("1")
-  //   // fetch attendances for employee in range
-  //   const attendances = await this.attendanceRepository.find({
-  //     where: {
-  //       employee: { id: employee_id },
-  //       attendance_date: Between(startDate, endDate),
-  //     },
-  //   });
-  //   console.log(attendances[0])
-  //   // fetch holidays in range (optionally scoped to company)
-  //   const holidayRepo = this.attendanceRepository.manager.getRepository(Holiday);
-  //   const holidayWhere: any = { holiday_date: Between(startDate, endDate) };
-  //   if (company_id) holidayWhere.company_id = company_id;
-  //   const holidays = await holidayRepo.find({ where: holidayWhere });
+  async getDailySummary(date: string, companyId: number) {
+    // Get all active employees for the company
+    const employees: User[] = await this.attendanceRepository.manager
+      .getRepository(User)
+      .createQueryBuilder('emp')
+      .where('emp.companyId = :companyId', { companyId })
+      .andWhere('emp.isActive = true')
+      .andWhere('emp.isDeleted = false')
+      .getMany();
 
-  //   // fetch leave applications overlapping the period for the employee
-  //   const leaveRepo = this.attendanceRepository.manager.getRepository(LeaveApplication);
-  //   const leaves = await leaveRepo.createQueryBuilder('l')
-  //     .where('l.employee_id = :eid', { eid: employee_id })
-  //     .andWhere('NOT (l.to_date < :start OR l.from_date > :end)', { start: startDate, end: endDate })
-  //     .getMany();
+    const totalEmployees = employees.length;
+    if (totalEmployees === 0) {
+      return { date, present: 0, absent: 0, onLeave: 0, lateCheckIns: 0, avgWorkingHours: 0, totalEmployees: 0 };
+    }
 
-  //   // map attendances, holidays and leaves by date for quick lookup
-  // const attendanceMap: Map<string, Attendance> = new Map();
-  // const holidaySet: Map<string, Holiday> = new Map();
-  // const leaveDays: Set<string> = new Set();
+    const employeeIds = employees.map((e: any) => e.employee_id || e.id);
 
-  // const toKey = (v: Date | string | null | undefined) => {
-  //   if (!v) return '';
-  //   const d = v instanceof Date ? v : new Date(v as string);
-  //   if (isNaN(d.getTime())) return '';
-  //   return d.toISOString().slice(0, 10);
-  // };
+    // Get attendance records for the date
+    const records = await this.attendanceRepository
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.employee', 'emp')
+      .where('a.attendance_date = :date', { date })
+      .andWhere('emp.companyId = :companyId', { companyId })
+      .getMany();
 
-  // attendances.forEach(a => {
-  //   const key = toKey((a as any).attendance_date);
-  //   if (key) attendanceMap.set(key, a);
-  // });
+    // Get approved leave applications overlapping the date
+    const leaveRepo = this.attendanceRepository.manager.getRepository(LeaveApplication);
+    const leaveRows: any[] = await leaveRepo
+      .createQueryBuilder('l')
+      .select('l.employee_id')
+      .where('l.status = :status', { status: 'Approved' })
+      .andWhere('l.from_date <= :date', { date })
+      .andWhere('l.to_date >= :date', { date })
+      .andWhere('l.employee_id IN (:...ids)', { ids: employeeIds })
+      .getRawMany();
 
-  // holidays.forEach(h => {
-  //   const key = toKey((h as any).holiday_date);
-  //   if (key) holidaySet.set(key, h);
-  // });
+    const leaveEmployeeIds: number[] = leaveRows.map(r => r.l_employee_id);
+    const onLeaveSet = new Set(leaveEmployeeIds);
 
-  // leaves.forEach(l => {
-  //   const from = new Date(l.from_date);
-  //   const to = new Date(l.to_date);
-  //   if (isNaN(from.getTime()) || isNaN(to.getTime())) return;
-  //   for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-  //     const key = d.toISOString().slice(0, 10);
-  //     leaveDays.add(key);
-  //   }
-  // });
+    let present = 0;
+    let lateCheckIns = 0;
+    let totalWorkingMinutes = 0;
+    let workingMinutesCount = 0;
 
-  // const result: any[] = [];
-  //   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate()+1)) {
-  //     const key = d.toISOString().slice(0,10);
-  //     const rec: any = { date: key, punch_in: null, punch_out: null, working_hours: null, status: 'Absent' };
+    for (const record of records) {
+      const empId = (record.employee as any)?.id;
+      if (!onLeaveSet.has(empId)) {
+        present++;
+      }
+      // Late check-in: punch_in after 09:30 AM
+      if (record.punch_in) {
+        const punchInDate = new Date(record.punch_in);
+        const punchInHour = punchInDate.getHours();
+        const punchInMin = punchInDate.getMinutes();
+        if (punchInHour > 9 || (punchInHour === 9 && punchInMin > 30)) {
+          lateCheckIns++;
+        }
+      }
+      // Compute average working hours from working_hours interval string "HH:MM:SS"
+      if (record.working_hours) {
+        const parts = record.working_hours.split(':');
+        if (parts.length >= 2) {
+          const mins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+          totalWorkingMinutes += mins;
+          workingMinutesCount++;
+        }
+      }
+    }
 
-  //     if (holidaySet.has(key)) {
-  //       rec.status = 'Holiday';
-  //     }
-  //     if (leaveDays.has(key)) {
-  //       rec.status = 'On Leave';
-  //     }
-  //     if (attendanceMap.has(key)) {
-  //       const a = attendanceMap.get(key);
-  //       if (a) {
-  //         rec.punch_in = a.punch_in;
-  //         rec.punch_out = a.punch_out;
-  //         rec.working_hours = a.working_hours;
-  //         rec.status = a.status || 'Present';
-  //       }
-  //     }
+    const onLeave = Array.from(onLeaveSet).filter(id => employeeIds.includes(id)).length;
+    const absent = Math.max(0, totalEmployees - present - onLeave);
+    const avgWorkingHours = workingMinutesCount > 0
+      ? Math.round((totalWorkingMinutes / workingMinutesCount / 60) * 100) / 100
+      : 0;
 
-  //     result.push(rec);
-  //   }
+    return {
+      date,
+      totalEmployees,
+      present,
+      absent,
+      onLeave,
+      lateCheckIns,
+      avgWorkingHours,
+    };
+  }
 
-  //   return result;
-  // }
+  /**
+   * Returns all employees with their attendance status for a specific date and company.
+   * Includes employees with no attendance record (marked as Absent).
+   */
+  async getAttendanceByDate(date: string, companyId: number) {
+    // Get all active employees for the company
+    const employees: User[] = await this.attendanceRepository.manager
+      .getRepository(User)
+      .createQueryBuilder('emp')
+      .where('emp.companyId = :companyId', { companyId })
+      .andWhere('emp.isActive = true')
+      .andWhere('emp.isDeleted = false')
+      .getMany();
+
+    if (employees.length === 0) return [];
+
+    const employeeIds = employees.map((e: any) => e.employee_id || e.id);
+
+    // Get attendance records for the date
+    const records = await this.attendanceRepository
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.employee', 'emp')
+      .where('a.attendance_date = :date', { date })
+      .andWhere('emp.companyId = :companyId', { companyId })
+      .orderBy('a.session_number', 'ASC')
+      .getMany();
+
+    // Get approved leaves for these employees on this date
+    const leaveRepo = this.attendanceRepository.manager.getRepository(LeaveApplication);
+    const leaveRows: any[] = await leaveRepo
+      .createQueryBuilder('l')
+      .select('l.employee_id')
+      .where('l.status = :status', { status: 'Approved' })
+      .andWhere('l.from_date <= :date', { date })
+      .andWhere('l.to_date >= :date', { date })
+      .andWhere('l.employee_id IN (:...ids)', { ids: employeeIds })
+      .getRawMany();
+
+    const onLeaveSet = new Set<number>(leaveRows.map(r => r.l_employee_id));
+
+    // Build a map: employeeId → latest attendance record
+    const attendanceMap = new Map<number, Attendance>();
+    for (const record of records) {
+      const empId = (record.employee as any)?.id;
+      if (empId) attendanceMap.set(empId, record);
+    }
+
+    const formatTime = (ts: Date | null): string | null => {
+      if (!ts) return null;
+      return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    };
+
+    const formatDuration = (workingHours: string | null): string => {
+      if (!workingHours) return '0h:00m';
+      const parts = workingHours.split(':');
+      if (parts.length >= 2) return `${parseInt(parts[0])}h:${parts[1]}m`;
+      return '0h:00m';
+    };
+
+    return employees.map((emp: any) => {
+      const empId = emp.employee_id || emp.id;
+      const record = attendanceMap.get(empId);
+      const isOnLeave = onLeaveSet.has(empId);
+
+      let status: string = 'Absent';
+      if (isOnLeave) {
+        status = 'Leave';
+      } else if (record) {
+        if (record.punch_in) {
+          const punchInDate = new Date(record.punch_in);
+          const h = punchInDate.getHours();
+          const m = punchInDate.getMinutes();
+          status = (h > 9 || (h === 9 && m > 30)) ? 'Late' : 'Present';
+        } else {
+          status = record.status || 'Present';
+        }
+      }
+
+      return {
+        id: empId,
+        name: emp.full_name || emp.fullName || '',
+        designation: emp.designation_id ? String(emp.designation_id) : '',
+        avatar: emp.avatar || null,
+        status,
+        entryTime: record ? formatTime(record.punch_in) : null,
+        exitTime: record ? formatTime(record.punch_out) : null,
+        duration: record ? formatDuration(record.working_hours) : '0h:00m',
+      };
+    });
+  }
 
   async findOne(id: number): Promise<Attendance> {
     const attendance = await this.attendanceRepository.findOne({
@@ -246,49 +343,171 @@ export class AttendanceService {
 
   /**
    * Calculate attendance percentage for a given employee for a specific month/year,
-   * excluding holidays (optionally filtered by companyId).
+   * excluding holidays and weekends.
    */
-  // async getEmployeeMonthlyPercentage(employeeId: number, month: number, year: number, companyId?: number) {
-  //   // compute date range for the month
-  //   const startDate = new Date(year, month - 1, 1);
-  //   const endDate = new Date(year, month, 0);
+  async getEmployeeMonthlyPercentage(employeeId: number, month: number, year: number, companyId?: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
 
-  //   const startStr = startDate.toISOString().slice(0, 10);
-  //   const endStr = endDate.toISOString().slice(0, 10);
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
 
-  //   // fetch holidays in the range (optionally by company)
-  //   const holidayWhere: any = { holiday_date: Between(startDate, endDate) };
-  //   if (companyId) holidayWhere.company_id = companyId;
-  //   const holidays = await this.holidayRepository.find({ where: holidayWhere });
-  //   const holidaySet = new Set(holidays.map(h => (h.holiday_date instanceof Date ? h.holiday_date.toISOString().slice(0,10) : new Date(h.holiday_date).toISOString().slice(0,10))));
+    // Fetch holidays in the range
+    const holidayWhere: any = { holiday_date: Between(startDate, endDate) };
+    if (companyId) holidayWhere.company_id = companyId;
+    const holidays = await this.holidayRepository.find({ where: holidayWhere });
+    const holidaySet = new Set(
+      holidays.map(h =>
+        (h.holiday_date instanceof Date ? h.holiday_date : new Date(h.holiday_date as any))
+          .toISOString().slice(0, 10)
+      )
+    );
 
-  //   // fetch attendance records for employee in range
-  //   const records = await this.attendanceRepository.createQueryBuilder('a')
-  //     .where('a.employee_id = :employeeId', { employeeId })
-  //     .andWhere('a.attendance_date BETWEEN :start AND :end', { start: startStr, end: endStr })
-  //     .getMany();
+    // Fetch attendance records for employee in range
+    const records = await this.attendanceRepository.createQueryBuilder('a')
+      .where('a.employeeId = :employeeId', { employeeId })
+      .andWhere('a.attendance_date BETWEEN :start AND :end', { start: startStr, end: endStr })
+      .getMany();
 
-  //   const presentDaysSet = new Set<string>();
-  //   for (const r of records) {
-  //     const dayKey = (r.attendance_date instanceof Date) ? r.attendance_date.toISOString().slice(0,10) : new Date(r.attendance_date).toISOString().slice(0,10);
-  //     const isPresent = (r.status && r.status.toLowerCase() !== 'absent') || (r.punch_in != null || r.punch_out != null);
-  //     if (isPresent) presentDaysSet.add(dayKey);
-  //   }
+    const presentDaysSet = new Set<string>();
+    for (const r of records) {
+      const dayKey = (r.attendance_date instanceof Date)
+        ? r.attendance_date.toISOString().slice(0, 10)
+        : new Date(r.attendance_date as any).toISOString().slice(0, 10);
+      const isPresent = (r.status && r.status.toLowerCase() !== 'absent') || (r.punch_in != null || r.punch_out != null);
+      if (isPresent) presentDaysSet.add(dayKey);
+    }
 
-  //   // compute total working days excluding holidays
-  //   let totalDays = 0;
-  //   const days: string[] = [];
-  //   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-  //     const key = d.toISOString().slice(0,10);
-  //     if (holidaySet.has(key)) continue;
-  //     days.push(key);
-  //   }
-  //   totalDays = days.length;
+    // Compute working days excluding weekends and holidays
+    const days: string[] = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) continue; // skip weekends
+      if (holidaySet.has(key)) continue;
+      days.push(key);
+    }
+    const totalDays = days.length;
 
-  //   const presentDays = Array.from(presentDaysSet).filter(d => days.includes(d)).length;
-  //   const absentDays = Math.max(0, totalDays - presentDays);
-  //   const percentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 10000) / 100 : 0;
+    const presentDays = Array.from(presentDaysSet).filter(d => days.includes(d)).length;
+    const absentDays = Math.max(0, totalDays - presentDays);
+    const percentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 10000) / 100 : 0;
 
-  //   return { employeeId, month, year, companyId: companyId ?? null, totalDays, presentDays, absentDays, percentage };
-  // }
+    return { employeeId, month, year, companyId: companyId ?? null, totalDays, presentDays, absentDays, percentage };
+  }
+
+  /**
+   * Returns attendance statistics for an employee for a specific month.
+   * Useful for the employee reports screen.
+   */
+  async getEmployeeStats(employeeId: number, month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    // Get attendance records
+    const records = await this.attendanceRepository.createQueryBuilder('a')
+      .where('a.employeeId = :employeeId', { employeeId })
+      .andWhere('a.attendance_date BETWEEN :start AND :end', { start: startStr, end: endStr })
+      .orderBy('a.attendance_date', 'ASC')
+      .getMany();
+
+    // Get total leaves taken in this month
+    const leaveRepo = this.attendanceRepository.manager.getRepository(LeaveApplication);
+    const leaves = await leaveRepo.createQueryBuilder('l')
+      .where('l.employee_id = :employeeId', { employeeId })
+      .andWhere('l.status = :status', { status: 'Approved' })
+      .andWhere(
+        '((l.from_date <= :end AND l.to_date >= :start))',
+        { start: startStr, end: endStr }
+      )
+      .getMany();
+
+    let totalWorkingMinutes = 0;
+    let daysWithWorkingHours = 0;
+    const dailyWorkingHours: any[] = [];
+
+    // Map records to chart data
+    for (const record of records) {
+      let mins = 0;
+      if (record.working_hours) {
+        const parts = record.working_hours.split(':');
+        if (parts.length >= 2) {
+          mins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+          totalWorkingMinutes += mins;
+          daysWithWorkingHours++;
+        }
+      }
+      dailyWorkingHours.push({
+        date: record.attendance_date,
+        hours: Math.round((mins / 60) * 10) / 10,
+      });
+    }
+
+    const { totalDays, presentDays, absentDays, percentage } = await this.getEmployeeMonthlyPercentage(employeeId, month, year);
+
+    return {
+      monthlySummary: {
+        totalDays,
+        presentDays,
+        absentDays,
+        onLeaveDays: leaves.length, // Rough count
+        attendancePercentage: percentage,
+        avgWorkingHours: daysWithWorkingHours > 0
+          ? Math.round((totalWorkingMinutes / daysWithWorkingHours / 60) * 10) / 10
+          : 0,
+      },
+      chartData: dailyWorkingHours,
+    };
+  }
+
+  /**
+   * Returns monthly attendance statistics for a whole company.
+   * Useful for the owner reports screen.
+   */
+  async getCompanyMonthlyStats(companyId: number, month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    // Get all days for the month
+    const days: string[] = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      days.push(d.toISOString().slice(0, 10));
+    }
+
+    const trendData: any[] = [];
+    let totalPresent = 0;
+    let totalLate = 0;
+    let totalWorkingMins = 0;
+    let recordsCount = 0;
+
+    for (const date of days) {
+      const summary = await this.getDailySummary(date, companyId);
+      if (summary.totalEmployees > 0) {
+        trendData.push({
+          date,
+          present: summary.present,
+          late: summary.lateCheckIns,
+        });
+        totalPresent += summary.present;
+        totalLate += summary.lateCheckIns;
+        // Total working minutes based on avg * count
+        totalWorkingMins += (summary.avgWorkingHours * 60) * summary.present;
+        recordsCount += summary.present;
+      }
+    }
+
+    return {
+      companySummary: {
+        totalPresent,
+        totalLate,
+        avgAttendance: recordsCount > 0 ? Math.round((totalPresent / (recordsCount + totalLate)) * 100) : 0, // Simplified
+        avgWorkingHours: recordsCount > 0 ? Math.round((totalWorkingMins / recordsCount / 60) * 10) / 10 : 0,
+      },
+      trendData,
+    };
+  }
 }

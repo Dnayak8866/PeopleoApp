@@ -41,17 +41,69 @@ export class AttendanceController {
     return this.attendanceService.getTodaySessionStatus(+employeeId);
   }
 
-  // @Get('percentage')
-  // @ApiOperation({ summary: 'Get employee attendance percentage for a month excluding holidays' })
-  // @ApiQuery({ name: 'employeeId', required: true, description: 'Employee ID' })
-  // @ApiQuery({ name: 'month', required: true, description: 'Month (1-12) to calculate for' })
-  // @ApiQuery({ name: 'year', required: false, description: 'Year (defaults to current year)' })
-  // @ApiQuery({ name: 'companyId', required: false, description: 'Company ID to filter holidays (optional)' })
-  // @ApiResponse({ status: 200, description: 'Returns attendance percentage excluding holidays' })
-  // async getEmployeePercentage(@Query() q: AttendancePercentageQueryDto) {
-  //   const year = q.year ?? new Date().getFullYear();
-  //   return this.attendanceService.getEmployeeMonthlyPercentage(q.employeeId, q.month, year, q.companyId);
-  // }
+  @Get('daily-summary')
+  @ApiOperation({ summary: 'Get daily attendance summary for a company (present, absent, on-leave, late, avg hours)' })
+  @ApiQuery({ name: 'date', required: true, description: 'Date in YYYY-MM-DD format' })
+  @ApiQuery({ name: 'company_id', required: true, description: 'Company ID' })
+  @ApiResponse({ status: 200, description: 'Daily summary returned.' })
+  async getDailySummary(
+    @Query('date') date: string,
+    @Query('company_id') companyId: string,
+  ) {
+    return this.attendanceService.getDailySummary(date, +companyId);
+  }
+
+  @Get('by-date')
+  @ApiOperation({ summary: 'Get all employee attendance records for a specific date and company' })
+  @ApiQuery({ name: 'date', required: true, description: 'Date in YYYY-MM-DD format' })
+  @ApiQuery({ name: 'company_id', required: true, description: 'Company ID' })
+  @ApiResponse({ status: 200, description: 'Employee attendance list returned.' })
+  async getAttendanceByDate(
+    @Query('date') date: string,
+    @Query('company_id') companyId: string,
+  ) {
+    return this.attendanceService.getAttendanceByDate(date, +companyId);
+  }
+
+  @Get('percentage')
+  @ApiOperation({ summary: 'Get employee attendance percentage for a month excluding holidays and weekends' })
+  @ApiQuery({ name: 'employeeId', required: true, description: 'Employee ID' })
+  @ApiQuery({ name: 'month', required: true, description: 'Month (1-12)' })
+  @ApiQuery({ name: 'year', required: false, description: 'Year (defaults to current year)' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Company ID to filter holidays' })
+  @ApiResponse({ status: 200, description: 'Returns attendance percentage excluding holidays and weekends' })
+  async getEmployeePercentage(@Query() q: AttendancePercentageQueryDto) {
+    const year = q.year ?? new Date().getFullYear();
+    return this.attendanceService.getEmployeeMonthlyPercentage(q.employeeId, q.month, year, q.companyId);
+  }
+
+  @Get('employee-stats')
+  @ApiOperation({ summary: 'Get detailed attendance stats for an employee for a month' })
+  @ApiQuery({ name: 'employeeId', required: true })
+  @ApiQuery({ name: 'month', required: true })
+  @ApiQuery({ name: 'year', required: true })
+  @ApiResponse({ status: 200, description: 'Stats returned.' })
+  async getEmployeeStats(
+    @Query('employeeId') employeeId: string,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    return this.attendanceService.getEmployeeStats(+employeeId, +month, +year);
+  }
+
+  @Get('company-stats')
+  @ApiOperation({ summary: 'Get monthly attendance stats for a company' })
+  @ApiQuery({ name: 'companyId', required: true })
+  @ApiQuery({ name: 'month', required: true })
+  @ApiQuery({ name: 'year', required: true })
+  @ApiResponse({ status: 200, description: 'Stats returned.' })
+  async getCompanyStats(
+    @Query('companyId') companyId: string,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    return this.attendanceService.getCompanyMonthlyStats(+companyId, +month, +year);
+  }
 
   // @Get(':id')
   // @ApiParam({ name: 'id', type: Number, description: 'Attendance ID' })

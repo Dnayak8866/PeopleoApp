@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import { IsNumber, IsOptional, IsBoolean, IsDateString, IsString } from 'class-validator';
 
 export class PunchOutDto {
   @IsNumber()

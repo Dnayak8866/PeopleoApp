@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { LeaveType } from './leave-type.entity';
 
 @Entity('leave_applications')
 export class LeaveApplication {
@@ -11,6 +12,10 @@ export class LeaveApplication {
   @Column({ name: 'leave_type_id', type: 'int', nullable: true })
   leave_type_id: number;
 
+  @ManyToOne(() => LeaveType)
+  @JoinColumn({ name: 'leave_type_id' })
+  leave_type: LeaveType;
+
   @Column({ name: 'from_date', type: 'date' })
   from_date: Date;
 
@@ -22,6 +27,9 @@ export class LeaveApplication {
 
   @Column({ name: 'status', length: 50, default: 'Pending' })
   status: string;
+
+  @Column({ name: 'duration', length: 20, default: 'Full Day' })
+  duration: string;
 
   @Column({ name: 'applied_at', type: 'timestamp', nullable: true })
   applied_at?: Date;

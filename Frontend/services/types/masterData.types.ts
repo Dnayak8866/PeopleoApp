@@ -25,11 +25,11 @@ export interface Department {
 }
 
 export interface LeaveType {
-  id: number;
-  name: string;
+  leave_type_id: number;
+  type_name: string;
   description?: string;
-  daysAllowed?: number;
-  companyId: number;
+  leave_balance: number;
+  company_id: number;
   createdAt?: string;
   updatedAt?: string;
 }

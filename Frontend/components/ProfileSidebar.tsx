@@ -8,9 +8,10 @@ import {
     Dimensions,
     TouchableWithoutFeedback,
 } from 'react-native';
-import { Settings, Lock, LogOut, ChevronRight } from 'lucide-react-native';
+import { Settings, Lock, LogOut, ChevronRight, User } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { sidebarStyles } from '@/styles/sidebarStyles';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     onLogout,
 }) => {
     const styles = sidebarStyles();
+    const router = useRouter();
     const slideAnim = useRef(new Animated.Value(width)).current;
 
     useEffect(() => {
@@ -90,6 +92,22 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         <View style={styles.divider} />
 
                         <View style={styles.menuItems}>
+                            <TouchableOpacity
+                                style={styles.menuItem}
+                                onPress={() => {
+                                    onClose();
+                                    router.push({
+                                        pathname: '/employee/edit',
+                                        params: { id: userDetails?.id }
+                                    });
+                                }}
+                            >
+                                <View style={styles.iconContainer}>
+                                    <User size={22} color="#4B5563" />
+                                </View>
+                                <Text style={styles.menuItemText}>Edit Profile</Text>
+                            </TouchableOpacity>
+
                             <TouchableOpacity style={styles.menuItem}>
                                 <View style={styles.iconContainer}>
                                     <Settings size={22} color="#4B5563" />
@@ -104,7 +122,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                                 <Text style={styles.menuItemText}>Reset Password</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={[styles.menuItem, styles.logoutItem]} onPress={handleLogout}>
+                            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
                                 <View style={[styles.iconContainer, styles.logoutIconContainer]}>
                                     <LogOut size={22} color="#EF4444" />
                                 </View>

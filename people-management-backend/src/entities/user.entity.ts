@@ -58,7 +58,7 @@ export class User {
   isDeleted: boolean;
 
   @Column({ name: 'shift_id', type: 'int', nullable: true })
-  shiftId: number;
+  shiftId: number | null;
 
   @Column({ name: 'dob', type: 'date', nullable: true })
   dob: Date;

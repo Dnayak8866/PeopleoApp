@@ -71,7 +71,7 @@ export const sidebarStyles = () => {
             height: 1,
             backgroundColor: '#F3F4F6FF',
             width: '100%',
-            marginBottom: 40,
+            marginBottom: 25,
         },
         menuItems: {
             flex: 1,
@@ -79,8 +79,8 @@ export const sidebarStyles = () => {
         menuItem: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 15,
-            marginBottom: 10,
+            paddingVertical: 10,
+            marginBottom: 8,
         },
         iconContainer: {
             width: 48,
@@ -95,9 +95,6 @@ export const sidebarStyles = () => {
             fontSize: 18,
             fontWeight: '600',
             color: '#374151',
-        },
-        logoutItem: {
-            marginTop: 20,
         },
         logoutIconContainer: {
             backgroundColor: '#FEF2F2FF',

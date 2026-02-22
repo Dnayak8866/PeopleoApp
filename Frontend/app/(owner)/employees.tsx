@@ -110,7 +110,6 @@ export default function EmployeesScreen() {
       setIsLoading(true);
       getEmployees()
         .then((data) => {
-          console.log("data", data)
           if (isActive && Array.isArray(data)) {
             setEmployees(data);
           } else if (isActive) {

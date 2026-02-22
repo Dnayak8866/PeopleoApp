@@ -155,7 +155,6 @@ export default function AddEmployeeScreen() {
       return;
     }
     try {
-      console.log("formData", formData);
       await createEmployee(formData);
       Alert.alert(
         'Success',
@@ -167,12 +166,6 @@ export default function AddEmployeeScreen() {
       Alert.alert('Error', 'Failed to add employee. Please try again later.');
       return;
     }
-    console.log("formData", formData);
-    Alert.alert(
-      'Success',
-      'Employee added successfully!',
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {

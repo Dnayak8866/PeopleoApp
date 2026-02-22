@@ -7,9 +7,19 @@ export class Attendance {
   @PrimaryGeneratedColumn('increment')
   attendance_id: number;
 
+  @Column({ name: 'employee_id', type: 'int' })
+  employeeId: number;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'employee_id' })
   employee: User;
+
+  @Column({ name: 'shift_id', type: 'int', nullable: true })
+  shiftId: number | null;
+
+  @ManyToOne(() => ShiftTiming)
+  @JoinColumn({ name: 'shift_id' })
+  shift: ShiftTiming;
 
   @Column({ type: 'date' })
   attendance_date: Date;

@@ -78,8 +78,11 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
         <Stack.Screen name="(employee)" options={{ headerShown: false }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false }} />
         <Stack.Screen name="employee/add" options={{ headerShown: false }} />
+        <Stack.Screen name="employee/edit" options={{ headerShown: false }} />
         <Stack.Screen name="employee/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="employee/apply-leave" options={{ headerShown: false }} />
+        <Stack.Screen name="leave-approval" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
