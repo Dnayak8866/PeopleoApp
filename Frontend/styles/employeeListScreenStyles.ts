@@ -202,5 +202,31 @@ export const employeeListScreenStyles = () => {
             width: 80,
             marginLeft: 8,
         },
+        noEmployeesContainer: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 80,
+            paddingHorizontal: 40,
+        },
+        emptyStateTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: '#1F2937',
+            marginTop: 16,
+            textAlign: 'center',
+        },
+        emptyStateSubtitle: {
+            fontSize: 16,
+            color: '#6B7280',
+            marginTop: 8,
+            textAlign: 'center',
+            lineHeight: 22,
+        },
+        noEmployeesText: {
+            fontSize: 16,
+            color: '#6B7280',
+            fontWeight: '500',
+        },
     });
 };

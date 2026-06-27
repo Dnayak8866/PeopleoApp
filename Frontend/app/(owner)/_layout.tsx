@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { CalendarCheck, ChartLine, Home, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const { user } = useAuth();
+  const { userDetails } = useAuth();
 
   return (
     <Tabs
@@ -30,7 +30,7 @@ export default function TabLayout() {
         }),
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: '#565E6CFF',
-        tabBarButton: (props) => (
+        tabBarButton: (props: any) => (
           <Pressable
             {...props}
             android_ripple={null}

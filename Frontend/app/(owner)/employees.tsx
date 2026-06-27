@@ -11,8 +11,10 @@ import {
   MessageCircle,
   Phone,
   Search,
+  SearchX,
   Trash2,
-  UserPlus
+  UserPlus,
+  Users
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -227,6 +229,27 @@ export default function EmployeesScreen() {
       );
     }
 
+    if (filteredEmployees.length === 0) {
+      const isSearching = searchText.length > 0;
+      return (
+        <View style={styles.noEmployeesContainer}>
+          {isSearching ? (
+            <SearchX size={64} color="#D1D5DB" />
+          ) : (
+            <Users size={64} color="#D1D5DB" />
+          )}
+          <Text style={styles.emptyStateTitle}>
+            {isSearching ? 'No employees found' : 'No employees yet'}
+          </Text>
+          <Text style={styles.emptyStateSubtitle}>
+            {isSearching
+              ? `We couldn't find any employees matching "${searchText}". Try a different search term.`
+              : "It looks like you haven't added any employees yet. Start building your team today!"}
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <>
         <View style={styles.selectAllContainer}>
@@ -239,7 +262,7 @@ export default function EmployeesScreen() {
           <Text style={styles.selectAllText}>Select All</Text>
         </View>
 
-        {filteredEmployees.map((employee) => (
+        {filteredEmployees?.map((employee) => (
           <View key={employee.id} style={styles.employeeCard}>
             <Checkbox
               style={styles.checkbox}

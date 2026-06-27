@@ -93,13 +93,13 @@ export default function AddEmployeeScreen() {
     if (!formData.full_name.trim()) {
       newErrors.full_name = 'Full name is required';
     } else if (formData.full_name.trim().length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
+      newErrors.full_name = 'Full name must be at least 2 characters';
     }
 
     if (!formData.phone_number.trim()) {
       newErrors.phone_number = 'Phone number is required';
     } else if (!/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phone_number.trim())) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
+      newErrors.phone_number = 'Please enter a valid phone number';
     }
 
     if (!formData.email.trim()) {
@@ -129,20 +129,20 @@ export default function AddEmployeeScreen() {
       const joiningDate = new Date(formData.joining_date);
       const today = new Date();
       if (joiningDate > today) {
-        newErrors.joiningDate = 'Joining date cannot be in the future';
+        newErrors.joining_date = 'Joining date cannot be in the future';
       }
     }
 
     if (!formData.shift_id) {
-      newErrors.shift = 'Please select a shift';
+      newErrors.shift_id = 'Please select a shift';
     }
 
     if (!formData.department_id) {
-      newErrors.department = 'Department is required';
+      newErrors.department_id = 'Department is required';
     }
 
     if (!formData.designation_id) {
-      newErrors.designation = 'Designation is required';
+      newErrors.designation_id = 'Designation is required';
     }
 
     setErrors(newErrors);

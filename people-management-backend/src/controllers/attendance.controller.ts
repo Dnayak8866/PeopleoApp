@@ -36,9 +36,13 @@ export class AttendanceController {
   @Get('session-status/:employeeId')
   @ApiOperation({ summary: 'Get today punch-in status' })
   @ApiParam({ name: 'employeeId', type: Number })
+  @ApiQuery({ name: 'date', required: false, description: 'Optional custom date' })
   @ApiResponse({ status: 200, description: 'Session status retrieved.' })
-  async getTodaySessionStatus(@Param('employeeId') employeeId: string) {
-    return this.attendanceService.getTodaySessionStatus(+employeeId);
+  async getTodaySessionStatus(
+    @Param('employeeId') employeeId: string,
+    @Query('date') date?: string,
+  ) {
+    return this.attendanceService.getTodaySessionStatus(+employeeId, date);
   }
 
   @Get('daily-summary')
@@ -89,6 +93,20 @@ export class AttendanceController {
     @Query('year') year: string,
   ) {
     return this.attendanceService.getEmployeeStats(+employeeId, +month, +year);
+  }
+
+  @Get('employee-history')
+  @ApiOperation({ summary: 'Get daily attendance history for an employee for a month' })
+  @ApiQuery({ name: 'employeeId', required: true })
+  @ApiQuery({ name: 'month', required: true })
+  @ApiQuery({ name: 'year', required: true })
+  @ApiResponse({ status: 200, description: 'Attendance history returned.' })
+  async getEmployeeHistory(
+    @Query('employeeId') employeeId: string,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    return this.attendanceService.getEmployeeAttendanceHistory(+employeeId, +month, +year);
   }
 
   @Get('company-stats')

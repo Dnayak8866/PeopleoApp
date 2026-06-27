@@ -1,10 +1,13 @@
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../secureStorage';
 import axios from 'axios';
 import { router } from 'expo-router';
 import { getAccessToken } from './auth';
 import Constants from 'expo-constants';
 
-export const API_BASE_URL = Constants?.expoConfig?.extra?.apiUri;
+export const API_BASE_URL =
+  Constants?.expoConfig?.extra?.apiUri ??
+  process.env.EXPO_PUBLIC_API_URI ??
+  'http://localhost:3000/api/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -32,7 +35,7 @@ api.interceptors.request.use(
     } catch (logErr) {
       console.warn('[api] Failed to log request URL', logErr);
     }
-    const token = await SecureStore.getItemAsync('accessToken');
+    const token = await storage.getItemAsync('accessToken');
     if (token && config.headers) {
       config.headers['authorization'] = `Bearer ${token}`;
     }
@@ -47,12 +50,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Guard: if config is missing (e.g. network error before request was sent)
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     // Check if the error comes from the refresh token endpoint itself
     if (originalRequest.url?.includes('/auth/accessToken')) {
       // Refresh token failed or expired
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('refreshToken');
-      await SecureStore.deleteItemAsync('userInfo');
+      await storage.deleteItemAsync('accessToken');
+      await storage.deleteItemAsync('refreshToken');
+      await storage.deleteItemAsync('userInfo');
       router.replace('/(auth)/login');
       return Promise.reject(error);
     }
@@ -60,20 +68,20 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        const refreshToken = await storage.getItemAsync('refreshToken');
         if (refreshToken) {
           const res = await getAccessToken(refreshToken);
-          const { accessToken: newAccessToken } = res.data;
-          await SecureStore.setItemAsync('accessToken', newAccessToken);
+          const newAccessToken = res.accessToken;
+          await storage.setItemAsync('accessToken', newAccessToken);
           // Update the Authorization header and retry the original request
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
           return api(originalRequest);
         }
       } catch (refreshError) {
         // Refresh failed: clear storage and optionally redirect to login
-        await SecureStore.deleteItemAsync('accessToken');
-        await SecureStore.deleteItemAsync('refreshToken');
-        await SecureStore.deleteItemAsync('userInfo');
+        await storage.deleteItemAsync('accessToken');
+        await storage.deleteItemAsync('refreshToken');
+        await storage.deleteItemAsync('userInfo');
         router.replace('/(auth)/login');
       }
     }

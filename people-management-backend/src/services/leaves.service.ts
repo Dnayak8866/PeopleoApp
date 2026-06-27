@@ -88,10 +88,9 @@ export class LeaveApplicationService {
             .andWhere('EXTRACT(YEAR FROM leave.from_date) = :year', { year: currentYear })
             .getMany();
 
-        // 3. Map balances
-        const results = employeeBalances.map(b => {
-            const usedLeaves = approvedLeaves
-                .filter(leave => leave.leave_type_id === b.leave_type_id)
+        const calculateUsedLeaves = (leaveTypeId: number) => {
+            return approvedLeaves
+                .filter(leave => leave.leave_type_id === leaveTypeId)
                 .reduce((total, leave) => {
                     if (leave.duration === 'Half Day') {
                         return total + 0.5;
@@ -102,7 +101,11 @@ export class LeaveApplicationService {
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                     return total + diffDays;
                 }, 0);
+        };
 
+        // 3. Map balances
+        const results = employeeBalances.map(b => {
+            const usedLeaves = calculateUsedLeaves(b.leave_type_id);
             const totalAllocated = Number(b.balance) + Number(b.carried_forward);
 
             return {
@@ -117,13 +120,17 @@ export class LeaveApplicationService {
         // Fallback: If no balances in leave_balances table, fallback to leave_types (optional, but good for robust UX)
         if (results.length === 0) {
             const leaveTypes = await this.leaveTypeRepo.find({ where: { company_id } });
-            return leaveTypes.map(type => ({
-                leave_type_id: type.leave_type_id,
-                type_name: type.type_name,
-                total_allowed: type.leave_balance || 0,
-                used: 0,
-                remaining: type.leave_balance || 0
-            }));
+            return leaveTypes.map(type => {
+                const usedLeaves = calculateUsedLeaves(type.leave_type_id);
+                const totalAllowed = type.leave_balance || 0;
+                return {
+                    leave_type_id: type.leave_type_id,
+                    type_name: type.type_name,
+                    total_allowed: totalAllowed,
+                    used: usedLeaves,
+                    remaining: totalAllowed - usedLeaves
+                };
+            });
         }
 
         return results;

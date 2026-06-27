@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  app.setGlobalPrefix('api');
   // Swagger config
   const config = new DocumentBuilder()
     .setTitle('People Management API')
@@ -24,7 +25,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, document);
+  SwaggerModule.setup('api/swagger', app, document);
 
   await app.listen(3000);
 }

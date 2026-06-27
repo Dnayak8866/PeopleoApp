@@ -14,7 +14,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Dimensions,
 } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [number, setNumber] = useState('');
@@ -72,191 +75,208 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.container}>
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-
-        {/* Title Section */}
-        <Text style={styles.title}>Peopleo Login</Text>
-        <Text style={styles.subtitle}>Welcome back! Please enter your details.</Text>
-
-        {/* Login Card */}
-        <View style={styles.card}>
-          {/* Employee ID or Email Field */}
-          <Text style={styles.label}>Phone Number</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#A0AEC0" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Phone Number"
-              placeholderTextColor="#A0AEC0"
-              value={number}
-              onChangeText={setNumber}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="numeric"
-              maxLength={10}
-            />
-          </View>
-
-          {/* Password Field */}
-          <View style={styles.passwordHeader}>
-            <Text style={styles.label}>Password</Text>
-            <TouchableOpacity onPress={handleForgotPassword}>
-              <Text style={styles.forgotPassword}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#A0AEC0" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#A0AEC0"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={16}
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                size={22}
-                color="#A0AEC0"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Remember Me Checkbox */}
-          <TouchableOpacity
-            style={styles.rememberContainer}
-            onPress={() => setRememberMe(!rememberMe)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-              {rememberMe && (
-                <Ionicons name="checkmark" size={14} color="#fff" />
-              )}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboardView}
+        >
+          {/* Purple Header Area */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoBox}>
+                <Ionicons name="apps" size={32} color="#fff" />
+              </View>
             </View>
-            <Text style={styles.rememberText}>Remember me for 30 days</Text>
-          </TouchableOpacity>
+            <Text style={styles.headerTitle}>Peopleo Login</Text>
+            <Text style={styles.headerSubtitle}>Welcome back! Please enter your details.</Text>
+          </View>
 
-          {/* Error Message */}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {/* Login Card */}
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              {/* Phone Number Field */}
+              <Text style={styles.label}>Phone Number</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="phone-portrait-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter Phone Number"
+                  placeholderTextColor="#94A3B8"
+                  value={number}
+                  onChangeText={setNumber}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="numeric"
+                  maxLength={10}
+                />
+              </View>
 
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.loginButtonText}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              {/* Password Field */}
+              <View style={styles.passwordHeader}>
+                <Text style={styles.label}>Password</Text>
+                <TouchableOpacity onPress={handleForgotPassword}>
+                  <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={16}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                    size={20}
+                    color="#94A3B8"
+                  />
+                </TouchableOpacity>
+              </View>
 
-        {/* Contact Support Section */}
-        <View style={styles.supportContainer}>
-          <Text style={styles.supportText}>Having trouble logging in?</Text>
-          <TouchableOpacity onPress={handleContactSupport}>
-            <Text style={styles.supportLink}>Contact HR Support</Text>
-          </TouchableOpacity>
-        </View>
+              {/* Remember Me */}
+              <TouchableOpacity
+                style={styles.rememberRow}
+                onPress={() => setRememberMe(!rememberMe)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Ionicons name="checkmark" size={12} color="#fff" />}
+                </View>
+                <Text style={styles.rememberText}>Remember me for 30 days</Text>
+              </TouchableOpacity>
+
+              {/* Error Message */}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              {/* Login Button */}
+              <TouchableOpacity
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.loginButtonText}>
+                  {loading ? 'Logging in...' : 'Login'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Footer Section */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.supportHeader}>Having trouble logging in?</Text>
+            <TouchableOpacity onPress={handleContactSupport}>
+              <Text style={styles.supportLink}>Contact HR Support</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </ScrollView>
-
-      <StatusBar style="dark" />
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+  },
+  header: {
+    backgroundColor: '#6366f1',
+    height: 400,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: 80,
+    borderBottomLeftRadius: 80,
+    borderBottomRightRadius: 80,
+    width: width,
   },
-  iconContainer: {
-    marginBottom: 24,
+  logoContainer: {
+    marginBottom: 20,
   },
-  iconBackground: {
-    width: 90,
-    height: 90,
+  logoBox: {
+    width: 68,
+    height: 68,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 20,
-    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Colors.primaryText,
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
     marginBottom: 8,
-    textAlign: 'center',
+    letterSpacing: -0.5,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 15,
-    color: '#6B7280',
-    marginBottom: 32,
+    color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+  cardContainer: {
+    paddingHorizontal: 24,
+    marginTop: -120, // Overlap the card onto the header
   },
   card: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 35,
     padding: 24,
+    paddingVertical: 32,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 15 },
+    shadowOpacity: 0.12,
+    shadowRadius: 25,
+    elevation: 10,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.primaryText,
+    color: '#1E293B',
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 15,
+    paddingHorizontal: 16,
     marginBottom: 20,
-    paddingHorizontal: 14,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   input: {
     flex: 1,
+    height: 52,
     fontSize: 15,
-    color: Colors.primaryText,
-    paddingVertical: 14,
-  },
-  eyeIcon: {
-    padding: 4,
+    color: '#1E293B',
   },
   passwordHeader: {
     flexDirection: 'row',
@@ -265,25 +285,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   forgotPassword: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  rememberContainer: {
+  eyeIcon: {
+    padding: 8,
+  },
+  rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   checkbox: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    marginRight: 10,
   },
   checkboxChecked: {
     backgroundColor: Colors.primary,
@@ -291,70 +313,47 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#64748B',
   },
-  error: {
+  errorText: {
     color: '#EF4444',
-    fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'left',
+    fontSize: 12,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   loginButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: '#6366f1', // Using the indigo/purple from screenshot
+    height: 56,
+    borderRadius: 15,
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.primary,
+    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 5,
   },
   loginButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   loginButtonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  supportContainer: {
+  footerContainer: {
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 40,
+    paddingBottom: 40,
   },
-  supportText: {
+  supportHeader: {
     fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
+    color: '#64748B',
+    marginBottom: 8,
   },
   supportLink: {
     fontSize: 14,
     color: Colors.primary,
-    fontWeight: '600',
-  },
-  footer: {
-    fontSize: 12,
-    color: '#D1D5DB',
-    marginTop: 40,
-    letterSpacing: 1,
-  },
-  darkModeToggle: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-  },
-  darkModeButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    fontWeight: '700',
   },
 });

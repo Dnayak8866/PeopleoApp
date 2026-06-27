@@ -119,12 +119,18 @@ export class AttendanceService {
     return this.attendanceRepository.save(session);
   }
 
-  async getTodaySessionStatus(employeeId: number): Promise<{
+  async getTodaySessionStatus(employeeId: number, dateStr?: string): Promise<{
     hasActivePunch: boolean;
     sessionNumber: number;
     punchIn: Date | null;
   }> {
-    const today = new Date();
+    let today: Date;
+    if (dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      today = new Date(y, m - 1, d);
+    } else {
+      today = new Date();
+    }
     today.setHours(0, 0, 0, 0);
 
     const activeSession = await this.attendanceRepository.findOne({
@@ -462,9 +468,79 @@ export class AttendanceService {
     };
   }
 
+  async getEmployeeAttendanceHistory(employeeId: number, month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    // Fetch attendance records sorted newest first
+    const records = await this.attendanceRepository.createQueryBuilder('a')
+      .where('a.employeeId = :employeeId', { employeeId })
+      .andWhere('a.attendance_date BETWEEN :start AND :end', { start: startStr, end: endStr })
+      .orderBy('a.attendance_date', 'DESC')
+      .getMany();
+
+    // Get approved leaves in this period
+    const leaveRepo = this.attendanceRepository.manager.getRepository(LeaveApplication);
+    const leaves: any[] = await leaveRepo.createQueryBuilder('l')
+      .leftJoinAndSelect('l.leave_type', 'lt')
+      .where('l.employee_id = :employeeId', { employeeId })
+      .andWhere('l.status = :status', { status: 'Approved' })
+      .andWhere('l.from_date <= :end AND l.to_date >= :start', { start: startStr, end: endStr })
+      .getMany();
+
+    // Build a set of leave dates
+    const leaveDateMap = new Map<string, string>();
+    for (const leave of leaves) {
+      const from = new Date(leave.from_date);
+      const to = new Date(leave.to_date);
+      for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        leaveDateMap.set(key, leave.leave_type?.type_name || 'Leave');
+      }
+    }
+
+    const formatTime = (ts: Date | null): string | null => {
+      if (!ts) return null;
+      return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    };
+
+    const formatWorkedHours = (workingHours: string | null): string => {
+      if (!workingHours) return '0h 0m';
+      const parts = workingHours.split(':');
+      if (parts.length >= 2) return `${parseInt(parts[0])}h ${parseInt(parts[1])}m`;
+      return '0h 0m';
+    };
+
+    const getStatus = (record: Attendance, dateKey: string): string => {
+      if (leaveDateMap.has(dateKey)) return 'Leave';
+      if (!record.punch_in) return 'Absent';
+      const punchInDate = new Date(record.punch_in);
+      const h = punchInDate.getHours();
+      const m = punchInDate.getMinutes();
+      return (h > 9 || (h === 9 && m > 30)) ? 'Late' : 'Present';
+    };
+
+    return records.map(record => {
+      const dateKey = (record.attendance_date instanceof Date)
+        ? record.attendance_date.toISOString().slice(0, 10)
+        : new Date(record.attendance_date as any).toISOString().slice(0, 10);
+      const status = getStatus(record, dateKey);
+      return {
+        date: dateKey,
+        punchIn: formatTime(record.punch_in),
+        punchOut: formatTime(record.punch_out),
+        workedHours: formatWorkedHours(record.working_hours),
+        status,
+        leaveType: leaveDateMap.get(dateKey) || null,
+      };
+    });
+  }
+
   /**
    * Returns monthly attendance statistics for a whole company.
-   * Useful for the owner reports screen.
+   * Uses a single bulk query instead of per-day getDailySummary calls to avoid N+1 performance issues.
    */
   async getCompanyMonthlyStats(companyId: number, month: number, year: number) {
     const startDate = new Date(year, month - 1, 1);
@@ -472,39 +548,63 @@ export class AttendanceService {
     const startStr = startDate.toISOString().slice(0, 10);
     const endStr = endDate.toISOString().slice(0, 10);
 
-    // Get all days for the month
-    const days: string[] = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      days.push(d.toISOString().slice(0, 10));
+    // Single query: fetch all attendance records for the company for the entire month
+    const records = await this.attendanceRepository
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.employee', 'emp')
+      .where('a.attendance_date BETWEEN :start AND :end', { start: startStr, end: endStr })
+      .andWhere('emp.companyId = :companyId', { companyId })
+      .andWhere('emp.isActive = true')
+      .andWhere('emp.isDeleted = false')
+      .getMany();
+
+    // Group records by date string for trend data
+    const byDate = new Map<string, Attendance[]>();
+    for (const record of records) {
+      const dateKey = (record.attendance_date instanceof Date)
+        ? record.attendance_date.toISOString().slice(0, 10)
+        : new Date(record.attendance_date as any).toISOString().slice(0, 10);
+      if (!byDate.has(dateKey)) byDate.set(dateKey, []);
+      byDate.get(dateKey)!.push(record);
     }
 
-    const trendData: any[] = [];
     let totalPresent = 0;
     let totalLate = 0;
     let totalWorkingMins = 0;
     let recordsCount = 0;
+    const trendData: any[] = [];
 
-    for (const date of days) {
-      const summary = await this.getDailySummary(date, companyId);
-      if (summary.totalEmployees > 0) {
-        trendData.push({
-          date,
-          present: summary.present,
-          late: summary.lateCheckIns,
-        });
-        totalPresent += summary.present;
-        totalLate += summary.lateCheckIns;
-        // Total working minutes based on avg * count
-        totalWorkingMins += (summary.avgWorkingHours * 60) * summary.present;
-        recordsCount += summary.present;
+    for (const [date, dayRecords] of Array.from(byDate.entries()).sort()) {
+      let dayPresent = 0;
+      let dayLate = 0;
+
+      for (const record of dayRecords) {
+        if (record.punch_in) {
+          dayPresent++;
+          const punchInDate = new Date(record.punch_in);
+          const h = punchInDate.getHours();
+          const m = punchInDate.getMinutes();
+          if (h > 9 || (h === 9 && m > 30)) dayLate++;
+        }
+        if (record.working_hours) {
+          const parts = record.working_hours.split(':');
+          if (parts.length >= 2) {
+            totalWorkingMins += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            recordsCount++;
+          }
+        }
       }
+
+      totalPresent += dayPresent;
+      totalLate += dayLate;
+      trendData.push({ date, present: dayPresent, late: dayLate });
     }
 
     return {
       companySummary: {
         totalPresent,
         totalLate,
-        avgAttendance: recordsCount > 0 ? Math.round((totalPresent / (recordsCount + totalLate)) * 100) : 0, // Simplified
+        avgAttendance: recordsCount > 0 ? Math.round((totalPresent / (totalPresent + totalLate || 1)) * 100) : 0,
         avgWorkingHours: recordsCount > 0 ? Math.round((totalWorkingMins / recordsCount / 60) * 10) / 10 : 0,
       },
       trendData,

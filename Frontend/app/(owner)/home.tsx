@@ -200,9 +200,6 @@ export default function HomePage() {
                   <Text style={{ fontSize: 13, fontWeight: '500', color: '#6B7280', marginTop: 4 }}>
                     Avg. Working Hours
                   </Text>
-                  <Text style={{ fontSize: 11, fontWeight: '400', color: '#9CA3AF', marginTop: 2 }}>
-                    ({summary ? summary.totalEmployees : '--'} employees)
-                  </Text>
                 </View>
               )}
             />

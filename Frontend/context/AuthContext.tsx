@@ -1,5 +1,5 @@
 import { login as loginApi } from '@/services/api/auth';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '@/services/secureStorage';
 import { jwtDecode } from 'jwt-decode';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const restoreAuth = async () => {
       setLoading(true);
       try {
-        const storedAccessToken = await SecureStore.getItemAsync('accessToken');
-        const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
+        const storedAccessToken = await storage.getItemAsync('accessToken');
+        const storedRefreshToken = await storage.getItemAsync('refreshToken');
 
         if (storedAccessToken) {
           setAccessToken(storedAccessToken);
@@ -75,10 +75,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await loginApi(phone, pin);
       const { accessToken, refreshToken } = response;
       const decoded = jwtDecode<DecodedAccessToken>(accessToken);
-      await SecureStore.setItemAsync('accessToken', accessToken);
-      await SecureStore.setItemAsync('refreshToken', refreshToken);
-      await SecureStore.setItemAsync('companyId', decoded.companyId.toString());
-      await SecureStore.setItemAsync('userId', decoded.sub.toString());
+      await storage.setItemAsync('accessToken', accessToken);
+      await storage.setItemAsync('refreshToken', refreshToken);
+      await storage.setItemAsync('companyId', decoded.companyId.toString());
+      await storage.setItemAsync('userId', decoded.sub.toString());
 
       setAccessToken(accessToken);
       setRefreshToken(refreshToken);
@@ -100,10 +100,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout function
   const logout = async () => {
     setLoading(true);
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    await SecureStore.deleteItemAsync('companyId');
-    await SecureStore.deleteItemAsync('userId');
+    await storage.deleteItemAsync('accessToken');
+    await storage.deleteItemAsync('refreshToken');
+    await storage.deleteItemAsync('companyId');
+    await storage.deleteItemAsync('userId');
     setUserId(null);
     setCompanyId(null);
     setAccessToken(null);

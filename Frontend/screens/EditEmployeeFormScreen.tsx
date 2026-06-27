@@ -171,11 +171,11 @@ export default function EditProfileScreen() {
     const newErrors: ValidationErrors = {};
 
     if (!formData.full_name.trim()) {
-      newErrors.fullName = 'Employee name is required';
+      newErrors.full_name = 'Employee name is required';
     }
 
     if (!formData.phone_number.trim()) {
-      newErrors.mobileNo = 'Mobile number is required';
+      newErrors.phone_number = 'Mobile number is required';
     }
 
     if (!formData.gender) {
@@ -183,15 +183,15 @@ export default function EditProfileScreen() {
     }
 
     if (!formData.dob) {
-      newErrors.dateOfBirth = 'Date of birth is required';
+      newErrors.dob = 'Date of birth is required';
     }
 
     if (!formData.department_id) {
-      newErrors.department = 'Department is required';
+      newErrors.department_id = 'Department is required';
     }
 
     if (!formData.designation_id) {
-      newErrors.designation = 'Designation is required';
+      newErrors.designation_id = 'Designation is required';
     }
 
     setErrors(newErrors);

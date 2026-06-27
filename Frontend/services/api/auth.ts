@@ -28,7 +28,8 @@ export const login = async (phone: string, pin: string): Promise<LoginResponse> 
 
 export const getAccessToken = async (refreshToken: string) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/accessToken`, {
+    const baseUrlCleaned = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    const response = await axios.post(`${baseUrlCleaned}/auth/accessToken`, {
       refreshToken,
     });
     return response.data;
