@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +18,7 @@ import {
 } from 'react-native';
 import { getAttendanceByDate, getDailyAttendanceSummary } from '@/services/api/attendance';
 import { AttendanceEmployee } from '@/services/types/attendance';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Leave';
 

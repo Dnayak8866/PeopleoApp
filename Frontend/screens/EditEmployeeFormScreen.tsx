@@ -22,7 +22,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -30,6 +29,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface FormData {
   profileImage: string;

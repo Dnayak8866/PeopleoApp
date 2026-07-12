@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { Bell, Calendar, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Timer } from 'lucide-react-native';
 import { getEmployeeDetailsById } from '@/services/api/employees';
 import { getEmployeeStats, getEmployeeAttendanceHistory } from '@/services/api/attendance';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Leave' | 'Holiday';
 
@@ -48,7 +48,7 @@ export default function EmployeeDetailsScreen(employeeId: string) {
   const [attendanceList, setAttendanceList] = useState<DailyAttendance[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const styles = employeeDetailsScreenStyles();
   const { userDetails } = useAuth();
 
@@ -127,7 +127,7 @@ export default function EmployeeDetailsScreen(employeeId: string) {
     return formatMinutesToTime(Math.round(sum / withPunchOut.length));
   })();
 
-  const avgWorkingHours = stats?.monthlySummary?.avgWorkingHours 
+  const avgWorkingHours = stats?.monthlySummary?.avgWorkingHours
     ? `${stats.monthlySummary.avgWorkingHours} hrs`
     : '0 hrs';
 

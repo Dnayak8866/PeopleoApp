@@ -4,7 +4,6 @@ import { Bell, LocateFixed, LogOut } from 'lucide-react-native';
 import React, { useRef, useState, useCallback, use } from 'react';
 import {
   Animated,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
@@ -21,6 +20,7 @@ import { getEmployeeLeavesCount } from '@/services/api/leaves';
 import { getSalaryCountdown } from '@/services/api/salary';
 import { StatusBar } from 'expo-status-bar';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();

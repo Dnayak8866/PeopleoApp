@@ -1,15 +1,15 @@
 import React from 'react';
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { ChevronLeft, Bell, Info, CheckCircle, AlertTriangle, Calendar } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
+import { useRouter } from 'expo-router';
+import { AlertTriangle, Calendar, CheckCircle, ChevronLeft, Info } from 'lucide-react-native';
 
 const notifications = [
     {

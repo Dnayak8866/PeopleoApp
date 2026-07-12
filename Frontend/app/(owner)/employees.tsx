@@ -21,7 +21,6 @@ import {
   Alert,
   Animated,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -34,6 +33,7 @@ import { getPositionNameById } from '@/utils/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import * as Linking from 'expo-linking';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Employee {
   id: string;

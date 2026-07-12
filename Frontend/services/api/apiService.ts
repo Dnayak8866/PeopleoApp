@@ -2,12 +2,8 @@ import { storage } from '../secureStorage';
 import axios from 'axios';
 import { router } from 'expo-router';
 import { getAccessToken } from './auth';
-import Constants from 'expo-constants';
 
-export const API_BASE_URL =
-  Constants?.expoConfig?.extra?.apiUri ??
-  process.env.EXPO_PUBLIC_API_URI ??
-  'http://localhost:3000/api/';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URI ?? 'http://localhost:3000/api/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

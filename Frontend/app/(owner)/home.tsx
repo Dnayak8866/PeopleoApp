@@ -10,7 +10,6 @@ import { ArrowUp, Bell, CalendarDays, ChartLine, ClipboardCheck, Dot, MailPlus, 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -20,6 +19,7 @@ import { PieChart } from 'react-native-gifted-charts';
 import { getDailyAttendanceSummary } from '@/services/api/attendance';
 import { getPendingLeavesCount } from '@/services/api/leaves';
 import { DailySummary } from '@/services/types/attendance';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Status = ({ label, value, trend, iconColor }: {
   label: string;

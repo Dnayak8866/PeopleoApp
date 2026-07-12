@@ -16,7 +16,6 @@ import React, { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -25,6 +24,7 @@ import {
 } from 'react-native';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import { formatToOptions } from '@/utils/utils';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface FormData {
   full_name: string;

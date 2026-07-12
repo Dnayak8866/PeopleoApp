@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import { getEmployeeStats } from '@/services/api/attendance';
 import { getLeaveBalances } from '@/services/api/leaves';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 

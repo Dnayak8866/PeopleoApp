@@ -2,12 +2,11 @@ import { Colors } from '@/constants/Colors';
 import { leavesScreenStyles } from '@/styles/leavesScreenStyles';
 import { router } from 'expo-router';
 import { Bell, ChevronRight, Plus, Filter, ChevronDown, Check } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View, ActivityIndicator, Alert, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { getEmployeeLeaves } from '@/services/api/leaves';
-import { useEffect } from 'react';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 
 

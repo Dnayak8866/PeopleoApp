@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import '@/global.css';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import SplashScreen from '@/screens/SplashScreen';
 import { useEffect, useState } from 'react';
