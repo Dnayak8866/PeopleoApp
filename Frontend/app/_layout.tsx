@@ -4,15 +4,25 @@ import 'react-native-reanimated';
 import '@/global.css';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import SplashScreen from '@/screens/SplashScreen';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { MasterDataProvider } from '@/context/MasterDataContext';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/Colors';
+import Toast from 'react-native-toast-message';
+
+// Prevent Expo's native splash screen from auto-hiding before JS component mounts
+ExpoSplashScreen.preventAutoHideAsync();
 
 let splashShown = false;
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(!splashShown);
+
+  useEffect(() => {
+    // Hide the OS native splash screen as soon as React component tree mounts
+    ExpoSplashScreen.hideAsync();
+  }, []);
 
   const handleSplashComplete = () => {
     splashShown = true;
@@ -32,21 +42,9 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
   const { userId, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
-    if (showSplash) {
-      setIsNavigationReady(false);
-      return;
-    }
-
-    if (loading) {
-      setIsNavigationReady(false);
-      return;
-    }
-
-    // Auth restoration is complete, now handle routing
-    setIsNavigationReady(true);
+    if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const hasTargetSegment = segments.length > 0 && segments[0] !== undefined;
@@ -58,39 +56,40 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
       // User is authenticated but at root or in auth group, redirect to loader
       router.replace('/loader');
     }
-  }, [userId, loading, showSplash, segments]);
-
-  if (showSplash) {
-    return <SplashScreen onAnimationComplete={onSplashComplete} />;
-  }
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  }, [userId, loading, segments]);
 
   return (
-    <>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="loader" options={{ headerShown: false }} />
-        <Stack.Screen name="(employee)" options={{ headerShown: false }} />
-        <Stack.Screen name="(owner)" options={{ headerShown: false }} />
-        <Stack.Screen name="employee/add" options={{ headerShown: false }} />
-        <Stack.Screen name="employee/edit" options={{ headerShown: false }} />
-        <Stack.Screen name="employee/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="employee/apply-leave" options={{ headerShown: false }} />
-        <Stack.Screen name="leave-approval" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
-        <Stack.Screen name="employee-details" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+    <View style={styles.container}>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
-    </>
+
+      {/* Overlay SplashScreen over Stack so background routing redirects seamlessly without flash */}
+      {showSplash && (
+        <View style={StyleSheet.absoluteFill}>
+          <SplashScreen onAnimationComplete={onSplashComplete} />
+        </View>
+      )}
+
+      {/* Show loader if splash has finished but auth state is loading */}
+      {!showSplash && loading && (
+        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      )}
+
+      {/* Global Toast Component */}
+      <Toast />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingOverlay: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+});
