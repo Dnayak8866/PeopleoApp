@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Image,
   ScrollView,
@@ -7,15 +7,22 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Dimensions,
+  Platform,
+  Animated,
 } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { useAuth } from '@/context/AuthContext';
-import { employeeDetailsScreenStyles } from '@/styles/employeeDetailsScreenStyles';
 import { useRouter } from 'expo-router';
-import { Bell, Calendar, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Timer } from 'lucide-react-native';
+import { Bell, Calendar, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Timer, CalendarDays } from 'lucide-react-native';
 import { getEmployeeDetailsById } from '@/services/api/employees';
 import { getEmployeeStats, getEmployeeAttendanceHistory } from '@/services/api/attendance';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import EmployeeDetailsIllustration from '@/components/illustrations/EmployeeDetailsIllustration';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
+
+const { width } = Dimensions.get('window');
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Leave' | 'Holiday';
 
@@ -33,15 +40,19 @@ const months = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const statusColors: Record<string, { background: string; color: string }> = {
-  Present: { background: '#E6F8EDFF', color: '#4CAF50FF' },
-  Absent: { background: '#FEF4F4FF', color: '#EB5757FF' },
-  Late: { background: '#FFFBEBFF', color: '#F7B500FF' },
-  Leave: { background: '#DBEAFEFF', color: '#1D4ED8FF' },
-  Holiday: { background: '#F3F4F6FF', color: '#636AE8FF' },
+const statusColors: Record<string, { bg: string; color: string; border: string }> = {
+  Present: { bg: '#ECFDF5', color: '#10B981', border: '#10B981' },
+  Absent: { bg: '#FEF2F2', color: '#EF4444', border: '#EF4444' },
+  Late: { bg: '#FFFBEB', color: '#F59E0B', border: '#F59E0B' },
+  Leave: { bg: '#EFF6FF', color: '#3B82F6', border: '#3B82F6' },
+  Holiday: { bg: '#F5F3FF', color: '#8B5CF6', border: '#8B5CF6' },
 };
 
-export default function EmployeeDetailsScreen(employeeId: string) {
+interface Props {
+  employeeId: string;
+}
+
+export default function EmployeeDetailsScreen({ employeeId }: Props) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [employee, setEmployee] = useState<any>(null);
@@ -49,8 +60,10 @@ export default function EmployeeDetailsScreen(employeeId: string) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const styles = employeeDetailsScreenStyles();
   const { userDetails } = useAuth();
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(15)).current;
 
   const loadData = useCallback(async () => {
     if (!employeeId) return;
@@ -80,6 +93,25 @@ export default function EmployeeDetailsScreen(employeeId: string) {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (!loading) {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(15);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [loading, attendanceList]);
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
@@ -108,7 +140,6 @@ export default function EmployeeDetailsScreen(employeeId: string) {
     return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${period}`;
   };
 
-  // derived metrics
   const avgPunchInTime = (() => {
     const withPunchIn = attendanceList
       .map(h => parseTimeToMinutes(h.punchIn))
@@ -133,42 +164,47 @@ export default function EmployeeDetailsScreen(employeeId: string) {
 
   const renderAttendanceCard = (attendance: DailyAttendance) => {
     const dateObj = new Date(attendance.date);
-    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
     const dayDate = dateObj.getDate().toString().padStart(2, '0');
     const status = attendance.status || 'Absent';
     const colors = statusColors[status] || statusColors.Absent;
 
     return (
       <View key={attendance.date} style={[styles.attendanceCard, { borderLeftColor: colors.color }]}>
-        <View style={styles.dateSection}>
-          <View style={{ position: 'relative', marginRight: 12 }}>
-            <Calendar size={50} color={colors.color} />
-            <View style={{ position: 'absolute', top: 20, left: 15 }}>
-              <Text style={[styles.dateText, { color: colors.color }]}>{dayDate}</Text>
+        <View style={styles.cardMain}>
+          {/* Calendar visual pill */}
+          <View style={styles.dateBlock}>
+            <View style={[styles.dateNumberContainer, { backgroundColor: colors.bg }]}>
+              <Text style={[styles.dateNumberText, { color: colors.color }]}>{dayDate}</Text>
             </View>
-            <Text style={styles.dayText}>{dayName.slice(0, 3)}</Text>
+            <Text style={styles.dayLabelText}>{dayName}</Text>
           </View>
-          <View style={styles.timeSection}>
-            <View style={styles.timeRow}>
-              <View style={styles.timeItem}>
-                <LogIn size={16} color="#1D4ED8FF" />
-                <Text style={[styles.timeLabel, { marginLeft: 8 }]}>In:</Text>
-                <Text style={styles.timeValue}>{attendance.punchIn || 'N/A'}</Text>
+
+          {/* Details Column */}
+          <View style={styles.detailsColumn}>
+            <View style={styles.timeRows}>
+              <View style={styles.timeCell}>
+                <LogIn size={13} color="#10B981" />
+                <Text style={styles.timeLabel}>In:</Text>
+                <Text style={styles.timeValue}>{attendance.punchIn || '--'}</Text>
               </View>
-              <View style={styles.timeItem}>
-                <LogOut size={16} color="#FF5724FF" />
-                <Text style={[styles.timeLabel, { marginLeft: 8 }]}>Out:</Text>
-                <Text style={styles.timeValue}>{attendance.punchOut || 'N/A'}</Text>
-              </View>
-              <View style={styles.workingHoursRow}>
-                <Clock size={16} color="#FFA75AFF" />
-                <Text style={styles.workingHoursText}>Working Hours: </Text>
-                <Text style={styles.timeValue}>{attendance.workedHours || 'N/A'}</Text>
+              <View style={styles.timeCell}>
+                <LogOut size={13} color="#EF4444" />
+                <Text style={styles.timeLabel}>Out:</Text>
+                <Text style={styles.timeValue}>{attendance.punchOut || '--'}</Text>
               </View>
             </View>
+            
+            <View style={styles.workedHoursRow}>
+              <Clock size={13} color="#6366f1" />
+              <Text style={styles.workedHoursLabel}>Worked:</Text>
+              <Text style={styles.workedHoursValue}>{attendance.workedHours || '0h 0m'}</Text>
+            </View>
           </View>
-          <View style={styles.dayInfo}>
-            <View style={[styles.statusBadge, { backgroundColor: colors.background }]}>
+
+          {/* Status Label on Right */}
+          <View style={styles.statusBadgeWrapper}>
+            <View style={[styles.statusBadge, { backgroundColor: colors.bg }]}>
               <Text style={[styles.statusText, { color: colors.color }]}>{status}</Text>
             </View>
           </View>
@@ -181,88 +217,478 @@ export default function EmployeeDetailsScreen(employeeId: string) {
   const displayDesignation = employee?.designation?.name || employee?.designationName || 'Staff';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeContainer}>
+      <StatusBar style="dark" />
+
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={{ padding: 4 }} onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#374151" />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <ChevronLeft size={22} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Employee Profile</Text>
-        <View style={{ width: 32 }} />
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Employee Profile</Text>
+        </View>
       </View>
 
       {loading && !employee ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={{ marginTop: 10, color: '#6B7280' }}>Loading employee details...</Text>
+        <View style={styles.loaderWrapper}>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text style={styles.loaderText}>Loading details...</Text>
         </View>
       ) : (
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.employeeSection}>
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Welcome Card & Illustration */}
+          <View style={styles.welcomeCard}>
+            <LinearGradient
+              colors={['#EEF2FF', '#F5F3FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.welcomeGradient}
+            >
+              <View style={styles.welcomeTextContainer}>
+                <Text style={styles.welcomeQuote}>Workspace Directory</Text>
+                <Text style={styles.ownerName}>Profile Details</Text>
+                <Text style={styles.welcomeDesc}>
+                  Review profile designation, monthly attendance statistics, and hours summary metrics.
+                </Text>
+              </View>
+              <View style={styles.illustrationWrapper}>
+                <EmployeeDetailsIllustration width={110} height={90} />
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
             {employee?.avatar ? (
-              <Image source={{ uri: employee.avatar }} style={styles.employeeAvatar} />
+              <Image source={{ uri: employee.avatar }} style={styles.profileAvatar} />
             ) : (
-              <Avatar fullName={displayName} size={80} />
+              <View style={styles.profileAvatarPlaceholder}>
+                <Avatar fullName={displayName} size={64} />
+              </View>
             )}
-            <View style={styles.employeeInfo}>
-              <Text style={styles.employeeName}>{displayName}</Text>
-              <Text style={styles.employeeDesignation}>{displayDesignation}</Text>
-            </View>
-          </View>
-
-          <View style={styles.summarySection}>
-            <Text style={styles.sectionTitle}>Monthly Summary</Text>
-            <View style={styles.summaryGrid}>
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryIcon}>
-                  <Timer size={30} color="#FF5724FF" />
-                </View>
-                <Text style={styles.summaryValue}>{avgPunchInTime}</Text>
-                <Text style={styles.summaryLabel}>Avg Punch In</Text>
-              </View>
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryIcon}>
-                  <LogOut size={30} color="#FF5724FF" />
-                </View>
-                <Text style={styles.summaryValue}>{avgPunchOutTime}</Text>
-                <Text style={styles.summaryLabel}>Avg Punch Out</Text>
-              </View>
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryIcon}>
-                  <Clock size={30} color="#FF5724FF" />
-                </View>
-                <Text style={styles.summaryValue}>{avgWorkingHours}</Text>
-                <Text style={styles.summaryLabel}>Avg Working Hours</Text>
+            <View style={styles.profileDetails}>
+              <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
+              <View style={styles.designationBadge}>
+                <Text style={styles.designationText}>{displayDesignation}</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.monthSection}>
-            <View style={styles.monthHeader}>
-              <TouchableOpacity onPress={() => navigateMonth('prev')}>
-                <ChevronLeft size={24} color="#6b7280" />
-              </TouchableOpacity>
-              <Text style={styles.monthText}>
-                {months[currentDate.getMonth()]} {currentDate.getFullYear()}
-              </Text>
-              <TouchableOpacity onPress={() => navigateMonth('next')}>
-                <ChevronRight size={24} color="#6b7280" />
-              </TouchableOpacity>
+          {/* Monthly Summary */}
+          <Text style={styles.sectionTitle}>Monthly Summary</Text>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryCard}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: '#EFF6FF' }]}>
+                <Timer size={20} color="#3B82F6" />
+              </View>
+              <Text style={styles.summaryValue} numberOfLines={1}>{avgPunchInTime}</Text>
+              <Text style={styles.summaryLabel}>Avg Punch In</Text>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: '#FEF2F2' }]}>
+                <LogOut size={20} color="#EF4444" />
+              </View>
+              <Text style={styles.summaryValue} numberOfLines={1}>{avgPunchOutTime}</Text>
+              <Text style={styles.summaryLabel}>Avg Punch Out</Text>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: '#F5F3FF' }]}>
+                <Clock size={20} color="#8B5CF6" />
+              </View>
+              <Text style={styles.summaryValue} numberOfLines={1}>{avgWorkingHours}</Text>
+              <Text style={styles.summaryLabel}>Avg Hours</Text>
             </View>
           </View>
 
-          <View style={styles.attendanceSection}>
+          {/* Month Navigator */}
+          <View style={styles.monthSelector}>
+            <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.monthNavBtn}>
+              <ChevronLeft size={18} color="#64748B" />
+            </TouchableOpacity>
+            <Text style={styles.monthSelectorText}>
+              {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </Text>
+            <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.monthNavBtn}>
+              <ChevronRight size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Attendance Section */}
+          <Animated.View style={[styles.attendanceSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {loading ? (
-              <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 20 }} />
+              <ActivityIndicator size="small" color="#6366f1" style={{ marginVertical: 30 }} />
             ) : attendanceList.length === 0 ? (
-              <Text style={{ color: '#8E8E93', textAlign: 'center', marginVertical: 30 }}>
-                No attendance logs found for this period.
-              </Text>
+              <View style={styles.emptyState}>
+                <CalendarDays size={32} color="#94A3B8" style={{ marginBottom: 10 }} />
+                <Text style={styles.emptyText}>No attendance logs found.</Text>
+              </View>
             ) : (
               attendanceList.map(renderAttendanceCard)
             )}
-          </View>
+          </Animated.View>
         </ScrollView>
       )}
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#FAFBFF',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+
+  // --- Header ---
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 4 : 10,
+    paddingBottom: 12,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E1B4B',
+  },
+
+  // --- Welcome Card ---
+  welcomeCard: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.08)',
+    marginBottom: 20,
+  },
+  welcomeGradient: {
+    flexDirection: 'row',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  welcomeTextContainer: {
+    flex: 1.2,
+    paddingRight: 8,
+  },
+  welcomeQuote: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ownerName: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginVertical: 2,
+  },
+  welcomeDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  illustrationWrapper: {
+    flex: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // --- Profile Card ---
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.03,
+    shadowRadius: 16,
+    elevation: 3,
+    marginBottom: 20,
+  },
+  profileAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#EEF2FF',
+  },
+  profileAvatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  profileDetails: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  designationBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  designationText: {
+    fontSize: 11,
+    color: '#6366f1',
+    fontWeight: '700',
+  },
+
+  // --- Section Title ---
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+
+  // --- Summary Grid ---
+  summaryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 10,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  summaryIconWrapper: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  summaryValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+
+  // --- Month Selector ---
+  monthSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 16,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  monthNavBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  monthSelectorText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+
+  // --- Attendance Section ---
+  attendanceSection: {
+    gap: 12,
+  },
+  attendanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  cardMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+  },
+  dateBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 44,
+  },
+  dateNumberContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  dateNumberText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  dayLabelText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  detailsColumn: {
+    flex: 1.5,
+    marginLeft: 16,
+    gap: 6,
+  },
+  timeRows: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  timeCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '700',
+  },
+  timeValue: {
+    fontSize: 11,
+    color: '#1E293B',
+    fontWeight: '700',
+  },
+  workedHoursRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  workedHoursLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '700',
+  },
+  workedHoursValue: {
+    fontSize: 11,
+    color: '#1E293B',
+    fontWeight: '700',
+  },
+  statusBadgeWrapper: {
+    flex: 0.8,
+    alignItems: 'flex-end',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+
+  // --- Loader ---
+  loaderWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+    gap: 8,
+  },
+  loaderText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+
+  // --- Empty State ---
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  emptyText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});

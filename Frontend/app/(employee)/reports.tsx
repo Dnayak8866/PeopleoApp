@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Platform,
+  Animated,
 } from 'react-native';
-import { CalendarDays, ChevronLeft, ChevronRight, BriefcaseBusiness, Clock, PieChart as PieIcon, BarChart as BarIcon } from 'lucide-react-native';
+import { CalendarDays, ChevronLeft, ChevronRight, BriefcaseBusiness, Clock, PieChart as PieIcon, BarChart as BarIcon, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
@@ -17,6 +19,9 @@ import { getLeaveBalances } from '@/services/api/leaves';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ReportIllustration from '@/components/illustrations/ReportIllustration';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +34,9 @@ export default function EmployeeReportsScreen() {
 
   // Month/Year navigation
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(15)).current;
 
   const fetchData = useCallback(async () => {
     if (!userId || !companyId) return;
@@ -55,6 +63,25 @@ export default function EmployeeReportsScreen() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    if (!loading) {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(15);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [loading, stats]);
+
   const changeMonth = (delta: number) => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + delta);
@@ -65,34 +92,26 @@ export default function EmployeeReportsScreen() {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  if (loading && !stats) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
   // Prepare Pie Chart Data
   const pieData = stats?.monthlySummary ? [
     { value: stats.monthlySummary.presentDays, color: '#10B981', text: 'P' },
     { value: stats.monthlySummary.absentDays, color: '#EF4444', text: 'A' },
-    { value: stats.monthlySummary.onLeaveDays, color: Colors.primary, text: 'L' },
+    { value: stats.monthlySummary.onLeaveDays, color: '#6366f1', text: 'L' },
   ] : [];
 
   // Prepare Bar Chart Data (Last 7 days or all records)
   const barData = stats?.chartData?.slice(-7).map((item: any) => ({
     value: item.hours,
     label: new Date(item.date).getDate().toString(),
-    frontColor: Colors.primary,
+    frontColor: '#6366f1',
   })) || [];
 
   const StatCard = ({ label, value, subLabel, icon: Icon, color }: any) => (
     <View style={styles.statCard}>
-      <View style={[styles.iconBox, { backgroundColor: color + '15' }]}>
-        <Icon size={20} color={color} />
+      <View style={[styles.iconBox, { backgroundColor: color + '12' }]}>
+        <Icon size={18} color={color} />
       </View>
-      <View>
+      <View style={styles.statInfo}>
         <Text style={styles.statValue}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
         {subLabel && <Text style={styles.statSubLabel}>{subLabel}</Text>}
@@ -101,285 +120,416 @@ export default function EmployeeReportsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeContainer}>
+      <StatusBar style="dark" />
+
+      {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerSubtitle}>Personal</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.welcomeText}>Personal</Text>
           <Text style={styles.headerTitle}>My Reports</Text>
         </View>
-        <HeaderAvatar />
+        <HeaderAvatar size={38} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Welcome Analytics Card & Illustration */}
+        <View style={styles.welcomeCard}>
+          <LinearGradient
+            colors={['#EEF2FF', '#F5F3FF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.welcomeGradient}
+          >
+            <View style={styles.welcomeTextContainer}>
+              <Text style={styles.welcomeQuote}>Insights & Logs</Text>
+              <Text style={styles.ownerName}>Analytics</Text>
+              <Text style={styles.welcomeDesc}>
+                Track your attendance metrics, daily worked hours, and remaining leaves.
+              </Text>
+            </View>
+            <View style={styles.illustrationWrapper}>
+              <ReportIllustration width={110} height={90} />
+            </View>
+          </LinearGradient>
+        </View>
+
         {/* Month Selector */}
         <View style={styles.monthSelector}>
-          <TouchableOpacity style={styles.navButton} onPress={() => changeMonth(-1)}>
-            <ChevronLeft size={24} color="#374151" />
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => changeMonth(-1)}
+            activeOpacity={0.7}
+          >
+            <ChevronLeft size={16} color="#475569" />
           </TouchableOpacity>
           <View style={styles.dateDisplay}>
-            <CalendarDays size={20} color={Colors.primary} />
+            <CalendarDays size={16} color="#6366f1" />
             <Text style={styles.dateText}>
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Text>
           </View>
-          <TouchableOpacity style={styles.navButton} onPress={() => changeMonth(1)}>
-            <ChevronRight size={24} color="#374151" />
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => changeMonth(1)}
+            activeOpacity={0.7}
+          >
+            <ChevronRight size={16} color="#475569" />
           </TouchableOpacity>
         </View>
 
-        {/* Summary Row */}
-        <View style={styles.statsGrid}>
-          <StatCard
-            label="Attendance"
-            value={`${stats?.monthlySummary?.attendancePercentage || 0}%`}
-            subLabel={`${stats?.monthlySummary?.presentDays || 0} days present`}
-            icon={PieIcon}
-            color="#10B981"
-          />
-          <StatCard
-            label="Avg. Hours"
-            value={`${stats?.monthlySummary?.avgWorkingHours || 0}`}
-            subLabel="Hours per day"
-            icon={Clock}
-            color="#F59E0B"
-          />
-        </View>
+        {loading ? (
+          <View style={styles.loaderWrapper}>
+            <ActivityIndicator size="large" color="#6366f1" />
+            <Text style={styles.loaderText}>Loading analytics...</Text>
+          </View>
+        ) : (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            {/* Summary Row */}
+            <View style={styles.statsGrid}>
+              <StatCard
+                label="Attendance"
+                value={`${stats?.monthlySummary?.attendancePercentage || 0}%`}
+                subLabel={`${stats?.monthlySummary?.presentDays || 0} days present`}
+                icon={PieIcon}
+                color="#10B981"
+              />
+              <StatCard
+                label="Avg. Hours"
+                value={`${stats?.monthlySummary?.avgWorkingHours || 0}h`}
+                subLabel="Hours per day"
+                icon={Clock}
+                color="#F59E0B"
+              />
+            </View>
 
-        {/* Attendance Distribution Chart */}
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Attendance Distribution</Text>
-          <View style={styles.pieContainer}>
-            {pieData.length > 0 ? (
-              <PieChart
-                data={pieData}
-                donut
-                radius={80}
-                innerRadius={55}
-                centerLabelComponent={() => (
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 20, fontWeight: '700', color: '#111827' }}>
-                      {stats?.monthlySummary?.totalDays || 0}
-                    </Text>
-                    <Text style={{ fontSize: 10, color: '#6B7280' }}>Working Days</Text>
+            {/* Attendance Distribution Chart */}
+            <View style={styles.chartSection}>
+              <Text style={styles.sectionTitle}>Attendance Distribution</Text>
+              <View style={styles.pieContainer}>
+                {pieData.length > 0 && stats?.monthlySummary?.totalDays > 0 ? (
+                  <View style={styles.chartAndCenterLabel}>
+                    <PieChart
+                      data={pieData}
+                      donut
+                      radius={72}
+                      innerRadius={50}
+                      centerLabelComponent={() => (
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E1B4B' }}>
+                            {stats?.monthlySummary?.totalDays || 0}
+                          </Text>
+                          <Text style={{ fontSize: 9, color: '#64748B', fontWeight: '700', textTransform: 'uppercase' }}>Days</Text>
+                        </View>
+                      )}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.emptyChart}>
+                    <Text style={styles.noData}>No attendance logs available.</Text>
                   </View>
                 )}
-              />
-            ) : (
-              <Text style={styles.noData}>No data available for this month</Text>
-            )}
-            <View style={styles.legend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-                <Text style={styles.legendText}>Present ({stats?.monthlySummary?.presentDays || 0})</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />
-                <Text style={styles.legendText}>Absent ({stats?.monthlySummary?.absentDays || 0})</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
-                <Text style={styles.legendText}>Leave ({stats?.monthlySummary?.onLeaveDays || 0})</Text>
+                <View style={styles.legend}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
+                    <Text style={styles.legendText}>Present ({stats?.monthlySummary?.presentDays || 0})</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />
+                    <Text style={styles.legendText}>Absent ({stats?.monthlySummary?.absentDays || 0})</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.dot, { backgroundColor: '#6366f1' }]} />
+                    <Text style={styles.legendText}>Leave ({stats?.monthlySummary?.onLeaveDays || 0})</Text>
+                  </View>
+                </View>
               </View>
             </View>
-          </View>
-        </View>
 
-        {/* Working Hours Bar Chart */}
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Working Hours (Last 7 Days)</Text>
-          <View style={styles.barContainer}>
-            {barData.length > 0 ? (
-              <BarChart
-                data={barData}
-                barWidth={22}
-                spacing={15}
-                roundedTop
-                roundedBottom
-                hideRules
-                yAxisThickness={0}
-                xAxisThickness={0}
-                yAxisTextStyle={{ color: '#9CA3AF', fontSize: 10 }}
-                xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10 }}
-                noOfSections={3}
-              />
-            ) : (
-              <Text style={styles.noData}>Not enough data for chart</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Leave Balances Section */}
-        <View style={styles.chartSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Leave Balance</Text>
-            <TouchableOpacity onPress={() => router.push('/employee/apply-leave')}>
-              <Text style={styles.actionText}>Apply Leave</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.balanceList}>
-            {balances.map((item, index) => (
-              <View key={index} style={styles.balanceItem}>
-                <View style={styles.balanceInfo}>
-                  <Text style={styles.balanceName}>{item.type_name}</Text>
-                  <Text style={styles.balanceUsed}>Used: {item.used} / {item.total_allowed}</Text>
-                </View>
-                <View style={styles.balanceTrack}>
-                  <View
-                    style={[
-                      styles.balanceFill,
-                      { width: `${(item.remaining / item.total_allowed) * 100}%` }
-                    ]}
+            {/* Working Hours Bar Chart */}
+            <View style={styles.chartSection}>
+              <Text style={styles.sectionTitle}>Working Hours (Last 7 Days)</Text>
+              <View style={styles.barContainer}>
+                {barData.length > 0 ? (
+                  <BarChart
+                    data={barData}
+                    barWidth={18}
+                    spacing={14}
+                    roundedTop
+                    roundedBottom
+                    hideRules
+                    yAxisThickness={0}
+                    xAxisThickness={0}
+                    yAxisTextStyle={{ color: '#94A3B8', fontSize: 10, fontWeight: '600' }}
+                    xAxisLabelTextStyle={{ color: '#64748B', fontSize: 10, fontWeight: '600' }}
+                    noOfSections={3}
                   />
-                  <Text style={styles.balanceRemaining}>{item.remaining} Left</Text>
-                </View>
+                ) : (
+                  <Text style={styles.noData}>Not enough check-in logs for charts.</Text>
+                )}
               </View>
-            ))}
-          </View>
-        </View>
+            </View>
 
-        <View style={{ height: 40 }} />
+            {/* Leave Balances Section */}
+            <View style={styles.chartSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Leave Balance</Text>
+                <TouchableOpacity
+                  onPress={() => router.push('/employee/apply-leave')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionText}>Apply Leave</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.balanceList}>
+                {balances.map((item, index) => {
+                  const percentage = Math.min(((item.total_allowed - item.remaining) / item.total_allowed) * 100, 100);
+                  return (
+                    <View key={index} style={styles.balanceItem}>
+                      <View style={styles.balanceInfo}>
+                        <Text style={styles.balanceName}>{item.type_name}</Text>
+                        <Text style={styles.balanceUsed}>Used: {item.used} / {item.total_allowed}</Text>
+                      </View>
+                      <View style={styles.balanceTrack}>
+                        <View
+                          style={[
+                            styles.balanceFill,
+                            { width: `${percentage}%` }
+                          ]}
+                        />
+                        <Text style={styles.balanceRemaining}>{item.remaining} Days Left</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#FAFBFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
+
+  // --- Header ---
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'ios' ? 4 : 10,
+    paddingBottom: 12,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  content: {
+  headerTitleContainer: {
     flex: 1,
   },
+  welcomeText: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginTop: 2,
+  },
+
+  // --- Welcome Card ---
+  welcomeCard: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.08)',
+    marginBottom: 20,
+  },
+  welcomeGradient: {
+    flexDirection: 'row',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  welcomeTextContainer: {
+    flex: 1.2,
+    paddingRight: 8,
+  },
+  welcomeQuote: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ownerName: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginVertical: 2,
+  },
+  welcomeDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  illustrationWrapper: {
+    flex: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // --- Month Selector ---
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
+    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    marginBottom: 10,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 20,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2,
   },
   navButton: {
-    padding: 5,
-    marginHorizontal: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   dateDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
     gap: 8,
   },
   dateText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#374151',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E1B4B',
   },
+
+  // --- Summary Grid ---
   statsGrid: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
     gap: 12,
     marginBottom: 20,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    padding: 14,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
     shadowRadius: 10,
     elevation: 2,
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  statInfo: {
+    flex: 1,
   },
   statValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#111827',
+    color: '#1E293B',
   },
   statLabel: {
     fontSize: 11,
-    color: '#6B7280',
-    fontWeight: '500',
+    color: '#64748B',
+    fontWeight: '700',
+    marginTop: 1,
   },
   statSubLabel: {
     fontSize: 9,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     marginTop: 2,
+    fontWeight: '500',
   },
+
+  // --- Chart Sections ---
   chartSection: {
     backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 22,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
     elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 15,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginBottom: 14,
   },
   actionText: {
-    fontSize: 13,
-    color: Colors.primary,
-    fontWeight: '600',
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '700',
   },
   pieContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
+    paddingVertical: 10,
+  },
+  chartAndCenterLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   legend: {
-    gap: 8,
+    gap: 10,
   },
   legendItem: {
     flexDirection: 'row',
@@ -387,29 +537,38 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   legendText: {
     fontSize: 12,
-    color: '#4B5563',
+    color: '#475569',
+    fontWeight: '600',
   },
   barContainer: {
     alignItems: 'center',
-    paddingTop: 10,
+    paddingTop: 14,
+    paddingBottom: 4,
   },
   noData: {
     textAlign: 'center',
-    color: '#9CA3AF',
+    color: '#94A3B8',
     paddingVertical: 20,
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '600',
   },
+  emptyChart: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // --- Leave Balance ---
   balanceList: {
-    gap: 15,
+    gap: 14,
   },
   balanceItem: {
-    gap: 8,
+    gap: 6,
   },
   balanceInfo: {
     flexDirection: 'row',
@@ -417,18 +576,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   balanceName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
   },
   balanceUsed: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
   },
   balanceTrack: {
-    height: 24,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
+    height: 22,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
     position: 'relative',
     justifyContent: 'center',
     paddingHorizontal: 10,
@@ -439,12 +601,31 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     bottom: 0,
-    backgroundColor: Colors.primary + '30',
-    borderRadius: 12,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderRadius: 8,
   },
   balanceRemaining: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primary,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6366f1',
+    textTransform: 'uppercase',
+  },
+
+  // --- Loader ---
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAFBFF',
+  },
+  loaderWrapper: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    gap: 8,
+  },
+  loaderText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
   },
 });

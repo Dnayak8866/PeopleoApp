@@ -18,6 +18,7 @@ export interface UserDetails {
   designationId: number;
   employeeCode: string;
   companyId: number;
+  avatar?: string;
 }
 
 interface AuthContextType {

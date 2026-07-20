@@ -25,6 +25,7 @@ export const HeaderAvatar: React.FC<HeaderAvatarProps> = ({ size = 40 }) => {
                 <Avatar
                     fullName={userDetails?.fullName || 'User'}
                     size={size}
+                    uri={userDetails?.avatar}
                 />
             </TouchableOpacity>
             <ProfileSidebar

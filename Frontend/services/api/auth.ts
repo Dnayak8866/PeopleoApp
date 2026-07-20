@@ -3,15 +3,6 @@ import axios from 'axios';
 import api, { API_BASE_URL } from './apiService';
 import { LoginResponse, HomePageDetails } from '../types/auth';
 
-export const validatePhone = async (phone: string): Promise<{ valid: boolean; message: string }> => {
-  try {
-    const response = await api.post('/auth/validate-phone', { phone });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to validate phone:', error);
-    throw error;
-  }
-};
 
 export const login = async (phone: string, pin: string): Promise<LoginResponse> => {
   try {

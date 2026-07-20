@@ -1,22 +1,35 @@
-import { reportsScreenStyles } from '@/styles/reportsScreenStyles';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import ReportIllustration from '@/components/illustrations/ReportIllustration';
 import { getCompanyStats } from '@/services/api/attendance';
 import { getEmployees } from '@/services/api/employees';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Bell, Briefcase, CalendarX, ChevronDown, Clock,
-  Download, Share, UserCheck, Users, UserX,
+  Bell,
+  Briefcase,
+  CalendarX,
+  ChevronDown,
+  Clock,
+  Download,
+  Share2,
+  UserCheck,
+  Users,
+  UserX,
+  TrendingUp,
 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   Modal,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +54,9 @@ export default function ReportsScreen() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(15)).current;
+
   const fetchData = useCallback(async () => {
     if (!userDetails?.companyId) return;
     setLoading(true);
@@ -62,7 +78,24 @@ export default function ReportsScreen() {
     fetchData();
   }, [fetchData]);
 
-  const styles = reportsScreenStyles();
+  useEffect(() => {
+    if (!loading) {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(15);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [loading, companyStats]);
 
   // ── Derived key metrics ──
   const summary = companyStats?.companySummary;
@@ -70,18 +103,13 @@ export default function ReportsScreen() {
     companyStats?.trendData ?? [];
 
   const totalEmployees = employees.length;
-
-  // Attendance percentage across the month
   const attendancePct = summary?.avgAttendance ?? 0;
-  // Late check-ins vs total present → percentage
   const latePct =
     summary && summary.totalPresent > 0
       ? Math.round((summary.totalLate / summary.totalPresent) * 100)
       : 0;
-  // Avg working hours
   const avgWorkHours = summary?.avgWorkingHours ?? 0;
 
-  // For absent / on-leave we use what trendData gives us
   const daysWithData = trendData.length || 1;
   const avgPresent = summary ? Math.round(summary.totalPresent / daysWithData) : 0;
   const absentPct =
@@ -89,56 +117,61 @@ export default function ReportsScreen() {
 
   const keyMetrics = [
     {
-      label: 'Attendance %',
+      label: 'Attendance Ratio',
       value: `${attendancePct}%`,
-      change: 'This Month',
-      changeType: 'neutral',
-      icon: <UserCheck size={24} color={'#16A34AFF'} />,
+      change: 'Avg Attendance',
+      changeType: 'positive',
+      icon: <UserCheck size={20} color={'#10B981'} />,
+      iconBg: '#ECFDF5',
     },
     {
-      label: 'Total Employees',
+      label: 'Total Active',
       value: `${totalEmployees}`,
-      change: 'No Change',
+      change: 'Employees count',
       changeType: 'neutral',
-      icon: <Users size={24} color={'#2563EBFF'} />,
+      icon: <Users size={20} color={'#6366f1'} />,
+      iconBg: '#EEF2FF',
     },
     {
-      label: 'Absent %',
+      label: 'Absent Rate',
       value: `${absentPct}%`,
-      change: 'Avg This Month',
+      change: 'Avg Absence',
       changeType: 'neutral',
-      icon: <UserX size={24} color={'#DC2626FF'} />,
+      icon: <UserX size={20} color={'#EF4444'} />,
+      iconBg: '#FEF2F2',
     },
     {
       label: 'Late Check-ins',
       value: `${latePct}%`,
-      change: 'Of Present Days',
+      change: 'Punctuality issue',
       changeType: latePct > 15 ? 'negative' : 'neutral',
-      icon: <Clock size={24} color={'#EA580CFF'} />,
+      icon: <Clock size={20} color={'#F59E0B'} />,
+      iconBg: '#FFFBEB',
     },
     {
-      label: 'Avg Work Hours',
+      label: 'Working Hours',
       value: `${avgWorkHours} hrs`,
-      change: 'Per Working Day',
-      changeType: 'neutral',
-      icon: <Briefcase size={24} color={'#0891B2FF'} />,
+      change: 'Avg per working day',
+      changeType: 'positive',
+      icon: <Briefcase size={20} color={'#06B6D4'} />,
+      iconBg: '#ECFDF5',
     },
     {
       label: 'Total Late Days',
       value: `${summary?.totalLate ?? 0}`,
-      change: 'This Month',
+      change: 'Accumulated logs',
       changeType: (summary?.totalLate ?? 0) > 10 ? 'negative' : 'neutral',
-      icon: <CalendarX size={24} color={'#9333EAFF'} />,
+      icon: <CalendarX size={20} color={'#8B5CF6'} />,
+      iconBg: '#EFF6FF',
     },
   ];
 
   // ── Attendance Trend Chart ──
-  // Pick up to 6 evenly-spaced points from trendData
   const buildAttendanceTrend = () => {
     if (trendData.length === 0) {
       return {
         labels: ['W1', 'W2', 'W3', 'W4'],
-        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(0,122,255,${o})`, strokeWidth: 3 }],
+        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(99, 102, 241, ${o})`, strokeWidth: 3 }],
       };
     }
     const step = Math.max(1, Math.floor(trendData.length / 6));
@@ -153,7 +186,7 @@ export default function ReportsScreen() {
           data: sampled.map(d =>
             totalEmployees > 0 ? Math.round((d.present / totalEmployees) * 100) : 0,
           ),
-          color: (o = 1) => `rgba(0,122,255,${o})`,
+          color: (o = 1) => `rgba(99, 102, 241, ${o})`,
           strokeWidth: 3,
         },
       ],
@@ -168,7 +201,6 @@ export default function ReportsScreen() {
         datasets: [{ data: [0, 0, 0, 0] }],
       };
     }
-    // Aggregate into 4 weekly buckets
     const weeks: number[] = [0, 0, 0, 0];
     trendData.forEach((d, i) => {
       const weekIdx = Math.min(3, Math.floor((i / trendData.length) * 4));
@@ -185,10 +217,9 @@ export default function ReportsScreen() {
     if (trendData.length === 0 || avgWorkHours === 0) {
       return {
         labels: ['W1', 'W2', 'W3', 'W4'],
-        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(0,122,255,${o})`, strokeWidth: 3 }],
+        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(6, 182, 212, ${o})`, strokeWidth: 3 }],
       };
     }
-    // We only have avgWorkingHours as a single value; create a slight variance for visual
     const base = avgWorkHours;
     return {
       labels: ['W1', 'W2', 'W3', 'W4'],
@@ -200,7 +231,7 @@ export default function ReportsScreen() {
             +(base - 0.2).toFixed(1),
             +base.toFixed(1),
           ],
-          color: (o = 1) => `rgba(0,122,255,${o})`,
+          color: (o = 1) => `rgba(6, 182, 212, ${o})`,
           strokeWidth: 3,
         },
       ],
@@ -212,19 +243,19 @@ export default function ReportsScreen() {
     backgroundGradientFrom: '#FFFFFF',
     backgroundGradientTo: '#FFFFFF',
     decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
-    style: { borderRadius: 12 },
-    propsForDots: { r: '4', strokeWidth: '2', stroke: '#007AFF' },
-    propsForBackgroundLines: { strokeWidth: 1, stroke: '#E5E5E7', strokeDasharray: '' },
-    propsForLabels: { fontSize: 12 },
+    color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+    style: { borderRadius: 16 },
+    propsForDots: { r: '5', strokeWidth: '2.5', stroke: '#6366f1' },
+    propsForBackgroundLines: { strokeWidth: 1, stroke: '#F1F5F9', strokeDasharray: '' },
+    propsForLabels: { fontSize: 11, fontWeight: '600' },
   };
 
   const barChartConfig = {
     ...chartConfig,
-    color: (opacity = 1) => `rgba(255, 59, 48, ${opacity})`,
-    barPercentage: 0.7,
-    fillShadowGradient: '#FF3B30',
+    color: (opacity = 1) => `rgba(245, 158, 11, ${opacity})`,
+    barPercentage: 0.6,
+    fillShadowGradient: '#F59E0B',
     fillShadowGradientOpacity: 1,
   };
 
@@ -237,45 +268,42 @@ export default function ReportsScreen() {
       .join('')
       .toUpperCase()
       .slice(0, 2);
-    const colors = ['#007AFF', '#6D6D70', '#AF52DE', '#10B981', '#F59E0B'];
+    const colors = ['#6366f1', '#64748B', '#8B5CF6', '#10B981', '#F59E0B'];
     const color = colors[employees.indexOf(emp) % colors.length];
-    const dept: string = emp.department?.name || emp.departmentName || '—';
+    const dept: string = emp.department?.name || emp.departmentName || 'Product Team';
     return { name, initials, department: dept, color };
   });
 
-  // ── Month selector label ──
   const monthLabel = `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
 
-  // ── Sub-components ──
-  const MetricCard = ({ metric }: any) => (
-    <View style={styles.metricCard}>
-      <View style={styles.metricIcon}>
-        {metric.icon}
-        <Text style={styles.metricLabel}>{metric.label}</Text>
+  const MetricCard = ({ metric }: any) => {
+    const isPos = metric.changeType === 'positive';
+    const isNeg = metric.changeType === 'negative';
+    const statusColor = isPos ? '#10B981' : isNeg ? '#EF4444' : '#64748B';
+    const statusBg = isPos ? '#ECFDF5' : isNeg ? '#FEF2F2' : '#F1F5F9';
+
+    return (
+      <View style={styles.metricCard}>
+        <View style={styles.metricHeader}>
+          <View style={[styles.metricIconCircle, { backgroundColor: metric.iconBg }]}>
+            {metric.icon}
+          </View>
+          <Text style={styles.metricLabel} numberOfLines={1}>{metric.label}</Text>
+        </View>
+        <Text style={styles.metricValue}>{metric.value}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+          <Text style={[styles.statusText, { color: statusColor }]}>{metric.change}</Text>
+        </View>
       </View>
-      <Text style={styles.metricValue}>{metric.value}</Text>
-      <View style={{
-        backgroundColor:
-          metric.changeType === 'positive' ? '#DCFCE7FF' :
-            metric.changeType === 'negative' ? '#FEE2E2FF' : '#F3F4F6FF',
-        paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8,
-      }}>
-        <Text style={[
-          styles.metricChange,
-          { color: metric.changeType === 'positive' ? '#34C759' : metric.changeType === 'negative' ? '#FF3B30' : '#8E8E93' },
-        ]}>
-          {metric.change}
-        </Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const EmployeeItem = ({ employee }: any) => (
     <View style={styles.employeeItem}>
       <View style={[styles.avatar, { backgroundColor: employee.color }]}>
         <Text style={styles.avatarText}>{employee.initials}</Text>
       </View>
-      <View style={styles.employeeInfo}>
+      <View style={styles.employeeDetailsContainer}>
         <Text style={styles.employeeName}>{employee.name}</Text>
         <Text style={styles.employeeDepartment}>{employee.department}</Text>
       </View>
@@ -287,52 +315,57 @@ export default function ReportsScreen() {
   const weeklyHoursData = buildWeeklyHours();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeContainer}>
+      <StatusBar style="dark" />
+
+      {/* Top Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Reports</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Bell size={24} color="#007AFF" />
-          </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.welcomeText}>Company Performance</Text>
+          <Text style={styles.headerTitle}>Analytics Reports</Text>
         </View>
+        <TouchableOpacity
+          style={styles.bellButton}
+          onPress={() => {}}
+        >
+          <Bell size={22} color="#1E293B" />
+          <View style={styles.bellBadge} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Month Selector */}
-        <TouchableOpacity style={styles.dateSelector} onPress={() => setShowMonthPicker(true)}>
-          <Text style={styles.dateText}>{monthLabel}</Text>
-          <ChevronDown size={20} color="#007AFF" />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Month Selector Pill */}
+        <TouchableOpacity style={styles.dateSelector} onPress={() => setShowMonthPicker(true)} activeOpacity={0.75}>
+          <View style={styles.dateSelectorLeft}>
+            <TrendingUp size={16} color="#6366f1" />
+            <Text style={styles.dateText}>{monthLabel}</Text>
+          </View>
+          <ChevronDown size={18} color="#6366f1" />
         </TouchableOpacity>
 
         {/* Month Picker Modal */}
         <Modal visible={showMonthPicker} transparent animationType="fade">
           <TouchableOpacity
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}
+            style={styles.modalOverlay}
             activeOpacity={1}
             onPress={() => setShowMonthPicker(false)}
           >
-            <View style={{
-              backgroundColor: '#fff', borderRadius: 16, padding: 16,
-              width: screenWidth - 64, maxHeight: 400,
-            }}>
-              <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 12, color: '#1C1C1EFF' }}>
-                Select Month
-              </Text>
-              <ScrollView>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Reporting Month</Text>
+              <ScrollView showsVerticalScrollIndicator={false}>
                 {MONTHS.map((m, i) => (
                   <TouchableOpacity
                     key={m}
-                    style={{
-                      paddingVertical: 12, paddingHorizontal: 8,
-                      borderRadius: 8,
-                      backgroundColor: selectedMonth === i + 1 ? '#007AFF15' : 'transparent',
-                    }}
+                    style={[
+                      styles.modalItem,
+                      selectedMonth === i + 1 && styles.modalItemSelect,
+                    ]}
                     onPress={() => {
                       setSelectedMonth(i + 1);
                       setShowMonthPicker(false);
                     }}
                   >
-                    <Text style={{ color: selectedMonth === i + 1 ? '#007AFF' : '#1C1C1EFF', fontWeight: selectedMonth === i + 1 ? '700' : '400' }}>
+                    <Text style={[styles.modalItemText, selectedMonth === i + 1 && styles.modalItemTextSelect]}>
                       {m} {selectedYear}
                     </Text>
                   </TouchableOpacity>
@@ -342,16 +375,37 @@ export default function ReportsScreen() {
           </TouchableOpacity>
         </Modal>
 
+        {/* Analytics card with Illustration */}
+        <View style={styles.welcomeCard}>
+          <LinearGradient
+            colors={['#EEF2FF', '#F5F3FF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.welcomeGradient}
+          >
+            <View style={styles.welcomeTextContainer}>
+              <Text style={styles.welcomeQuote}>Monthly Insights</Text>
+              <Text style={styles.ownerName}>Overview</Text>
+              <Text style={styles.welcomeDesc}>
+                View work trends, attendance analytics, and employee ratings for this month.
+              </Text>
+            </View>
+            <View style={styles.illustrationWrapper}>
+              <ReportIllustration width={110} height={90} />
+            </View>
+          </LinearGradient>
+        </View>
+
         {loading ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={{ marginTop: 12, color: '#8E8E93', fontSize: 14 }}>Loading reports…</Text>
+          <View style={styles.loaderWrapper}>
+            <ActivityIndicator size="large" color="#6366f1" />
+            <Text style={styles.loaderText}>Generating report details...</Text>
           </View>
         ) : (
-          <>
-            {/* Key Metrics */}
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            {/* Key Metrics Grid */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Key Metrics</Text>
+              <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
               <View style={styles.metricsGrid}>
                 {keyMetrics.map((metric, index) => (
                   <MetricCard key={index} metric={metric} />
@@ -359,29 +413,27 @@ export default function ReportsScreen() {
               </View>
             </View>
 
-            <View style={styles.divider} />
-
-            {/* Attendance Analytics */}
+            {/* Attendance Analytics charts */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Attendance Analytics</Text>
 
               {/* Attendance % Trend */}
               <View style={styles.chartCard}>
                 <View style={styles.chartHeader}>
-                  <Text style={styles.chartTitle}>Attendance Trend (%)</Text>
+                  <Text style={styles.chartCardTitle}>Attendance Trend (%)</Text>
                   <View style={styles.chartActions}>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Download size={16} color="#8E8E93" />
+                      <Download size={15} color="#94A3B8" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Share size={16} color="#8E8E93" />
+                      <Share2 size={15} color="#94A3B8" />
                     </TouchableOpacity>
                   </View>
                 </View>
                 <LineChart
                   data={attendanceTrendData}
-                  width={screenWidth - 72}
-                  height={200}
+                  width={screenWidth - 68}
+                  height={190}
                   chartConfig={chartConfig}
                   bezier
                   style={styles.chart}
@@ -397,20 +449,20 @@ export default function ReportsScreen() {
               {/* Late Check-ins (Weekly) */}
               <View style={styles.chartCard}>
                 <View style={styles.chartHeader}>
-                  <Text style={styles.chartTitle}>Late Check-ins (Weekly)</Text>
+                  <Text style={styles.chartCardTitle}>Weekly Late check-ins</Text>
                   <View style={styles.chartActions}>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Download size={16} color="#8E8E93" />
+                      <Download size={15} color="#94A3B8" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Share size={16} color="#8E8E93" />
+                      <Share2 size={15} color="#94A3B8" />
                     </TouchableOpacity>
                   </View>
                 </View>
                 <BarChart
                   data={lateTrendData}
-                  width={screenWidth - 70}
-                  height={200}
+                  width={screenWidth - 66}
+                  height={190}
                   chartConfig={barChartConfig}
                   style={styles.chart}
                   showValuesOnTopOfBars={true}
@@ -425,21 +477,25 @@ export default function ReportsScreen() {
               {/* Weekly Work Hours Trend */}
               <View style={styles.chartCard}>
                 <View style={styles.chartHeader}>
-                  <Text style={styles.chartTitle}>Weekly Work Hour Trend</Text>
+                  <Text style={styles.chartCardTitle}>Weekly Work hours trend</Text>
                   <View style={styles.chartActions}>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Download size={16} color="#8E8E93" />
+                      <Download size={15} color="#94A3B8" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.chartAction}>
-                      <Share size={16} color="#8E8E93" />
+                      <Share2 size={15} color="#94A3B8" />
                     </TouchableOpacity>
                   </View>
                 </View>
                 <LineChart
                   data={weeklyHoursData}
-                  width={screenWidth - 72}
-                  height={200}
-                  chartConfig={chartConfig}
+                  width={screenWidth - 68}
+                  height={190}
+                  chartConfig={{
+                    ...chartConfig,
+                    color: (opacity = 1) => `rgba(6, 182, 212, ${opacity})`,
+                    propsForDots: { r: '5', strokeWidth: '2.5', stroke: '#06B6D4' },
+                  }}
                   bezier
                   style={styles.chart}
                   withInnerLines={true}
@@ -453,17 +509,19 @@ export default function ReportsScreen() {
             </View>
 
             {/* Employee Overview */}
-            <View style={[styles.section, { marginBottom: 14 }]}>
+            <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Employee Overview</Text>
-                <TouchableOpacity style={styles.sectionAction}>
-                  <Download size={16} color="#8E8E93" />
+                <Text style={styles.sectionTitle}>Employee Directory Snapshot</Text>
+                <TouchableOpacity style={styles.downloadButton}>
+                  <Download size={15} color="#6366f1" />
+                  <Text style={styles.downloadButtonText}>Save list</Text>
                 </TouchableOpacity>
               </View>
+
               {employeeList.length === 0 ? (
-                <Text style={{ color: '#8E8E93', textAlign: 'center', paddingVertical: 20 }}>
-                  No employee data available.
-                </Text>
+                <View style={styles.emptyEmployeesCard}>
+                  <Text style={styles.emptyEmployeesText}>No employee log available for this period.</Text>
+                </View>
               ) : (
                 <View style={styles.employeeList}>
                   {employeeList.map((employee, index) => (
@@ -472,10 +530,393 @@ export default function ReportsScreen() {
                 </View>
               )}
             </View>
-          </>
+          </Animated.View>
         )}
       </ScrollView>
-      <StatusBar style="dark" />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#FAFBFF',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+
+  // --- Header ---
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 4 : 10,
+    paddingBottom: 12,
+  },
+  headerTitleContainer: {
+    flex: 1,
+  },
+  welcomeText: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginTop: 2,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 9,
+    right: 9,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+
+  // --- Month Selector ---
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  dateSelectorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '700',
+  },
+
+  // --- Welcome Banner ---
+  welcomeCard: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.08)',
+    marginBottom: 24,
+  },
+  welcomeGradient: {
+    flexDirection: 'row',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  welcomeTextContainer: {
+    flex: 1.2,
+    paddingRight: 8,
+  },
+  welcomeQuote: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ownerName: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginVertical: 2,
+  },
+  welcomeDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  illustrationWrapper: {
+    flex: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // --- Metrics ---
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E1B4B',
+    marginBottom: 14,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  metricCard: {
+    width: (screenWidth - 52) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  metricHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  metricIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  metricLabel: {
+    flex: 1,
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  metricValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
+  // --- Chart Card ---
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  chartCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  chartActions: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  chartAction: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  chart: {
+    marginVertical: 4,
+    borderRadius: 14,
+  },
+
+  // --- Employee list ---
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  downloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+  },
+  downloadButtonText: {
+    fontSize: 11,
+    color: '#6366f1',
+    fontWeight: '700',
+  },
+  employeeList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  employeeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  employeeDetailsContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  employeeName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  employeeDepartment: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  emptyEmployeesCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  emptyEmployeesText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+
+  // --- Loader ---
+  loaderWrapper: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    gap: 8,
+  },
+  loaderText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+
+  // --- Modal styles ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(30, 27, 75, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    width: screenWidth - 64,
+    maxHeight: 380,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontWeight: '800',
+    fontSize: 16,
+    color: '#1E1B4B',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 6,
+    backgroundColor: '#F8FAFC',
+  },
+  modalItemSelect: {
+    backgroundColor: '#EEF2FF',
+  },
+  modalItemText: {
+    color: '#475569',
+    fontWeight: '600',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  modalItemTextSelect: {
+    color: '#6366f1',
+    fontWeight: '800',
+  },
+});

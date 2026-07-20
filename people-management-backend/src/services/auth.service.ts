@@ -92,6 +92,7 @@ export class AuthService {
       designationId: user.designationId,
       employeeCode: user.employeeCode,
       companyId: user.companyId,
+      avatar: user.avatar || null,
     };
   }
 

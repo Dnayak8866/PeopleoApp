@@ -41,7 +41,24 @@ export class UserService {
       createdAt: now,
       // password: hashedPassword,
     });
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    const dto = userDto as any;
+    const details = this.userDetailsRepository.create({
+      employeeId: savedUser.id,
+      profileImage: dto.avatar || '',
+      houseNo: dto.house_no || '',
+      landmark: dto.area_landmark || '',
+      zipCode: dto.zipcode || '',
+      city: dto.city || '',
+      state: dto.state || '',
+      country: dto.country || '',
+      aadharNo: dto.aadhar_number || '',
+      panNo: dto.pan_number || '',
+    });
+    await this.userDetailsRepository.save(details);
+
+    return this.findOne(savedUser.id);
   }
 
   async findAll(): Promise<User[]> {

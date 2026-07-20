@@ -45,6 +45,9 @@ import { SalaryCountdownService } from './services/salary-countdown.service';
 import { UserDetails } from './entities/user-details.entity';
 import { LeaveApplicationService } from './services/leaves.service';
 import { LeaveApplicationController } from './controllers/leaves.controller';
+import { Notification } from './entities/notification.entity';
+import { NotificationService } from './services/notification.service';
+import { NotificationController } from './controllers/notification.controller';
 
 @Module({
   imports: [
@@ -75,11 +78,11 @@ import { LeaveApplicationController } from './controllers/leaves.controller';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Role, Company, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication, UserDetails, LeaveBalance]),
+    TypeOrmModule.forFeature([User, Role, Company, LeaveType, ShiftTiming, Holiday, Department, Designation, Attendance, LeaveApplication, UserDetails, LeaveBalance, Notification]),
   ],
 
-  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController, SalaryCountdownController, LeaveApplicationController],
-  providers: [UserService, AuthService, CompanyService, RoleService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService, SalaryCountdownService, LeaveApplicationService],
+  controllers: [UserController, AuthController, LeaveTypeController, ShiftTimingController, HolidayController, DepartmentController, DesignationController, AttendanceController, SalaryCountdownController, LeaveApplicationController, NotificationController],
+  providers: [UserService, AuthService, CompanyService, RoleService, LeaveTypeService, ShiftTimingService, HolidayService, DepartmentService, DesignationService, AttendanceService, SalaryCountdownService, LeaveApplicationService, NotificationService],
 
 })
 export class AppModule implements NestModule {
@@ -93,5 +96,6 @@ export class AppModule implements NestModule {
     consumer.apply(AuthMiddleware).forRoutes('attendance');
     consumer.apply(AuthMiddleware).forRoutes('salary-countdown');
     consumer.apply(AuthMiddleware).forRoutes('leaves');
+    consumer.apply(AuthMiddleware).forRoutes('notifications');
   }
 }

@@ -49,12 +49,13 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
     setIsNavigationReady(true);
 
     const inAuthGroup = segments[0] === '(auth)';
+    const hasTargetSegment = segments.length > 0 && segments[0] !== undefined;
 
     if (!userId && !inAuthGroup) {
       // User is not authenticated and not in auth group, redirect to login
       router.replace('/(auth)/login');
-    } else if (userId && inAuthGroup) {
-      // User is authenticated but in auth group, redirect to loader
+    } else if (userId && (!hasTargetSegment || inAuthGroup)) {
+      // User is authenticated but at root or in auth group, redirect to loader
       router.replace('/loader');
     }
   }, [userId, loading, showSplash, segments]);
@@ -84,6 +85,9 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
         <Stack.Screen name="employee/apply-leave" options={{ headerShown: false }} />
         <Stack.Screen name="leave-approval" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="employee-details" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

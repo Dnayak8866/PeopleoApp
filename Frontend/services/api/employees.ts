@@ -22,8 +22,9 @@ export const getEmployeeDetailsById = async (id: any) => {
 
 export const createEmployee = async (employeeData: any) => {
   try {
-    employeeData.company_id = 1;
-    employeeData.role_id = 2;
+    if (!employeeData.role_id) {
+      employeeData.role_id = 2; // Default: employee role
+    }
     const response = await api.post('/user', employeeData);
     return response.data;
   } catch (error) {
