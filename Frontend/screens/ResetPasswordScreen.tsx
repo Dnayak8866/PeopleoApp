@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { resetPassword as resetPasswordApi } from '@/services/api/auth';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import { ChevronLeft, Lock, Eye, EyeOff } from 'lucide-react-native';
 import ResetPasswordIllustration from '@/components/illustrations/ResetPasswordIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +23,7 @@ import { StatusBar } from 'expo-status-bar';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const { userId } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,29 +35,34 @@ export default function ResetPasswordScreen() {
 
   const handleReset = async () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Alert.alert('Error', 'Please fill all password fields');
+      showErrorToast('Error', 'Please fill all password fields');
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert('Error', 'New password must be at least 6 characters');
+      showErrorToast('Error', 'New password must be at least 6 characters');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      showErrorToast('Error', 'New passwords do not match');
+      return;
+    }
+
+    if (!userId) {
+      showErrorToast('Error', 'User is not authenticated.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      // Simulate API call for resetting password
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      Alert.alert('Success', 'Password has been reset successfully!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to reset password. Please try again.');
+      await resetPasswordApi(userId, currentPassword, newPassword);
+      showSuccessToast('Success', 'Password has been reset successfully!');
+      router.back();
+    } catch (error: any) {
+      console.error('Failed to reset password:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to reset password. Please try again.';
+      showErrorToast('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

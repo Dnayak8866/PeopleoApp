@@ -1,4 +1,5 @@
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import { formatToOptions } from '@/utils/utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -148,7 +149,7 @@ export default function EditProfileScreen() {
 
     } catch (error) {
       console.error('Error fetching employee details:', error);
-      Alert.alert('Error', 'Failed to fetch employee details');
+      showErrorToast('Error', 'Failed to fetch employee details');
     }
   };
 
@@ -204,7 +205,7 @@ export default function EditProfileScreen() {
 
   const handleUpdate = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fill all required fields');
+      showErrorToast('Validation Error', 'Please fill all required fields');
       return;
     }
     try {
@@ -228,14 +229,11 @@ export default function EditProfileScreen() {
       };
 
       await updateEmployee(employeeId, payload);
-      Alert.alert(
-        'Success',
-        'Profile updated successfully!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      showSuccessToast('Success', 'Profile updated successfully!');
+      router.back();
     } catch (error) {
       console.error('Failed to update employee:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again later.');
+      showErrorToast('Error', 'Failed to update profile. Please try again later.');
     }
   };
 

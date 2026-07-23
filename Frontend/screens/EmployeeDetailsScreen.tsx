@@ -162,15 +162,22 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
     ? `${stats.monthlySummary.avgWorkingHours} hrs`
     : '0 hrs';
 
-  const renderAttendanceCard = (attendance: DailyAttendance) => {
-    const dateObj = new Date(attendance.date);
+  const renderAttendanceCard = (attendance: DailyAttendance, index: number) => {
+    let dateObj: Date;
+    if (typeof attendance.date === 'string' && attendance.date.includes('-')) {
+      const [y, m, d] = attendance.date.split('T')[0].split('-').map(Number);
+      dateObj = new Date(y, m - 1, d);
+    } else {
+      dateObj = new Date(attendance.date);
+    }
+
     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
     const dayDate = dateObj.getDate().toString().padStart(2, '0');
     const status = attendance.status || 'Absent';
     const colors = statusColors[status] || statusColors.Absent;
 
     return (
-      <View key={attendance.date} style={[styles.attendanceCard, { borderLeftColor: colors.color }]}>
+      <View key={`${attendance.date}-${index}`} style={[styles.attendanceCard, { borderLeftColor: colors.color }]}>
         <View style={styles.cardMain}>
           {/* Calendar visual pill */}
           <View style={styles.dateBlock}>

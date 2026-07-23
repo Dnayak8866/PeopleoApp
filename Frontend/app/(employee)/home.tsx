@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import EmployeeHomeIllustration from '@/components/illustrations/EmployeeHomeIllustration';
 import { useAuth } from '@/context/AuthContext';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import { Avatar } from '@/components/Avatar';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import { punchIn, punchOut, getTodaySessionStatus, getEmployeeAttendancePercentage } from '@/services/api/attendance';
@@ -143,7 +144,7 @@ export default function HomeScreen() {
       setIsLoading(true);
 
       if (!userDetails?.id) {
-        Alert.alert('Error', 'User information not available');
+        showErrorToast('Error', 'User information not available');
         return;
       }
 
@@ -157,13 +158,11 @@ export default function HomeScreen() {
       setIsPunchedIn(true);
       setPunchInTime(new Date());
 
-      Alert.alert('Success', 'Punched in successfully!', [
-        { text: 'OK' }
-      ]);
+      showSuccessToast('Success', 'Punched in successfully!');
     } catch (error: any) {
       console.error('Punch in error:', error);
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to punch in';
-      Alert.alert('Error', errorMessage);
+      showErrorToast('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -176,7 +175,7 @@ export default function HomeScreen() {
       setIsLoading(true);
 
       if (!userDetails?.id) {
-        Alert.alert('Error', 'User information not available');
+        showErrorToast('Error', 'User information not available');
         return;
       }
 
@@ -189,13 +188,11 @@ export default function HomeScreen() {
 
       setIsPunchedIn(false);
 
-      Alert.alert('Success', 'Punched out successfully!', [
-        { text: 'OK' }
-      ]);
+      showSuccessToast('Success', 'Punched out successfully!');
     } catch (error: any) {
       console.error('Punch out error:', error);
       const errorMessage = error?.response?.data?.message || error.message || 'Failed to punch out';
-      Alert.alert('Error', errorMessage);
+      showErrorToast('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -384,7 +381,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
 
   // --- Header ---

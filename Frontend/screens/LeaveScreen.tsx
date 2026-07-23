@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
+import { showErrorToast } from '@/services/toast';
 import LeaveIllustration from '@/components/illustrations/LeaveIllustration';
 import { getEmployeeLeaves } from '@/services/api/leaves';
 import { useMasterDataContext } from '@/context/MasterDataContext';
@@ -57,7 +58,7 @@ export default function LeavesScreen() {
       setLeaves(data);
     } catch (error) {
       console.error('Error fetching leaves:', error);
-      Alert.alert('Error', 'Failed to fetch leave applications');
+      showErrorToast('Error', 'Failed to fetch leave applications');
     } finally {
       setIsLoading(false);
     }
@@ -605,7 +606,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 30,
+    bottom: 60,
     borderRadius: 20,
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },

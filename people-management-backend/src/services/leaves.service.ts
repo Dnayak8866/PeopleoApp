@@ -128,8 +128,9 @@ export class LeaveApplicationService {
                     }
                     const from = new Date(leave.from_date);
                     const to = new Date(leave.to_date);
-                    const diffTime = Math.abs(to.getTime() - from.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+                    const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+                    const diffDays = Math.max(1, Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24)) + 1);
                     return total + diffDays;
                 }, 0);
         };
@@ -269,8 +270,9 @@ export class LeaveApplicationService {
             }
             const from = new Date(leave.from_date);
             const to = new Date(leave.to_date);
-            const diffTime = Math.abs(to.getTime() - from.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+            const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+            const diffDays = Math.max(1, Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24)) + 1);
             return total + diffDays;
         }, 0);
 

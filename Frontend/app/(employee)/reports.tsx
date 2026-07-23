@@ -100,11 +100,22 @@ export default function EmployeeReportsScreen() {
   ] : [];
 
   // Prepare Bar Chart Data (Last 7 days or all records)
-  const barData = stats?.chartData?.slice(-7).map((item: any) => ({
-    value: item.hours,
-    label: new Date(item.date).getDate().toString(),
-    frontColor: '#6366f1',
-  })) || [];
+  const barData = stats?.chartData?.slice(-7).map((item: any) => {
+    let dayLabel = '';
+    if (typeof item.date === 'string') {
+      const parts = item.date.split('T')[0].split('-');
+      dayLabel = parts.length === 3 ? parseInt(parts[2], 10).toString() : item.date;
+    } else if (item.date instanceof Date) {
+      dayLabel = item.date.getDate().toString();
+    } else {
+      dayLabel = String(item.date);
+    }
+    return {
+      value: item.hours,
+      label: dayLabel,
+      frontColor: '#6366f1',
+    };
+  }) || [];
 
   const StatCard = ({ label, value, subLabel, icon: Icon, color }: any) => (
     <View style={styles.statCard}>
@@ -327,7 +338,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
 
   // --- Header ---

@@ -119,24 +119,57 @@ export class AttendanceService {
     return this.attendanceRepository.save(session);
   }
 
+  private parseWorkingHoursToMinutes(workingHours: any): number {
+    if (!workingHours) return 0;
+
+    if (typeof workingHours === 'string') {
+      if (workingHours.includes(':')) {
+        const parts = workingHours.split(':');
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        return hours * 60 + minutes;
+      }
+      const hoursMatch = workingHours.match(/(\d+)\s*h/i);
+      const minsMatch = workingHours.match(/(\d+)\s*m/i);
+      const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+      const mins = minsMatch ? parseInt(minsMatch[1], 10) : 0;
+      return hours * 60 + mins;
+    }
+
+    if (typeof workingHours === 'object') {
+      const days = typeof workingHours.days === 'number' ? workingHours.days : 0;
+      const hours = typeof workingHours.hours === 'number' ? workingHours.hours : 0;
+      const minutes = typeof workingHours.minutes === 'number' ? workingHours.minutes : 0;
+      return (days * 24 + hours) * 60 + minutes;
+    }
+
+    if (typeof workingHours === 'number') {
+      return Math.floor(workingHours);
+    }
+
+    return 0;
+  }
+
   async getTodaySessionStatus(employeeId: number, dateStr?: string): Promise<{
     hasActivePunch: boolean;
     sessionNumber: number;
     punchIn: Date | null;
   }> {
-    let today: Date;
+    let todayStr: string;
     if (dateStr) {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      today = new Date(y, m - 1, d);
+      todayStr = dateStr;
     } else {
-      today = new Date();
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      todayStr = `${y}-${m}-${d}`;
     }
-    today.setHours(0, 0, 0, 0);
 
     const activeSession = await this.attendanceRepository.findOne({
       where: {
         employeeId: employeeId,
-        attendance_date: today,
+        attendance_date: todayStr as any,
         punch_out: IsNull(),
       },
       order: { attendance_id: 'DESC' },
@@ -219,11 +252,10 @@ export class AttendanceService {
           lateCheckIns++;
         }
       }
-      // Compute average working hours from working_hours interval string "HH:MM:SS"
+      // Compute average working hours safely
       if (record.working_hours) {
-        const parts = record.working_hours.split(':');
-        if (parts.length >= 2) {
-          const mins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        const mins = this.parseWorkingHoursToMinutes(record.working_hours);
+        if (mins > 0) {
           totalWorkingMinutes += mins;
           workingMinutesCount++;
         }
@@ -299,11 +331,12 @@ export class AttendanceService {
       return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     };
 
-    const formatDuration = (workingHours: string | null): string => {
-      if (!workingHours) return '0h:00m';
-      const parts = workingHours.split(':');
-      if (parts.length >= 2) return `${parseInt(parts[0])}h:${parts[1]}m`;
-      return '0h:00m';
+    const formatDuration = (workingHours: any): string => {
+      const totalMins = this.parseWorkingHoursToMinutes(workingHours);
+      if (totalMins === 0) return '0h:00m';
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      return `${h}h:${String(m).padStart(2, '0')}m`;
     };
 
     return employees.map((emp: any) => {
@@ -352,21 +385,24 @@ export class AttendanceService {
    * excluding holidays and weekends.
    */
   async getEmployeeMonthlyPercentage(employeeId: number, month: number, year: number, companyId?: number) {
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const monthStr = String(month).padStart(2, '0');
+    const startStr = `${year}-${monthStr}-01`;
+    const endStr = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
+
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
-
-    const startStr = startDate.toISOString().slice(0, 10);
-    const endStr = endDate.toISOString().slice(0, 10);
 
     // Fetch holidays in the range
     const holidayWhere: any = { holiday_date: Between(startDate, endDate) };
     if (companyId) holidayWhere.company_id = companyId;
     const holidays = await this.holidayRepository.find({ where: holidayWhere });
     const holidaySet = new Set(
-      holidays.map(h =>
-        (h.holiday_date instanceof Date ? h.holiday_date : new Date(h.holiday_date as any))
-          .toISOString().slice(0, 10)
-      )
+      holidays.map(h => {
+        if (typeof h.holiday_date === 'string') return (h.holiday_date as string).slice(0, 10);
+        const d = new Date(h.holiday_date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })
     );
 
     // Fetch attendance records for employee in range
@@ -377,17 +413,28 @@ export class AttendanceService {
 
     const presentDaysSet = new Set<string>();
     for (const r of records) {
-      const dayKey = (r.attendance_date instanceof Date)
-        ? r.attendance_date.toISOString().slice(0, 10)
-        : new Date(r.attendance_date as any).toISOString().slice(0, 10);
+      let dayKey = '';
+      if (typeof r.attendance_date === 'string') {
+        dayKey = (r.attendance_date as string).slice(0, 10);
+      } else if (r.attendance_date instanceof Date) {
+        dayKey = `${r.attendance_date.getFullYear()}-${String(r.attendance_date.getMonth() + 1).padStart(2, '0')}-${String(r.attendance_date.getDate()).padStart(2, '0')}`;
+      } else {
+        const d = new Date(r.attendance_date as any);
+        dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
       const isPresent = (r.status && r.status.toLowerCase() !== 'absent') || (r.punch_in != null || r.punch_out != null);
       if (isPresent) presentDaysSet.add(dayKey);
     }
 
-    // Compute working days excluding weekends and holidays
+    // Compute working days up to today (if current month) or up to end of month
+    const now = new Date();
+    const isCurrentMonth = now.getFullYear() === year && (now.getMonth() + 1) === month;
+    const maxDay = isCurrentMonth ? Math.min(now.getDate(), lastDayOfMonth) : lastDayOfMonth;
+
     const days: string[] = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
+    for (let dayNum = 1; dayNum <= maxDay; dayNum++) {
+      const d = new Date(year, month - 1, dayNum);
+      const key = `${year}-${monthStr}-${String(dayNum).padStart(2, '0')}`;
       const dayOfWeek = d.getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6) continue; // skip weekends
       if (holidaySet.has(key)) continue;
@@ -407,10 +454,10 @@ export class AttendanceService {
    * Useful for the employee reports screen.
    */
   async getEmployeeStats(employeeId: number, month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    const startStr = startDate.toISOString().slice(0, 10);
-    const endStr = endDate.toISOString().slice(0, 10);
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const monthStr = String(month).padStart(2, '0');
+    const startStr = `${year}-${monthStr}-01`;
+    const endStr = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
     // Get attendance records
     const records = await this.attendanceRepository.createQueryBuilder('a')
@@ -438,9 +485,8 @@ export class AttendanceService {
     for (const record of records) {
       let mins = 0;
       if (record.working_hours) {
-        const parts = record.working_hours.split(':');
-        if (parts.length >= 2) {
-          mins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        mins = this.parseWorkingHoursToMinutes(record.working_hours);
+        if (mins > 0) {
           totalWorkingMinutes += mins;
           daysWithWorkingHours++;
         }
@@ -469,10 +515,10 @@ export class AttendanceService {
   }
 
   async getEmployeeAttendanceHistory(employeeId: number, month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    const startStr = startDate.toISOString().slice(0, 10);
-    const endStr = endDate.toISOString().slice(0, 10);
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const monthStr = String(month).padStart(2, '0');
+    const startStr = `${year}-${monthStr}-01`;
+    const endStr = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
     // Fetch attendance records sorted newest first
     const records = await this.attendanceRepository.createQueryBuilder('a')
@@ -496,7 +542,7 @@ export class AttendanceService {
       const from = new Date(leave.from_date);
       const to = new Date(leave.to_date);
       for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-        const key = d.toISOString().slice(0, 10);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         leaveDateMap.set(key, leave.leave_type?.type_name || 'Leave');
       }
     }
@@ -506,11 +552,12 @@ export class AttendanceService {
       return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     };
 
-    const formatWorkedHours = (workingHours: string | null): string => {
-      if (!workingHours) return '0h 0m';
-      const parts = workingHours.split(':');
-      if (parts.length >= 2) return `${parseInt(parts[0])}h ${parseInt(parts[1])}m`;
-      return '0h 0m';
+    const formatWorkedHours = (workingHours: any): string => {
+      const totalMins = this.parseWorkingHoursToMinutes(workingHours);
+      if (totalMins === 0) return '0h 0m';
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      return `${h}h ${m}m`;
     };
 
     const getStatus = (record: Attendance, dateKey: string): string => {
@@ -523,9 +570,16 @@ export class AttendanceService {
     };
 
     return records.map(record => {
-      const dateKey = (record.attendance_date instanceof Date)
-        ? record.attendance_date.toISOString().slice(0, 10)
-        : new Date(record.attendance_date as any).toISOString().slice(0, 10);
+      let dateKey = '';
+      if (typeof record.attendance_date === 'string') {
+        dateKey = (record.attendance_date as string).slice(0, 10);
+      } else if (record.attendance_date instanceof Date) {
+        dateKey = `${record.attendance_date.getFullYear()}-${String(record.attendance_date.getMonth() + 1).padStart(2, '0')}-${String(record.attendance_date.getDate()).padStart(2, '0')}`;
+      } else {
+        const d = new Date(record.attendance_date as any);
+        dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
       const status = getStatus(record, dateKey);
       return {
         date: dateKey,
@@ -543,10 +597,10 @@ export class AttendanceService {
    * Uses a single bulk query instead of per-day getDailySummary calls to avoid N+1 performance issues.
    */
   async getCompanyMonthlyStats(companyId: number, month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    const startStr = startDate.toISOString().slice(0, 10);
-    const endStr = endDate.toISOString().slice(0, 10);
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const monthStr = String(month).padStart(2, '0');
+    const startStr = `${year}-${monthStr}-01`;
+    const endStr = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
     // Single query: fetch all attendance records for the company for the entire month
     const records = await this.attendanceRepository
@@ -561,9 +615,15 @@ export class AttendanceService {
     // Group records by date string for trend data
     const byDate = new Map<string, Attendance[]>();
     for (const record of records) {
-      const dateKey = (record.attendance_date instanceof Date)
-        ? record.attendance_date.toISOString().slice(0, 10)
-        : new Date(record.attendance_date as any).toISOString().slice(0, 10);
+      let dateKey = '';
+      if (typeof record.attendance_date === 'string') {
+        dateKey = (record.attendance_date as string).slice(0, 10);
+      } else if (record.attendance_date instanceof Date) {
+        dateKey = `${record.attendance_date.getFullYear()}-${String(record.attendance_date.getMonth() + 1).padStart(2, '0')}-${String(record.attendance_date.getDate()).padStart(2, '0')}`;
+      } else {
+        const d = new Date(record.attendance_date as any);
+        dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
       if (!byDate.has(dateKey)) byDate.set(dateKey, []);
       byDate.get(dateKey)!.push(record);
     }
@@ -587,9 +647,9 @@ export class AttendanceService {
           if (h > 9 || (h === 9 && m > 30)) dayLate++;
         }
         if (record.working_hours) {
-          const parts = record.working_hours.split(':');
-          if (parts.length >= 2) {
-            totalWorkingMins += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+          const mins = this.parseWorkingHoursToMinutes(record.working_hours);
+          if (mins > 0) {
+            totalWorkingMins += mins;
             recordsCount++;
           }
         }

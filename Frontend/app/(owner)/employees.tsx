@@ -36,6 +36,7 @@ import { getEmployees, deleteEmployee } from '../../services/api/employees';
 import { getPositionNameById } from '@/utils/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -202,10 +203,10 @@ export default function EmployeesScreen() {
             try {
               await deleteEmployee(employee.id);
               setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
-              Alert.alert('Deleted', `${employee.fullName} has been removed`);
+              showSuccessToast('Deleted', `${employee.fullName} has been removed`);
             } catch (error) {
               console.error('Failed to delete employee:', error);
-              Alert.alert('Error', 'Failed to delete employee. Please try again.');
+              showErrorToast('Error', 'Failed to delete employee. Please try again.');
             }
           },
         },
@@ -712,7 +713,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 30,
+    bottom: 60,
     borderRadius: 20,
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 8 },

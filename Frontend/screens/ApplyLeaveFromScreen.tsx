@@ -30,6 +30,7 @@ import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import ApplyLeaveIllustration from '@/components/illustrations/ApplyLeaveIllustration';
 import { applyLeave, getLeaveBalances } from '@/services/api/leaves';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -122,17 +123,17 @@ export default function ApplyLeaveFormScreen() {
 
   const handleSubmit = async () => {
     if (!userId) {
-      Alert.alert('Error', 'User not authenticated');
+      showErrorToast('Error', 'User not authenticated');
       return;
     }
 
     if (!selectedLeaveTypeId) {
-      Alert.alert('Error', 'Please select a leave type');
+      showErrorToast('Error', 'Please select a leave type');
       return;
     }
 
     if (!reason.trim()) {
-      Alert.alert('Error', 'Please enter a reason for leave');
+      showErrorToast('Error', 'Please enter a reason for leave');
       return;
     }
 
@@ -148,13 +149,12 @@ export default function ApplyLeaveFormScreen() {
       };
 
       await applyLeave(leaveData);
-      Alert.alert('Success', 'Leave application submitted successfully', [
-        { text: 'OK', onPress: () => router.push('/(employee)/leave') }
-      ]);
+      showSuccessToast('Success', 'Leave application submitted successfully');
+      router.push('/(employee)/leave');
     } catch (error: any) {
       console.error('Failed to submit leave:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit leave application. Please try again.';
-      Alert.alert('Error', errorMessage);
+      showErrorToast('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

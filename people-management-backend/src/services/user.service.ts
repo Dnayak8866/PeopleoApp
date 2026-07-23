@@ -160,4 +160,11 @@ export class UserService {
   async findByPhone(phoneNumber: string): Promise<User | null> {
     return await this.userRepository.findOne({ where: { phoneNumber } });
   }
+
+  async updatePassword(id: number, hashedPassword: string): Promise<void> {
+    const employee = await this.userRepository.findOneBy({ id });
+    if (!employee) throw new NotFoundException(`User #${id} not found`);
+    employee.password = hashedPassword;
+    await this.userRepository.save(employee);
+  }
 }

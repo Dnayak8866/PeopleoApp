@@ -37,3 +37,17 @@ export const decodeToken = (token: string) => {
     return null;
   }
 };
+
+export const resetPassword = async (userId: number, currentPassword: string, newPassword: string) => {
+  try {
+    const response = await api.post('/auth/reset-password', {
+      userId,
+      currentPassword,
+      newPassword,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to reset password:', error);
+    throw error;
+  }
+};

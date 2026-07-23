@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import LoginIllustration from '@/components/illustrations/LoginIllustration';
 import { useAuth } from '@/context/AuthContext';
+import { showInfoToast } from '@/services/toast';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -75,11 +76,11 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert('Forgot Password feature will be available soon.');
-  }
+    showInfoToast('Coming Soon', 'Forgot Password feature will be available soon.');
+  };
 
   const handleContactSupport = () => {
-    Alert.alert('Contact HR Support feature will be available soon.');
+    showInfoToast('Coming Soon', 'Contact HR Support feature will be available soon.');
   };
 
   const onPressIn = () => {

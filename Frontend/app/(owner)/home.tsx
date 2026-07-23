@@ -118,10 +118,10 @@ export default function HomePage() {
 
   const chartData = hasData && summary
     ? [
-        { value: Math.max(summary.present, 0.001), color: '#10B981', text: 'Present' },
-        { value: Math.max(summary.lateCheckIns, 0.001), color: '#F59E0B', text: 'Late' },
-        { value: Math.max(summary.onLeave, 0.001), color: '#8B5CF6', text: 'Leave' },
-        { value: Math.max(summary.absent, 0.001), color: '#EF4444', text: 'Absent' },
+        { value: Math.max(summary.present, 0.001), color: '#10B981'},
+        { value: Math.max(summary.lateCheckIns, 0.001), color: '#F59E0B'},
+        { value: Math.max(summary.onLeave, 0.001), color: '#8B5CF6'},
+        { value: Math.max(summary.absent, 0.001), color: '#EF4444'},
       ]
     : [
         { value: 1, color: '#E2E8F0' }, // Placeholder gray circle

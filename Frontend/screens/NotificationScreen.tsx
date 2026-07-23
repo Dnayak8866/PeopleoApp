@@ -16,6 +16,7 @@ import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, Calendar, CheckCircle2, ChevronLeft, Info, BellRing, ClipboardCheck } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { showErrorToast } from '@/services/toast';
 import NotificationIllustration from '@/components/illustrations/NotificationIllustration';
 import { getNotifications, markAllNotificationsAsRead, markNotificationAsRead, NotificationItem } from '@/services/api/notifications';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -74,7 +75,7 @@ export default function NotificationScreen() {
       setNotifications(data || []);
     } catch (error) {
       console.error('Failed to load notifications:', error);
-      Alert.alert('Error', 'Failed to load notifications');
+      showErrorToast('Error', 'Failed to load notifications');
     } finally {
       setLoading(false);
     }
@@ -110,7 +111,7 @@ export default function NotificationScreen() {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
-      Alert.alert('Error', 'Failed to mark all as read');
+      showErrorToast('Error', 'Failed to mark all as read');
     }
   };
 

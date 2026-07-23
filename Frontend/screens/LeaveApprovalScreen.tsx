@@ -1,6 +1,7 @@
 import { Avatar } from '@/components/Avatar';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import { approveLeave, getPendingLeaves, PendingLeave, rejectLeave } from '@/services/api/leaves';
 import { router } from 'expo-router';
 import { ArrowLeft, CheckCircle, ClipboardList, XCircle, CalendarDays, Clock, FileText, ChevronLeft } from 'lucide-react-native';
@@ -104,8 +105,9 @@ export default function LeaveApprovalsScreen() {
             try {
               await approveLeave(leaveId, userDetails.id);
               setLeaves(prev => prev.filter(l => l.leave_id !== leaveId));
+              showSuccessToast('Approved', 'Leave request approved successfully.');
             } catch (err) {
-              Alert.alert('Error', 'Failed to approve leave. Please try again.');
+              showErrorToast('Error', 'Failed to approve leave. Please try again.');
             } finally {
               setActionLoading(prev => ({ ...prev, [leaveId]: null }));
             }
@@ -129,8 +131,9 @@ export default function LeaveApprovalsScreen() {
             try {
               await rejectLeave(leaveId);
               setLeaves(prev => prev.filter(l => l.leave_id !== leaveId));
+              showSuccessToast('Rejected', 'Leave request rejected.');
             } catch (err) {
-              Alert.alert('Error', 'Failed to reject leave. Please try again.');
+              showErrorToast('Error', 'Failed to reject leave. Please try again.');
             } finally {
               setActionLoading(prev => ({ ...prev, [leaveId]: null }));
             }

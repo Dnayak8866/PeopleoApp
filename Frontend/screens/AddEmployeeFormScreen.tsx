@@ -1,4 +1,5 @@
 import { createEmployee } from '@/services/api/employees';
+import { showSuccessToast, showErrorToast } from '@/services/toast';
 import { Colors } from '@/constants/Colors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
@@ -163,19 +164,16 @@ export default function AddEmployeeScreen() {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please enter the required fields correctly.');
+      showErrorToast('Validation Error', 'Please enter the required fields correctly.');
       return;
     }
     try {
       await createEmployee({ ...formData, company_id: companyId });
-      Alert.alert(
-        'Success',
-        'Employee added successfully!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      showSuccessToast('Success', 'Employee added successfully!');
+      router.back();
     } catch (error) {
       console.error('Error saving employee:', error);
-      Alert.alert('Error', 'Failed to add employee. Please try again later.');
+      showErrorToast('Error', 'Failed to add employee. Please try again later.');
       return;
     }
   };

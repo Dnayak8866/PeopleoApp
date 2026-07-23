@@ -32,4 +32,12 @@ export class AuthController {
   async getHomePageDetails(@Body() body: { userId: number; companyId: number }): Promise<HomePageDetailsDto> {
     return this.authService.getHomePageDetails(body.userId, body.companyId);
   }
+
+  @Post('reset-password')
+  @ApiBody({ schema: { properties: { userId: { type: 'number', example: 1 }, currentPassword: { type: 'string' }, newPassword: { type: 'string' } } } })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  async resetPassword(@Body() body: { userId: number; currentPassword: string; newPassword: string }) {
+    return this.authService.resetPassword(body.userId, body.currentPassword, body.newPassword);
+  }
 }
