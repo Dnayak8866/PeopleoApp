@@ -1,11 +1,12 @@
 import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { LeaveApplication } from '../entities/leave-application.entity';
 import { LeaveApplicationDto } from '../dto/leaves.dto';
 import { User } from '../entities/user.entity';
 import { LeaveType } from '../entities/leave-type.entity';
 import { LeaveBalance } from '../entities/leave-balance.entity';
+import { NotificationService } from './notification.service';
 
 @Injectable()
 export class LeaveApplicationService {
@@ -18,6 +19,7 @@ export class LeaveApplicationService {
         private readonly leaveTypeRepo: Repository<LeaveType>,
         @InjectRepository(LeaveBalance)
         private readonly balanceRepo: Repository<LeaveBalance>,
+        private readonly notificationService: NotificationService,
     ) { }
 
     async applyLeave(dto: LeaveApplicationDto): Promise<LeaveApplication> {
@@ -61,7 +63,36 @@ export class LeaveApplicationService {
             applied_at: new Date(),
         });
 
-        return this.leaveRepo.save(leave);
+        const savedLeave = await this.leaveRepo.save(leave);
+
+        try {
+            // 1. Notify employee
+            const formattedFrom = from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const formattedTo = to.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            await this.notificationService.create(
+                employee_id,
+                'Leave Applied',
+                `Your leave application from ${formattedFrom} to ${formattedTo} has been submitted successfully.`,
+                'success'
+            );
+
+            // 2. Notify all admins in the company
+            const admins = await this.userRepo.find({
+                where: { companyId: employee.companyId, roleId: 1 }
+            });
+            for (const admin of admins) {
+                await this.notificationService.create(
+                    admin.id,
+                    'New Leave Request',
+                    `${employee.fullName} has applied for leave from ${formattedFrom} to ${formattedTo}.`,
+                    'info'
+                );
+            }
+        } catch (err) {
+            console.error('Failed to generate leave apply notifications:', err);
+        }
+
+        return savedLeave;
     }
 
     async getEmployeeLeaves(employee_id: number): Promise<LeaveApplication[]> {
@@ -97,8 +128,9 @@ export class LeaveApplicationService {
                     }
                     const from = new Date(leave.from_date);
                     const to = new Date(leave.to_date);
-                    const diffTime = Math.abs(to.getTime() - from.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+                    const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+                    const diffDays = Math.max(1, Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24)) + 1);
                     return total + diffDays;
                 }, 0);
         };
@@ -137,13 +169,13 @@ export class LeaveApplicationService {
     }
 
     async getPendingLeaves(companyId: number) {
+        // Fetch all pending leaves, filter by company via subquery on users table
         const leaves: LeaveApplication[] = await this.leaveRepo
             .createQueryBuilder('l')
             .leftJoinAndSelect('l.leave_type', 'lt')
-            .innerJoin('employees', 'emp', 'emp.employee_id = l.employee_id')
+            .innerJoin('l.user', 'u')
             .where('l.status = :status', { status: 'Pending' })
-            .andWhere('emp.company_id = :companyId', { companyId })
-            .addSelect(['emp.full_name', 'emp.employee_id'])
+            .andWhere('u.companyId = :companyId', { companyId })
             .orderBy('l.applied_at', 'DESC')
             .getMany();
 
@@ -151,7 +183,7 @@ export class LeaveApplicationService {
         const employeeIds = [...new Set(leaves.map(l => l.employee_id))];
         let employeeMap: Record<number, User> = {};
         if (employeeIds.length > 0) {
-            const employees = await this.userRepo.findByIds(employeeIds);
+            const employees = await this.userRepo.findBy({ id: In(employeeIds) });
             employeeMap = employees.reduce((acc, emp) => {
                 acc[emp.id] = emp;
                 return acc;
@@ -180,7 +212,23 @@ export class LeaveApplicationService {
         }
         leave.status = 'Approved';
         leave.approved_by = approvedBy;
-        return this.leaveRepo.save(leave);
+        
+        const savedLeave = await this.leaveRepo.save(leave);
+        
+        try {
+            const formattedFrom = new Date(leave.from_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const formattedTo = new Date(leave.to_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            await this.notificationService.create(
+                leave.employee_id,
+                'Leave Approved',
+                `Your leave application from ${formattedFrom} to ${formattedTo} has been approved.`,
+                'success'
+            );
+        } catch (err) {
+            console.error('Failed to notify leave approval:', err);
+        }
+
+        return savedLeave;
     }
 
     async rejectLeave(leaveId: number): Promise<LeaveApplication> {
@@ -190,7 +238,23 @@ export class LeaveApplicationService {
             throw new BadRequestException(`Leave application is already ${leave.status}`);
         }
         leave.status = 'Rejected';
-        return this.leaveRepo.save(leave);
+        
+        const savedLeave = await this.leaveRepo.save(leave);
+
+        try {
+            const formattedFrom = new Date(leave.from_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const formattedTo = new Date(leave.to_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            await this.notificationService.create(
+                leave.employee_id,
+                'Leave Rejected',
+                `Your leave application from ${formattedFrom} to ${formattedTo} has been rejected.`,
+                'warning'
+            );
+        } catch (err) {
+            console.error('Failed to notify leave rejection:', err);
+        }
+
+        return savedLeave;
     }
 
     async getEmployeeLeaveCount(employeeId: number, year: number): Promise<{ total_leaves_taken: number }> {
@@ -206,8 +270,9 @@ export class LeaveApplicationService {
             }
             const from = new Date(leave.from_date);
             const to = new Date(leave.to_date);
-            const diffTime = Math.abs(to.getTime() - from.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+            const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+            const diffDays = Math.max(1, Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24)) + 1);
             return total + diffDays;
         }, 0);
 
@@ -217,9 +282,9 @@ export class LeaveApplicationService {
     async getPendingLeavesCount(companyId: number): Promise<{ count: number }> {
         const count = await this.leaveRepo
             .createQueryBuilder('l')
-            .innerJoin('employees', 'emp', 'emp.employee_id = l.employee_id')
+            .innerJoin('l.user', 'u')
             .where('l.status = :status', { status: 'Pending' })
-            .andWhere('emp.company_id = :companyId', { companyId })
+            .andWhere('u.companyId = :companyId', { companyId })
             .getCount();
 
         return { count };

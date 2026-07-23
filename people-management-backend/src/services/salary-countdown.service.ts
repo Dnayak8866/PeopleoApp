@@ -26,10 +26,11 @@ export class SalaryCountdownService {
     // candidate this month
     const daysInThisMonth = lastDayOfMonth(year, month);
     const candidateDayThisMonth = Math.min(day, daysInThisMonth);
+    const todayStartOfDay = new Date(year, month, now.getDate(), 0, 0, 0, 0);
     const candidateDateThisMonth = new Date(year, month, candidateDayThisMonth, 0, 0, 0, 0);
 
     let nextSalaryDate: Date;
-    if (now <= candidateDateThisMonth) {
+    if (todayStartOfDay <= candidateDateThisMonth) {
       nextSalaryDate = candidateDateThisMonth;
     } else {
       // next month
@@ -42,13 +43,12 @@ export class SalaryCountdownService {
     }
 
     const msPerDay = 24 * 60 * 60 * 1000;
-    // calculate difference in days (fractional days rounded up if there's any remainder)
-    const diffMs = nextSalaryDate.getTime() - now.getTime();
-    const rawDays = Math.ceil(diffMs / msPerDay);
+    const diffMs = nextSalaryDate.getTime() - todayStartOfDay.getTime();
+    const daysRemaining = Math.max(0, Math.round(diffMs / msPerDay));
 
     return {
       salaryDay: day,
-      daysRemaining: Math.max(0, rawDays),
+      daysRemaining,
       nextSalaryDate: nextSalaryDate.toISOString(),
     } as SalaryCountdownResult;
   }

@@ -1,38 +1,43 @@
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
-import { ownerHomeScreenStyles } from '@/styles/ownerHomeScreenStyles';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
+import OwnerHomeIllustration from '@/components/illustrations/OwnerHomeIllustration';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowUp, Bell, CalendarDays, ChartLine, ClipboardCheck, Dot, MailPlus, Users } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Bell,
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  FileBarChart2,
+  Clock,
+  UserCheck,
+  UserMinus,
+  UserX,
+  Users2,
+} from 'lucide-react-native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
+  Animated,
+  Dimensions,
+  Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 import { getDailyAttendanceSummary } from '@/services/api/attendance';
 import { getPendingLeavesCount } from '@/services/api/leaves';
 import { DailySummary } from '@/services/types/attendance';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const Status = ({ label, value, trend, iconColor }: {
-  label: string;
-  value: string | number;
-  trend?: string;
-  iconColor: string;
-}) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', height: 40, width: '50%' }}>
-    <Dot size={60} color={iconColor} />
-    <Text>{label}: </Text>
-    <Text>{value} {trend && <ArrowUp size={15} color={'green'} />}<Text style={{ fontSize: 10, color: 'green', fontWeight: '700', lineHeight: 11 }}>{trend}</Text></Text>
-  </View>
-);
+const { width } = Dimensions.get('window');
 
 export default function HomePage() {
   const getToday = () => {
@@ -48,124 +53,193 @@ export default function HomePage() {
 
   const { logout, userDetails } = useAuth();
   const { companyDetails } = useMasterDataContext();
-  const styles = ownerHomeScreenStyles();
 
-  const fetchSummary = useCallback(async (date: string) => {
-    if (!userDetails?.companyId) return;
-    setLoading(true);
-    try {
-      const [summaryData, pendingData] = await Promise.all([
-        getDailyAttendanceSummary(date, userDetails.companyId),
-        getPendingLeavesCount(userDetails.companyId)
-      ]);
-      setSummary(summaryData);
-      setPendingCount(pendingData.count);
-    } catch (err) {
-      console.error('Failed to load owner home data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [userDetails?.companyId]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  const fetchSummary = useCallback(
+    async (date: string) => {
+      if (!userDetails?.companyId) return;
+      setLoading(true);
+      try {
+        const [summaryData, pendingData] = await Promise.all([
+          getDailyAttendanceSummary(date, userDetails.companyId),
+          getPendingLeavesCount(userDetails.companyId),
+        ]);
+        setSummary(summaryData);
+        setPendingCount(pendingData.count);
+      } catch (err) {
+        console.error('Failed to load owner home data:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userDetails?.companyId]
+  );
 
   useEffect(() => {
     fetchSummary(selectedDate);
   }, [selectedDate, fetchSummary]);
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/login');
-  };
+  useEffect(() => {
+    // Reset animations and trigger fade-in
+    fadeAnim.setValue(0);
+    slideAnim.setValue(20);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [selectedDate]);
 
   const getDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
+      weekday: 'short',
+      month: 'short',
       day: 'numeric',
     });
   };
 
-  // Build chart data from real summary; fall back to zeros when loading
-  const total = summary ? (summary.present + summary.absent + summary.onLeave + summary.lateCheckIns) || 1 : 1;
-  const chartData = summary
-    ? [
-      { value: Math.max(summary.lateCheckIns, 0.001), color: '#F59E0B' },
-      { value: Math.max(summary.absent, 0.001), color: '#EF4444' },
-      { value: Math.max(summary.onLeave, 0.001), color: Colors.primary },
-      { value: Math.max(summary.present, 0.001), color: '#10B981' },
-    ]
-    : [
-      { value: 1, color: '#F59E0B' },
-      { value: 1, color: '#EF4444' },
-      { value: 1, color: Colors.primary },
-      { value: 1, color: '#10B981' },
-    ];
+  // Build chart data from real summary; fall back to default values when loading/empty
+  const hasData =
+    !!(summary &&
+    (summary.present > 0 ||
+      summary.absent > 0 ||
+      summary.onLeave > 0 ||
+      summary.lateCheckIns > 0));
 
-  const QuickActionCard = ({ icon: Icon, title, onPress, iconColor = Colors.primary, badgeCount }: {
+  const chartData = hasData && summary
+    ? [
+        { value: Math.max(summary.present, 0.001), color: '#10B981'},
+        { value: Math.max(summary.lateCheckIns, 0.001), color: '#F59E0B'},
+        { value: Math.max(summary.onLeave, 0.001), color: '#8B5CF6'},
+        { value: Math.max(summary.absent, 0.001), color: '#EF4444'},
+      ]
+    : [
+        { value: 1, color: '#E2E8F0' }, // Placeholder gray circle
+      ];
+
+  const QuickActionCard = ({
+    icon: Icon,
+    title,
+    subtitle,
+    onPress,
+    gradientColors,
+    badgeCount,
+  }: {
     icon: any;
     title: string;
+    subtitle: string;
     onPress: () => void;
-    iconColor?: string;
+    gradientColors: string[];
     badgeCount?: number;
   }) => (
-    <TouchableOpacity style={styles.quickActionCard} onPress={onPress}>
-      <View style={[styles.quickActionIcon, { backgroundColor: iconColor + '20' }]}>
-        <Icon size={24} color={iconColor} />
+    <TouchableOpacity
+      style={styles.quickActionCard}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <LinearGradient
+        colors={gradientColors as [string, string, ...string[]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.quickActionIconContainer}
+      >
+        <Icon size={22} color="#FFFFFF" />
+      </LinearGradient>
+      
+      <View style={styles.quickActionTextContainer}>
+        <Text style={styles.quickActionTitle}>{title}</Text>
+        <Text style={styles.quickActionSubtitle}>{subtitle}</Text>
       </View>
-      {badgeCount !== undefined && badgeCount > 0 && (
-        <View style={{
-          position: 'absolute',
-          top: 10,
-          right: 15,
-          backgroundColor: '#EF4444',
-          borderRadius: 10,
-          minWidth: 20,
-          height: 20,
-          paddingHorizontal: 4,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 2,
-          borderColor: '#FFFFFF',
-        }}>
-          <Text style={{ color: 'white', fontSize: 10, fontWeight: '700' }}>{badgeCount}</Text>
+
+      {badgeCount !== undefined && badgeCount > 0 ? (
+        <View style={styles.badgeContainer}>
+          <Text style={styles.badgeText}>{badgeCount}</Text>
         </View>
+      ) : (
+        <ChevronRight size={16} color="#94A3B8" style={styles.chevron} />
       )}
-      <Text style={styles.quickActionTitle}>{title}</Text>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+
+      {/* Top Header */}
       <View style={styles.header}>
-        <Text style={styles.companyName}>{companyDetails?.name || 'Loading...'}</Text>
+        <View style={styles.logoContainer}>
+          <Text style={styles.appName}>Peopleo</Text>
+          <Text style={styles.companyName}>
+            {companyDetails?.name || 'Dashboard'}
+          </Text>
+        </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => router.push('/notifications')}>
-            <Bell size={24} color="#6B7280" />
+          <TouchableOpacity
+            style={styles.bellButton}
+            onPress={() => router.push('/notifications')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Bell size={22} color="#1E293B" />
+            <View style={styles.bellBadge} />
           </TouchableOpacity>
-          <HeaderAvatar size={40} />
+          <HeaderAvatar size={38} />
         </View>
       </View>
-      <ScrollView contentContainerStyle={{ flex: 1 }}>
-        {/* Date Picker Button */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#FFFFFF', marginHorizontal: 0, minWidth: '55%',
-            justifyContent: 'center', alignItems: 'center', alignSelf: 'center',
-            borderRadius: 10, marginTop: 5, padding: 6,
-            boxShadow: '0px 0px 1px #171a1f12, 0px 0px 2px #171a1f1F',
-            borderColor: '#EBEBEAFF', borderWidth: 1, flexDirection: 'row', gap: 4, marginBottom: 20
-          } as any}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <CalendarDays size={24} color="#6B7280" />
-          <Text>{getDisplayDate(selectedDate)}</Text>
-        </TouchableOpacity>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Welcome Section with Illustration */}
+        <View style={styles.welcomeCard}>
+          <LinearGradient
+            colors={['#EEF2FF', '#F5F3FF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.welcomeGradient}
+          >
+            <View style={styles.welcomeTextContainer}>
+              <Text style={styles.welcomeGreeting}>Welcome Back,</Text>
+              <Text style={styles.ownerName}>
+                {userDetails?.fullName?.split(' ')[0] || 'Manager'}
+              </Text>
+              <Text style={styles.welcomeQuote}>
+                Here is your team's overview for today.
+              </Text>
+
+              {/* Date Selector Button */}
+              <TouchableOpacity
+                style={styles.dateSelector}
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.7}
+              >
+                <Calendar size={14} color="#6366f1" />
+                <Text style={styles.dateSelectorText}>
+                  {getDisplayDate(selectedDate)}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.illustrationContainer}>
+              <OwnerHomeIllustration width={120} height={100} />
+            </View>
+          </LinearGradient>
+        </View>
 
         {showDatePicker && (
           <DateTimePicker
             value={new Date(selectedDate)}
             mode="date"
-            style={{ height: 100, width: '50%' }}
             display="default"
             onChange={(event, date) => {
               setShowDatePicker(false);
@@ -176,81 +250,421 @@ export default function HomePage() {
           />
         )}
 
-        {/* Pie Chart */}
-        <View style={{ marginTop: 5, alignItems: 'center' }}>
+        {/* Attendance Dashboard Card */}
+        <Animated.View
+          style={[
+            styles.dashboardCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.cardTitle}>Today's Snapshot</Text>
+
           {loading ? (
-            <View style={{ height: 240, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#6366f1" />
+              <Text style={styles.loaderText}>Syncing records...</Text>
             </View>
           ) : (
-            <PieChart
-              data={chartData}
-              donut
-              showText
-              textColor="white"
-              radius={120}
-              innerRadius={80}
-              textSize={12}
-              centerLabelComponent={() => (
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 32, fontWeight: '700', color: '#111827' }}>
-                    {summary ? summary.avgWorkingHours.toFixed(1) : '--'}{' '}
-                    <Text style={{ fontSize: 18, fontWeight: '500', color: '#6B7280' }}>hrs</Text>
-                  </Text>
-                  <Text style={{ fontSize: 13, fontWeight: '500', color: '#6B7280', marginTop: 4 }}>
-                    Avg. Working Hours
-                  </Text>
+            <View style={styles.dashboardBody}>
+              {/* Donut Chart Container */}
+              <View style={styles.chartWrapper}>
+                <PieChart
+                  data={chartData}
+                  donut
+                  showText={hasData}
+                  textColor="white"
+                  radius={80}
+                  innerRadius={56}
+                  textSize={10}
+                  focusOnPress
+                  centerLabelComponent={() => (
+                    <View style={styles.chartCenter}>
+                      <Text style={styles.chartCenterHours}>
+                        {summary ? summary.avgWorkingHours.toFixed(1) : '0.0'}
+                      </Text>
+                      <Text style={styles.chartCenterLabel}>Avg Hrs</Text>
+                    </View>
+                  )}
+                />
+              </View>
+
+              {/* Stats badges */}
+              <View style={styles.statsColumn}>
+                {/* Present */}
+                <View style={styles.statBadgeRow}>
+                  <View style={[styles.statDot, { backgroundColor: '#10B981' }]} />
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statLabel}>Present</Text>
+                    <Text style={styles.statCount}>
+                      {summary?.present ?? 0}
+                    </Text>
+                  </View>
                 </View>
-              )}
-            />
+
+                {/* Late Check-ins */}
+                <View style={styles.statBadgeRow}>
+                  <View style={[styles.statDot, { backgroundColor: '#F59E0B' }]} />
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statLabel}>Late In</Text>
+                    <Text style={styles.statCount}>
+                      {summary?.lateCheckIns ?? 0}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* On Leave */}
+                <View style={styles.statBadgeRow}>
+                  <View style={[styles.statDot, { backgroundColor: '#8B5CF6' }]} />
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statLabel}>On Leave</Text>
+                    <Text style={styles.statCount}>
+                      {summary?.onLeave ?? 0}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Absent */}
+                <View style={styles.statBadgeRow}>
+                  <View style={[styles.statDot, { backgroundColor: '#EF4444' }]} />
+                  <View style={styles.statInfo}>
+                    <Text style={styles.statLabel}>Absent</Text>
+                    <Text style={styles.statCount}>
+                      {summary?.absent ?? 0}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
           )}
-        </View>
+        </Animated.View>
 
-        {/* Stats row */}
-        <View style={{ flex: 1, justifyContent: 'flex-start', width: '80%', alignSelf: 'flex-start', marginLeft: 20 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Status label='Present' value={loading ? '...' : (summary?.present ?? '--')} iconColor='#10B981' />
-            <Status label='Absent' value={loading ? '...' : (summary?.absent ?? '--')} iconColor='#EF4444' />
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Status label='On leave' value={loading ? '...' : (summary?.onLeave ?? '--')} iconColor={Colors.primary} />
-            <Status label='Late Check-ins' value={loading ? '...' : (summary?.lateCheckIns ?? '--')} iconColor='#F59E0B' />
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
+        {/* Quick Management Section */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.sectionTitle}>Quick Management</Text>
+          <View style={styles.quickActionsList}>
             <QuickActionCard
-              icon={MailPlus}
-              title="Leave Approval"
+              icon={UserCheck}
+              title="Leave Approvals"
+              subtitle="Review pending leave requests"
               onPress={() => router.push('/leave-approval')}
-              iconColor="#EF4444"
+              gradientColors={['#EF4444', '#F87171']}
               badgeCount={pendingCount}
             />
+
             <QuickActionCard
-              icon={ClipboardCheck}
+              icon={ClipboardList}
               title="View Attendance"
+              subtitle="Check in/out logs & timesheets"
               onPress={() => router.push('/(owner)/attendance')}
-              iconColor={Colors.primary}
+              gradientColors={['#6366f1', '#818cf8']}
             />
+
             <QuickActionCard
-              icon={Users}
+              icon={Users2}
               title="Manage Employees"
+              subtitle="View directory & worker status"
               onPress={() => router.push('/(owner)/employees')}
-              iconColor="#06B6D4"
+              gradientColors={['#06B6D4', '#22D3EE']}
             />
+
             <QuickActionCard
-              icon={ChartLine}
-              title="Reports"
+              icon={FileBarChart2}
+              title="Reports & Analytics"
+              subtitle="Generate monthly insight reports"
               onPress={() => router.push('/(owner)/reports')}
-              iconColor="#10B981"
+              gradientColors={['#10B981', '#34D399']}
             />
           </View>
         </View>
       </ScrollView>
-      <StatusBar style="dark" />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFBFF',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+
+  // --- Header ---
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 4 : 12,
+    paddingBottom: 16,
+    backgroundColor: '#FAFBFF',
+  },
+  logoContainer: {
+    flex: 1,
+  },
+  appName: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#6366f1',
+    letterSpacing: -0.5,
+  },
+  companyName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  bellButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+
+  // --- Welcome Card & Illustration ---
+  welcomeCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.08)',
+  },
+  welcomeGradient: {
+    flexDirection: 'row',
+    padding: 20,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  welcomeTextContainer: {
+    flex: 1.2,
+    paddingRight: 10,
+  },
+  welcomeGreeting: {
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ownerName: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E1B4B',
+    marginVertical: 2,
+  },
+  welcomeQuote: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 14,
+    lineHeight: 16,
+  },
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  dateSelectorText: {
+    fontSize: 12,
+    color: '#1E293B',
+    fontWeight: '700',
+  },
+  illustrationContainer: {
+    flex: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // --- Dashboard Card ---
+  dashboardCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.04)',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e1b4b',
+    marginBottom: 16,
+  },
+  loaderContainer: {
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loaderText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  dashboardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chartWrapper: {
+    flex: 1.1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chartCenterHours: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1e1b4b',
+    letterSpacing: -0.5,
+  },
+  chartCenterLabel: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  statsColumn: {
+    flex: 0.9,
+    gap: 12,
+    paddingLeft: 10,
+  },
+  statBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  statDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  statCount: {
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '700',
+  },
+
+  // --- Quick Actions Grid ---
+  quickActionsSection: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e1b4b',
+    marginBottom: 16,
+  },
+  quickActionsList: {
+    gap: 12,
+  },
+  quickActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  quickActionIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionTextContainer: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  quickActionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  quickActionSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  chevron: {
+    marginRight: 4,
+  },
+  badgeContainer: {
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+});

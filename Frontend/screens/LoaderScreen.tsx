@@ -1,17 +1,31 @@
 import { Colors } from '@/constants/Colors';
+import LoaderIllustration from '@/components/illustrations/LoaderIllustration';
 import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState, useRef } from 'react';
 import {
     Animated,
+    Dimensions,
+    Platform,
     StyleSheet,
     Text,
     View,
-    StatusBar
+    StatusBar,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width } = Dimensions.get('window');
+
+// Loading step definitions
+const LOADING_STEPS = [
+    { label: 'Authenticating profile', icon: 'finger-print-outline' as const },
+    { label: 'Fetching your data', icon: 'cloud-download-outline' as const },
+    { label: 'Setting up workspace', icon: 'construct-outline' as const },
+    { label: 'Securing connections', icon: 'shield-checkmark-outline' as const },
+];
 
 export default function LoaderScreen() {
     const router = useRouter();
@@ -19,25 +33,69 @@ export default function LoaderScreen() {
     const { fetchHomePageDetails } = useMasterDataContext();
 
     const progress = useRef(new Animated.Value(0)).current;
-    const spinValue = useRef(new Animated.Value(0)).current;
-    const [loadingText, setLoadingText] = useState('Syncing attendance records...');
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const fadeIn = useRef(new Animated.Value(0)).current;
+    const slideUp = useRef(new Animated.Value(30)).current;
+    const dotOpacity1 = useRef(new Animated.Value(0.3)).current;
+    const dotOpacity2 = useRef(new Animated.Value(0.3)).current;
+    const dotOpacity3 = useRef(new Animated.Value(0.3)).current;
+
     const [percentage, setPercentage] = useState(0);
+    const [currentStep, setCurrentStep] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Simple listener to update percentage text
+        // Percentage listener
         const id = progress.addListener(({ value }) => {
             setPercentage(Math.floor(value * 100));
         });
 
-        // Continuous spin animation (ActivityIndicator speed)
-        Animated.loop(
-            Animated.timing(spinValue, {
+        // Entrance animations
+        Animated.parallel([
+            Animated.timing(fadeIn, {
                 toValue: 1,
-                duration: 1200,
+                duration: 600,
                 useNativeDriver: true,
-            })
+            }),
+            Animated.timing(slideUp, {
+                toValue: 0,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Pulse animation for the progress ring
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.06,
+                    duration: 1200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 1200,
+                    useNativeDriver: true,
+                }),
+            ])
         ).start();
+
+        // Dot loading animation
+        const animateDots = () => {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(dotOpacity1, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.timing(dotOpacity2, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.timing(dotOpacity3, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.parallel([
+                        Animated.timing(dotOpacity1, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+                        Animated.timing(dotOpacity2, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+                        Animated.timing(dotOpacity3, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+                    ]),
+                ])
+            ).start();
+        };
+        animateDots();
 
         loadDataAndNavigate();
 
@@ -46,14 +104,10 @@ export default function LoaderScreen() {
         };
     }, []);
 
-    const spin = spinValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '360deg'],
-    });
-
     const loadDataAndNavigate = async () => {
         try {
             // Step 1: Start (0% -> 20%)
+            setCurrentStep(0);
             Animated.timing(progress, {
                 toValue: 0.2,
                 duration: 500,
@@ -69,7 +123,7 @@ export default function LoaderScreen() {
                 return;
             }
 
-            setLoadingText('Authenticating your profile...');
+            setCurrentStep(1);
             const homePageData = await fetchHomePageDetails(userId, companyId);
 
             // Step 2: Data Fetched (20% -> 40%)
@@ -85,7 +139,7 @@ export default function LoaderScreen() {
 
             setUserDetails(homePageData.user);
 
-            setLoadingText('Setting up your workspace...');
+            setCurrentStep(2);
             await new Promise(resolve => setTimeout(resolve, 800));
 
             const userRole = homePageData.masterData.roles.find(
@@ -103,7 +157,7 @@ export default function LoaderScreen() {
                 useNativeDriver: false,
             }).start();
 
-            setLoadingText('Finalizing secure connections...');
+            setCurrentStep(3);
             await new Promise(resolve => setTimeout(resolve, 800));
 
             // Step 4: Finalize (80% -> 100%)
@@ -141,72 +195,168 @@ export default function LoaderScreen() {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
-            {/* Header section */}
-            <View style={styles.header}>
-                <View style={styles.iconBox}>
-                    <Ionicons name="business" size={20} color="#3b82f6" />
-                </View>
-                <Text style={styles.versionText}>V1.0.0</Text>
+            {/* Background gradient blobs */}
+            <View style={styles.blobContainer}>
+                <LinearGradient
+                    colors={['#eef2ff', '#e0e7ff', '#f5f3ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.blob1}
+                />
+                <LinearGradient
+                    colors={['#ddd6fe', '#c7d2fe', '#e9d5ff']}
+                    start={{ x: 1, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.blob2}
+                />
+                <LinearGradient
+                    colors={['#e0e7ff', '#ede9fe']}
+                    start={{ x: 0, y: 1 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.blob3}
+                />
             </View>
 
-            {/* Center Content */}
-            <View style={styles.centerContent}>
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.logoPill}>
+                    <LinearGradient
+                        colors={['#6366f1', '#7c3aed']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.logoGradient}
+                    >
+                        <Ionicons name="apps" size={16} color="#fff" />
+                    </LinearGradient>
+                    <Text style={styles.logoText}>Peopleo</Text>
+                </View>
+                <View style={styles.versionBadge}>
+                    <Text style={styles.versionText}>v1.0.0</Text>
+                </View>
+            </View>
+
+            {/* Main Content */}
+            <Animated.View
+                style={[
+                    styles.centerContent,
+                    {
+                        opacity: fadeIn,
+                        transform: [{ translateY: slideUp }],
+                    },
+                ]}
+            >
                 {error ? (
-                    <View style={styles.errorContainer}>
-                        <Ionicons name="alert-circle" size={64} color="#ef4444" />
+                    <View style={styles.errorCard}>
+                        <View style={styles.errorIconCircle}>
+                            <Ionicons name="alert-circle" size={36} color="#ef4444" />
+                        </View>
+                        <Text style={styles.errorTitle}>Something went wrong</Text>
                         <Text style={styles.errorText}>{error}</Text>
-                        <Text style={styles.errorSubText}>Redirecting to login...</Text>
+                        <View style={styles.errorRedirectBadge}>
+                            <Ionicons name="arrow-back-outline" size={14} color="#6366f1" />
+                            <Text style={styles.errorRedirectText}>Redirecting to login...</Text>
+                        </View>
                     </View>
                 ) : (
                     <>
-                        {/* Circular Progress and Fingerprint Area */}
-                        <View style={styles.loaderWrapper}>
-                            {/* Base Faint Ring */}
-                            <View style={styles.baseRing} />
+                        {/* Illustration */}
+                        <View style={styles.illustrationWrapper}>
+                            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                                <LoaderIllustration width={width * 0.75} height={width * 0.6} />
+                            </Animated.View>
+                        </View>
 
-                            {/* Spinning Arc (ActivityIndicator style) */}
-                            <Animated.View
-                                style={[
-                                    styles.rotatingArc,
-                                    { transform: [{ rotate: spin }] }
-                                ]}
-                            />
-
-                            {/* Static Core with Fingerprint */}
-                            <View style={styles.innerCircle}>
-                                <Ionicons name="finger-print-outline" size={36} color="#3b82f6" />
+                        {/* Title + animated dots */}
+                        <View style={styles.titleContainer}>
+                            <Text style={styles.mainTitle}>
+                                {LOADING_STEPS[currentStep]?.label}
+                            </Text>
+                            <View style={styles.dotsRow}>
+                                <Animated.View style={[styles.loadingDot, { opacity: dotOpacity1 }]} />
+                                <Animated.View style={[styles.loadingDot, { opacity: dotOpacity2 }]} />
+                                <Animated.View style={[styles.loadingDot, { opacity: dotOpacity3 }]} />
                             </View>
                         </View>
 
-                        <Text style={styles.mainTitle}>Authenticating your profile...</Text>
-                        <Text style={styles.subTitle}>
-                            Setting up your workspace and{"\n"}secure connections
-                        </Text>
-
-                        {/* Establishing Link Badge */}
-                        <View style={styles.badge}>
-                            <View style={styles.dot} />
-                            <Text style={styles.badgeText}>ESTABLISHING LINK</Text>
+                        {/* Step indicators */}
+                        <View style={styles.stepsContainer}>
+                            {LOADING_STEPS.map((step, index) => (
+                                <View key={index} style={styles.stepRow}>
+                                    <View
+                                        style={[
+                                            styles.stepIconCircle,
+                                            index < currentStep && styles.stepIconDone,
+                                            index === currentStep && styles.stepIconActive,
+                                        ]}
+                                    >
+                                        {index < currentStep ? (
+                                            <Ionicons name="checkmark" size={12} color="#fff" />
+                                        ) : (
+                                            <Ionicons
+                                                name={step.icon}
+                                                size={12}
+                                                color={index === currentStep ? '#6366f1' : '#94a3b8'}
+                                            />
+                                        )}
+                                    </View>
+                                    <Text
+                                        style={[
+                                            styles.stepLabel,
+                                            index < currentStep && styles.stepLabelDone,
+                                            index === currentStep && styles.stepLabelActive,
+                                        ]}
+                                    >
+                                        {step.label}
+                                    </Text>
+                                    {index < LOADING_STEPS.length - 1 && (
+                                        <View style={styles.stepConnector}>
+                                            <View
+                                                style={[
+                                                    styles.stepConnectorLine,
+                                                    index < currentStep && styles.stepConnectorDone,
+                                                ]}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
+                            ))}
                         </View>
                     </>
                 )}
-            </View>
+            </Animated.View>
 
-            {/* Bottom Section */}
+            {/* Bottom Progress Bar */}
             {!error && (
                 <View style={styles.bottomSection}>
                     <View style={styles.progressCard}>
                         <View style={styles.progressHeader}>
-                            <Text style={styles.progressTitle}>Syncing attendance records...</Text>
-                            <Text style={styles.progressPercent}>{percentage}%</Text>
+                            <View style={styles.progressLabelRow}>
+                                <View style={styles.progressPulse} />
+                                <Text style={styles.progressTitle}>
+                                    {LOADING_STEPS[currentStep]?.label}...
+                                </Text>
+                            </View>
+                            <View style={styles.percentBadge}>
+                                <Text style={styles.percentText}>{percentage}%</Text>
+                            </View>
                         </View>
                         <View style={styles.progressBarBg}>
-                            <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
+                            <Animated.View style={[styles.progressBarFillWrapper, { width: progressWidth }]}>
+                                <LinearGradient
+                                    colors={['#6366f1', '#7c3aed', '#a855f7']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.progressBarFill}
+                                />
+                            </Animated.View>
                         </View>
                     </View>
-                    <Text style={styles.footerNote}>
-                        Please wait a moment. Do not close the app.
-                    </Text>
+                    <View style={styles.footerRow}>
+                        <Ionicons name="lock-closed" size={12} color="#94a3b8" />
+                        <Text style={styles.footerNote}>
+                            Secure connection · Do not close the app
+                        </Text>
+                    </View>
                 </View>
             )}
         </SafeAreaView>
@@ -216,113 +366,178 @@ export default function LoaderScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#FAFBFF',
     },
+
+    // --- Background blobs ---
+    blobContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    blob1: {
+        position: 'absolute',
+        top: -60,
+        right: -40,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        opacity: 0.6,
+    },
+    blob2: {
+        position: 'absolute',
+        top: '40%',
+        left: -60,
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        opacity: 0.4,
+    },
+    blob3: {
+        position: 'absolute',
+        bottom: -40,
+        right: -20,
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        opacity: 0.5,
+    },
+
+    // --- Header ---
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingTop: 10,
+        paddingTop: Platform.OS === 'ios' ? 4 : 10,
+        paddingBottom: 8,
     },
-    iconBox: {
-        width: 40,
-        height: 40,
-        backgroundColor: '#EBF2FF',
+    logoPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    logoGradient: {
+        width: 32,
+        height: 32,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    logoText: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: '#1e1b4b',
+        letterSpacing: -0.3,
+    },
+    versionBadge: {
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#D0E1FF',
+        borderColor: '#e0e7ff',
     },
     versionText: {
-        fontSize: 14,
-        color: '#94A3B8',
-        fontWeight: '500',
+        fontSize: 11,
+        color: '#6366f1',
+        fontWeight: '600',
     },
+
+    // --- Center content ---
     centerContent: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: 24,
     },
-    loaderWrapper: {
-        width: 160,
-        height: 160,
-        justifyContent: 'center',
+    illustrationWrapper: {
+        marginBottom: 20,
         alignItems: 'center',
-        marginBottom: 40,
     },
-    baseRing: {
-        position: 'absolute',
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        borderWidth: 6,
-        borderColor: '#F1F5F9', // Very soft gray ring
-    },
-    rotatingArc: {
-        position: 'absolute',
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        borderWidth: 6,
-        borderColor: 'transparent',
-        borderTopColor: '#3b82f6', // Bright Blue
-        borderRightColor: '#8b5cf6', // Violet/Indigo transition
-    },
-    innerCircle: {
-        width: 90,
-        height: 90,
-        borderRadius: 45,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 15,
-        elevation: 5,
-        zIndex: 10,
-    },
-    mainTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#1E293B',
-        textAlign: 'center',
-        marginBottom: 12,
-    },
-    subTitle: {
-        fontSize: 16,
-        color: '#64748B',
-        textAlign: 'center',
-        lineHeight: 24,
-        marginBottom: 32,
-    },
-    badge: {
+
+    // --- Title + dots ---
+    titleContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#E2EEFF',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 20,
+        marginBottom: 28,
     },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#3b82f6',
-        marginRight: 10,
-    },
-    badgeText: {
-        fontSize: 12,
-        color: '#3b82f6',
+    mainTitle: {
+        fontSize: 20,
         fontWeight: '700',
-        letterSpacing: 1,
+        color: '#1e1b4b',
+        letterSpacing: -0.3,
     },
+    dotsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 4,
+        gap: 3,
+    },
+    loadingDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: '#6366f1',
+    },
+
+    // --- Steps ---
+    stepsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexWrap: 'nowrap',
+        gap: 0,
+    },
+    stepRow: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 4,
+    },
+    stepIconCircle: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: '#f1f5f9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
+        borderColor: '#e2e8f0',
+    },
+    stepIconDone: {
+        backgroundColor: '#6366f1',
+        borderColor: '#6366f1',
+    },
+    stepIconActive: {
+        backgroundColor: '#eef2ff',
+        borderColor: '#6366f1',
+    },
+    stepLabel: {
+        display: 'none', // Hide labels to keep it compact, only show icons
+    },
+    stepLabelDone: {},
+    stepLabelActive: {},
+    stepConnector: {
+        width: 20,
+        height: 2,
+        justifyContent: 'center',
+        marginHorizontal: 2,
+    },
+    stepConnectorLine: {
+        height: 2,
+        backgroundColor: '#e2e8f0',
+        borderRadius: 1,
+    },
+    stepConnectorDone: {
+        backgroundColor: '#6366f1',
+    },
+
+    // --- Bottom section ---
     bottomSection: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
+        paddingBottom: Platform.OS === 'ios' ? 16 : 32,
         alignItems: 'center',
     },
     progressCard: {
@@ -330,62 +545,126 @@ const styles = StyleSheet.create({
         width: '100%',
         borderRadius: 20,
         padding: 20,
-        marginBottom: 20,
-        shadowColor: '#000',
+        marginBottom: 16,
+        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 12,
-        elevation: 4,
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 6,
         borderWidth: 1,
-        borderColor: '#F1F5F9',
+        borderColor: 'rgba(99, 102, 241, 0.06)',
     },
     progressHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 14,
+    },
+    progressLabelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    progressPulse: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#6366f1',
     },
     progressTitle: {
-        fontSize: 14,
-        color: '#64748B',
-        fontWeight: '500',
-    },
-    progressPercent: {
-        fontSize: 12,
-        color: '#64748B',
+        fontSize: 13,
+        color: '#475569',
         fontWeight: '600',
+    },
+    percentBadge: {
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    percentText: {
+        fontSize: 13,
+        color: '#6366f1',
+        fontWeight: '800',
     },
     progressBarBg: {
         width: '100%',
-        height: 6,
+        height: 8,
         backgroundColor: '#F1F5F9',
-        borderRadius: 3,
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    progressBarFillWrapper: {
+        height: '100%',
+        borderRadius: 4,
         overflow: 'hidden',
     },
     progressBarFill: {
-        height: '100%',
-        backgroundColor: '#6366f1',
-        borderRadius: 3,
+        flex: 1,
+        borderRadius: 4,
+    },
+    footerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
     footerNote: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#94A3B8',
         fontWeight: '500',
     },
-    errorContainer: {
+
+    // --- Error ---
+    errorCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 32,
         alignItems: 'center',
+        width: '100%',
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
+        elevation: 8,
+        borderWidth: 1,
+        borderColor: '#fecaca',
     },
-    errorText: {
-        fontSize: 18,
-        color: '#ef4444',
-        fontWeight: '700',
-        textAlign: 'center',
-        marginTop: 20,
+    errorIconCircle: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: '#fef2f2',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#fecaca',
+    },
+    errorTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1e1b4b',
         marginBottom: 8,
     },
-    errorSubText: {
+    errorText: {
         fontSize: 14,
-        color: '#64748B',
+        color: '#64748b',
         textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 20,
+    },
+    errorRedirectBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        gap: 6,
+    },
+    errorRedirectText: {
+        fontSize: 13,
+        color: '#6366f1',
+        fontWeight: '600',
     },
 });

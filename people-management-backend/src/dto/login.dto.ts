@@ -48,6 +48,9 @@ export class UserDetailsDto {
 
     @ApiProperty()
     companyId: number;
+
+    @ApiProperty({ required: false })
+    avatar?: string;
 }
 
 export class LoginResponseDto {

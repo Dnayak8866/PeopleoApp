@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../services/user.service';
@@ -92,6 +92,7 @@ export class AuthService {
       designationId: user.designationId,
       employeeCode: user.employeeCode,
       companyId: user.companyId,
+      avatar: user.avatar || null,
     };
   }
 
@@ -143,5 +144,28 @@ export class AuthService {
       console.error('Error fetching home page details:', error);
       throw error;
     }
+  }
+
+  async resetPassword(userId: number, currentPassword: string, newPassword: string) {
+    if (!userId || !currentPassword || !newPassword) {
+      throw new BadRequestException('User ID, current password, and new password are required');
+    }
+
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.password) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password).catch(() => false);
+      if (!isMatch && user.password !== currentPassword) {
+        throw new BadRequestException('Current password does not match');
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePassword(userId, hashedPassword);
+
+    return { message: 'Password reset successfully' };
   }
 }

@@ -1,27 +1,6 @@
-import { useAuth } from '@/context/AuthContext';
-import { Redirect } from 'expo-router';
-
+// Routing is handled entirely by AppNavigator in _layout.tsx.
+// This component renders null to avoid calling useAuth() outside a guaranteed
+// AuthProvider context during early Expo Router render cycles.
 export default function Index() {
-  const { userId, userDetails, loading } = useAuth();
-
-  if (loading) {
-    return null;
-  }
-
-  if (!userId) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // If we have userId but not userDetails yet, go to loader
-  if (!userDetails) {
-    return <Redirect href="/loader" />;
-  }
-
-  // Redirect based on user role
-  // roleId 1 is typically Admin/Owner
-  if (userDetails.roleId === 1) {
-    return <Redirect href="/(owner)/home" />;
-  } else {
-    return <Redirect href="/(employee)/home" />;
-  }
+  return null;
 }

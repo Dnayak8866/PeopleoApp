@@ -41,7 +41,24 @@ export class UserService {
       createdAt: now,
       // password: hashedPassword,
     });
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    const dto = userDto as any;
+    const details = this.userDetailsRepository.create({
+      employeeId: savedUser.id,
+      profileImage: dto.avatar || '',
+      houseNo: dto.house_no || '',
+      landmark: dto.area_landmark || '',
+      zipCode: dto.zipcode || '',
+      city: dto.city || '',
+      state: dto.state || '',
+      country: dto.country || '',
+      aadharNo: dto.aadhar_number || '',
+      panNo: dto.pan_number || '',
+    });
+    await this.userDetailsRepository.save(details);
+
+    return this.findOne(savedUser.id);
   }
 
   async findAll(): Promise<User[]> {
@@ -142,5 +159,12 @@ export class UserService {
 
   async findByPhone(phoneNumber: string): Promise<User | null> {
     return await this.userRepository.findOne({ where: { phoneNumber } });
+  }
+
+  async updatePassword(id: number, hashedPassword: string): Promise<void> {
+    const employee = await this.userRepository.findOneBy({ id });
+    if (!employee) throw new NotFoundException(`User #${id} not found`);
+    employee.password = hashedPassword;
+    await this.userRepository.save(employee);
   }
 }

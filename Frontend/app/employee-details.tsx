@@ -6,5 +6,5 @@ export default function EmployeeDetailsPage() {
   const { userDetails } = useAuth();
   const id = userDetails?.id ? userDetails.id.toString() : '';
 
-  return EmployeeDetailsScreen(id);
+  return <EmployeeDetailsScreen employeeId={id} />;
 }

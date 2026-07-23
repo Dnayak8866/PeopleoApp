@@ -2,9 +2,16 @@ import { PunchInData, PunchOutData, DailySummary, AttendanceEmployee } from '../
 import api from './apiService';
 import * as Location from 'expo-location';
 
+export const getLocalDateString = (date: Date = new Date()): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
 export const getTodaySessionStatus = async (employeeId: number): Promise<any> => {
     try {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateString();
         const response = await api.get(`/attendance/session-status/${employeeId}`, {
             params: { date: todayStr }
         });
@@ -53,7 +60,7 @@ export const punchIn = async (data: PunchInData): Promise<any> => {
 
         const punchInPayload = {
             employee_id: data.employee_id,
-            attendance_date: data.attendance_date.toISOString().split('T')[0],
+            attendance_date: getLocalDateString(data.attendance_date),
             punch_in_latitude: location?.coords.latitude ?? data.punch_in_latitude,
             punch_in_longitude: location?.coords.longitude ?? data.punch_in_longitude,
             is_punch_in_from_office: data.is_punch_in_from_office ?? true,
@@ -74,7 +81,7 @@ export const punchOut = async (data: PunchOutData): Promise<any> => {
 
         const punchOutPayload = {
             employee_id: data.employee_id,
-            attendance_date: data.attendance_date.toISOString().split('T')[0],
+            attendance_date: getLocalDateString(data.attendance_date),
             punch_out_latitude: location?.coords.latitude ?? data.punch_out_latitude,
             punch_out_longitude: location?.coords.longitude ?? data.punch_out_longitude,
             is_punch_out_from_office: data.is_punch_out_from_office ?? true,

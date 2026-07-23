@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle, Image } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
 interface AvatarProps {
@@ -9,14 +8,11 @@ interface AvatarProps {
     textColor?: string;
     style?: ViewStyle;
     textStyle?: TextStyle;
+    uri?: string;
 }
 
 /**
- * Avatar component that displays user initials
- * Rules:
- * - If full name has first and last name: show first char of first name + first char of last name
- * - If full name has middle name: skip middle name
- * - If only first name exists: show first char of first name
+ * Avatar component that displays user initials or an image
  */
 export const Avatar: React.FC<AvatarProps> = ({
     fullName,
@@ -25,6 +21,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     textColor = '#FFFFFF',
     style,
     textStyle,
+    uri,
 }) => {
     const getInitials = (name: string): string => {
         if (!name || name.trim() === '') {
@@ -65,18 +62,29 @@ export const Avatar: React.FC<AvatarProps> = ({
                 style,
             ]}
         >
-            <Text
-                style={[
-                    styles.avatarText,
-                    {
-                        color: textColor,
-                        fontSize: size * 0.4, // Scale font size based on avatar size
-                    },
-                    textStyle,
-                ]}
-            >
-                {initials}
-            </Text>
+            {uri ? (
+                <Image
+                    source={{ uri }}
+                    style={{
+                        width: size,
+                        height: size,
+                        borderRadius,
+                    }}
+                />
+            ) : (
+                <Text
+                    style={[
+                        styles.avatarText,
+                        {
+                            color: textColor,
+                            fontSize: size * 0.4, // Scale font size based on avatar size
+                        },
+                        textStyle,
+                    ]}
+                >
+                    {initials}
+                </Text>
+            )}
         </View>
     );
 };

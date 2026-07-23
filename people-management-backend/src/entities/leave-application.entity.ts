@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { LeaveType } from './leave-type.entity';
+import { User } from './user.entity';
 
 @Entity('leave_applications')
 export class LeaveApplication {
@@ -8,6 +9,10 @@ export class LeaveApplication {
 
   @Column({ name: 'employee_id', type: 'int' })
   employee_id: number;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'employee_id' })
+  user: User;
 
   @Column({ name: 'leave_type_id', type: 'int', nullable: true })
   leave_type_id: number;
