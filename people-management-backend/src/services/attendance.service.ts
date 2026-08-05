@@ -444,9 +444,9 @@ export class AttendanceService {
 
     const presentDays = Array.from(presentDaysSet).filter(d => days.includes(d)).length;
     const absentDays = Math.max(0, totalDays - presentDays);
-    const percentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 10000) / 100 : 0;
+    const percentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
-    return { employeeId, month, year, companyId: companyId ?? null, totalDays, presentDays, absentDays, percentage };
+    return { employeeId, month, year, companyId: companyId ?? null, totalDays, presentDays, absentDays, percentage, holidaySet };
   }
 
   /**
@@ -497,14 +497,36 @@ export class AttendanceService {
       });
     }
 
-    const { totalDays, presentDays, absentDays, percentage } = await this.getEmployeeMonthlyPercentage(employeeId, month, year);
+    const { totalDays, presentDays, percentage, holidaySet } = await this.getEmployeeMonthlyPercentage(employeeId, month, year);
+
+    // Calculate actual on-leave working days
+    let onLeaveDays = 0;
+    for (const leave of leaves) {
+      const from = new Date(leave.from_date);
+      const to = new Date(leave.to_date);
+      for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+        const dYear = d.getFullYear();
+        const dMonth = d.getMonth() + 1;
+        if (dYear === year && dMonth === month) {
+          const dayOfWeek = d.getDay();
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) { // skip weekends
+            const dStr = `${dYear}-${String(dMonth).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            if (!holidaySet || !holidaySet.has(dStr)) {
+              onLeaveDays++;
+            }
+          }
+        }
+      }
+    }
+
+    const netAbsentDays = Math.max(0, totalDays - presentDays - onLeaveDays);
 
     return {
       monthlySummary: {
         totalDays,
         presentDays,
-        absentDays,
-        onLeaveDays: leaves.length, // Rough count
+        absentDays: netAbsentDays,
+        onLeaveDays,
         attendancePercentage: percentage,
         avgWorkingHours: daysWithWorkingHours > 0
           ? Math.round((totalWorkingMinutes / daysWithWorkingHours / 60) * 10) / 10
@@ -602,6 +624,11 @@ export class AttendanceService {
     const startStr = `${year}-${monthStr}-01`;
     const endStr = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
+    // Total active employees for company
+    const totalEmployees = await this.userRepository.count({
+      where: { companyId, isActive: true, isDeleted: false },
+    });
+
     // Single query: fetch all attendance records for the company for the entire month
     const records = await this.attendanceRepository
       .createQueryBuilder('a')
@@ -660,11 +687,18 @@ export class AttendanceService {
       trendData.push({ date, present: dayPresent, late: dayLate });
     }
 
+    const daysWithData = byDate.size || 1;
+    const totalExpectedLogs = totalEmployees * daysWithData;
+    const avgAttendance = totalExpectedLogs > 0
+      ? Math.min(100, Math.round((totalPresent / totalExpectedLogs) * 100))
+      : 0;
+
     return {
       companySummary: {
         totalPresent,
         totalLate,
-        avgAttendance: recordsCount > 0 ? Math.round((totalPresent / (totalPresent + totalLate || 1)) * 100) : 0,
+        totalEmployees,
+        avgAttendance,
         avgWorkingHours: recordsCount > 0 ? Math.round((totalWorkingMins / recordsCount / 60) * 10) / 10 : 0,
       },
       trendData,

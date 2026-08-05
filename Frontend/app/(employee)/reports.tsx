@@ -93,29 +93,57 @@ export default function EmployeeReportsScreen() {
   ];
 
   // Prepare Pie Chart Data
-  const pieData = stats?.monthlySummary ? [
-    { value: stats.monthlySummary.presentDays, color: '#10B981', text: 'P' },
-    { value: stats.monthlySummary.absentDays, color: '#EF4444', text: 'A' },
-    { value: stats.monthlySummary.onLeaveDays, color: '#6366f1', text: 'L' },
+  const summary = stats?.monthlySummary;
+  const pieData = summary ? [
+    ...(summary.presentDays > 0 ? [{ value: summary.presentDays, color: '#10B981', text: 'P' }] : []),
+    ...(summary.absentDays > 0 ? [{ value: summary.absentDays, color: '#EF4444', text: 'A' }] : []),
+    ...(summary.onLeaveDays > 0 ? [{ value: summary.onLeaveDays, color: '#6366f1', text: 'L' }] : []),
   ] : [];
 
-  // Prepare Bar Chart Data (Last 7 days or all records)
-  const barData = stats?.chartData?.slice(-7).map((item: any) => {
-    let dayLabel = '';
-    if (typeof item.date === 'string') {
-      const parts = item.date.split('T')[0].split('-');
-      dayLabel = parts.length === 3 ? parseInt(parts[2], 10).toString() : item.date;
-    } else if (item.date instanceof Date) {
-      dayLabel = item.date.getDate().toString();
-    } else {
-      dayLabel = String(item.date);
-    }
-    return {
-      value: item.hours,
+  // Prepare Bar Chart Data for Last 7 Days with Weekday labels (Mon, Tues, Wed, Thu, Fri, Sat, Sun)
+  const DAY_NAMES = ['Sun', 'Mon', 'Tues', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const hoursMap = new Map<string, number>();
+  if (stats?.chartData && Array.isArray(stats.chartData)) {
+    stats.chartData.forEach((item: any) => {
+      let dateKey = '';
+      if (typeof item.date === 'string') {
+        dateKey = item.date.split('T')[0];
+      } else if (item.date instanceof Date) {
+        dateKey = `${item.date.getFullYear()}-${String(item.date.getMonth() + 1).padStart(2, '0')}-${String(item.date.getDate()).padStart(2, '0')}`;
+      }
+      if (dateKey) {
+        hoursMap.set(dateKey, item.hours || 0);
+      }
+    });
+  }
+
+  const last7DaysData: any[] = [];
+  const baseDate = new Date(currentDate);
+  const now = new Date();
+  const isCurrentMonth = now.getFullYear() === baseDate.getFullYear() && now.getMonth() === baseDate.getMonth();
+  const endDate = isCurrentMonth ? new Date(now) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(d.getDate() - i);
+
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${dayNum}`;
+
+    const hours = hoursMap.get(dateStr) || 0;
+    const dayLabel = DAY_NAMES[d.getDay()];
+
+    last7DaysData.push({
+      value: Math.min(10, Math.max(0, hours)),
       label: dayLabel,
-      frontColor: '#6366f1',
-    };
-  }) || [];
+      frontColor: hours > 0 ? '#6366f1' : '#CBD5E1',
+    });
+  }
+
+  const barData = last7DaysData;
 
   const StatCard = ({ label, value, subLabel, icon: Icon, color }: any) => (
     <View style={styles.statCard}>
@@ -269,15 +297,21 @@ export default function EmployeeReportsScreen() {
                   <BarChart
                     data={barData}
                     barWidth={18}
-                    spacing={14}
+                    spacing={16}
                     roundedTop
                     roundedBottom
-                    hideRules
+                    hideRules={false}
+                    rulesType="dashed"
+                    rulesColor="#F1F5F9"
                     yAxisThickness={0}
-                    xAxisThickness={0}
+                    xAxisThickness={1}
+                    xAxisColor="#E2E8F0"
                     yAxisTextStyle={{ color: '#94A3B8', fontSize: 10, fontWeight: '600' }}
-                    xAxisLabelTextStyle={{ color: '#64748B', fontSize: 10, fontWeight: '600' }}
-                    noOfSections={3}
+                    xAxisLabelTextStyle={{ color: '#64748B', fontSize: 11, fontWeight: '600' }}
+                    noOfSections={5}
+                    maxValue={10}
+                    stepValue={2}
+                    yAxisLabelTexts={['0', '2', '4', '6', '8', '10']}
                   />
                 ) : (
                   <Text style={styles.noData}>Not enough check-in logs for charts.</Text>

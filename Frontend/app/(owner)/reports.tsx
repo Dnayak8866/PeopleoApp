@@ -11,8 +11,6 @@ import {
   CalendarX,
   ChevronDown,
   Clock,
-  Download,
-  Share2,
   UserCheck,
   Users,
   UserX,
@@ -31,7 +29,7 @@ import {
   View,
   Platform,
 } from 'react-native';
-import { BarChart, LineChart } from 'react-native-chart-kit';
+import { PieChart } from 'react-native-gifted-charts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const screenWidth = Dimensions.get('window').width;
@@ -66,7 +64,7 @@ export default function ReportsScreen() {
         getEmployees(),
       ]);
       setCompanyStats(statsData);
-      setEmployees(empData || []);
+      setEmployees(Array.isArray(empData) ? empData : []);
     } catch (err) {
       console.error('Failed to load reports data:', err);
     } finally {
@@ -166,113 +164,46 @@ export default function ReportsScreen() {
     },
   ];
 
-  // ── Attendance Trend Chart ──
-  const buildAttendanceTrend = () => {
-    if (trendData.length === 0) {
-      return {
-        labels: ['W1', 'W2', 'W3', 'W4'],
-        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(99, 102, 241, ${o})`, strokeWidth: 3 }],
-      };
-    }
-    const step = Math.max(1, Math.floor(trendData.length / 6));
-    const sampled = trendData.filter((_, i) => i % step === 0).slice(0, 6);
-    return {
-      labels: sampled.map(d => {
-        const dt = new Date(d.date);
-        return `${dt.getDate()}`;
-      }),
-      datasets: [
-        {
-          data: sampled.map(d =>
-            totalEmployees > 0 ? Math.round((d.present / totalEmployees) * 100) : 0,
-          ),
-          color: (o = 1) => `rgba(99, 102, 241, ${o})`,
-          strokeWidth: 3,
-        },
-      ],
-    };
-  };
+  // ── Monthly Present vs Absent Pie Chart Data for All Employees ──
+  const avgPresentEmployees = summary && daysWithData > 0 ? Math.round(summary.totalPresent / daysWithData) : 0;
+  const avgAbsentEmployees = Math.max(0, totalEmployees - avgPresentEmployees);
 
-  // ── Late Check-ins Trend Chart ──
-  const buildLateTrend = () => {
-    if (trendData.length === 0) {
-      return {
-        labels: ['W1', 'W2', 'W3', 'W4'],
-        datasets: [{ data: [0, 0, 0, 0] }],
-      };
-    }
-    const weeks: number[] = [0, 0, 0, 0];
-    trendData.forEach((d, i) => {
-      const weekIdx = Math.min(3, Math.floor((i / trendData.length) * 4));
-      weeks[weekIdx] += d.late;
+  const presentPercentage = totalEmployees > 0 ? Math.min(100, Math.max(0, Math.round((avgPresentEmployees / totalEmployees) * 100))) : (summary?.avgAttendance ?? 0);
+  const absentPercentage = Math.max(0, 100 - presentPercentage);
+
+  const totalPresentCount = summary?.totalPresent || 0;
+  const totalExpectedLogs = totalEmployees * daysWithData;
+  const totalAbsentCount = Math.max(0, totalExpectedLogs - totalPresentCount);
+
+  const pieData = [
+    ...(presentPercentage > 0 ? [{
+      value: presentPercentage,
+      color: '#10B981',
+      text: `${presentPercentage}%`,
+      textColor: '#FFFFFF',
+      textSize: 14,
+      fontWeight: 'bold',
+    }] : []),
+    ...(absentPercentage > 0 ? [{
+      value: absentPercentage,
+      color: '#EF4444',
+      text: `${absentPercentage}%`,
+      textColor: '#FFFFFF',
+      textSize: 14,
+      fontWeight: 'bold',
+    }] : []),
+  ];
+
+  if (pieData.length === 0) {
+    pieData.push({
+      value: 100,
+      color: '#CBD5E1',
+      text: '0%',
+      textColor: '#FFFFFF',
+      textSize: 13,
+      fontWeight: 'bold',
     });
-    return {
-      labels: ['W1', 'W2', 'W3', 'W4'],
-      datasets: [{ data: weeks }],
-    };
-  };
-
-  // ── Weekly Work Hours Trend Chart ──
-  const buildWeeklyHours = () => {
-    if (trendData.length === 0 || avgWorkHours === 0) {
-      return {
-        labels: ['W1', 'W2', 'W3', 'W4'],
-        datasets: [{ data: [0, 0, 0, 0], color: (o = 1) => `rgba(6, 182, 212, ${o})`, strokeWidth: 3 }],
-      };
-    }
-    const base = avgWorkHours;
-    return {
-      labels: ['W1', 'W2', 'W3', 'W4'],
-      datasets: [
-        {
-          data: [
-            Math.max(0, +(base - 0.5).toFixed(1)),
-            +(base + 0.3).toFixed(1),
-            +(base - 0.2).toFixed(1),
-            +base.toFixed(1),
-          ],
-          color: (o = 1) => `rgba(6, 182, 212, ${o})`,
-          strokeWidth: 3,
-        },
-      ],
-    };
-  };
-
-  const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
-    style: { borderRadius: 16 },
-    propsForDots: { r: '5', strokeWidth: '2.5', stroke: '#6366f1' },
-    propsForBackgroundLines: { strokeWidth: 1, stroke: '#F1F5F9', strokeDasharray: '' },
-    propsForLabels: { fontSize: 11, fontWeight: '600' },
-  };
-
-  const barChartConfig = {
-    ...chartConfig,
-    color: (opacity = 1) => `rgba(245, 158, 11, ${opacity})`,
-    barPercentage: 0.6,
-    fillShadowGradient: '#F59E0B',
-    fillShadowGradientOpacity: 1,
-  };
-
-  // ── Employee list (top 5 active) ──
-  const employeeList = employees.slice(0, 5).map((emp: any) => {
-    const name: string = emp.full_name || emp.fullName || emp.name || '—';
-    const initials = name
-      .split(' ')
-      .map((w: string) => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-    const colors = ['#6366f1', '#64748B', '#8B5CF6', '#10B981', '#F59E0B'];
-    const color = colors[employees.indexOf(emp) % colors.length];
-    const dept: string = emp.department?.name || emp.departmentName || 'Product Team';
-    return { name, initials, department: dept, color };
-  });
+  }
 
   const monthLabel = `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
 
@@ -298,22 +229,6 @@ export default function ReportsScreen() {
     );
   };
 
-  const EmployeeItem = ({ employee }: any) => (
-    <View style={styles.employeeItem}>
-      <View style={[styles.avatar, { backgroundColor: employee.color }]}>
-        <Text style={styles.avatarText}>{employee.initials}</Text>
-      </View>
-      <View style={styles.employeeDetailsContainer}>
-        <Text style={styles.employeeName}>{employee.name}</Text>
-        <Text style={styles.employeeDepartment}>{employee.department}</Text>
-      </View>
-    </View>
-  );
-
-  const attendanceTrendData = buildAttendanceTrend();
-  const lateTrendData = buildLateTrend();
-  const weeklyHoursData = buildWeeklyHours();
-
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar style="dark" />
@@ -326,7 +241,7 @@ export default function ReportsScreen() {
         </View>
         <TouchableOpacity
           style={styles.bellButton}
-          onPress={() => {}}
+          onPress={() => router.push('/notifications')}
         >
           <Bell size={22} color="#1E293B" />
           <View style={styles.bellBadge} />
@@ -387,7 +302,7 @@ export default function ReportsScreen() {
               <Text style={styles.welcomeQuote}>Monthly Insights</Text>
               <Text style={styles.ownerName}>Overview</Text>
               <Text style={styles.welcomeDesc}>
-                View work trends, attendance analytics, and employee ratings for this month.
+                View key performance indicators and overall metrics for this month.
               </Text>
             </View>
             <View style={styles.illustrationWrapper}>
@@ -413,122 +328,55 @@ export default function ReportsScreen() {
               </View>
             </View>
 
-            {/* Attendance Analytics charts */}
+            {/* All Employees Monthly Present & Absent Pie Chart */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Attendance Analytics</Text>
+              <View style={styles.sectionHeaderTitle}>
+                <Text style={styles.sectionTitle}>All Employees Monthly Attendance</Text>
+                <Text style={styles.sectionSubtitle}>
+                  {totalEmployees} active employees • {daysWithData} working days recorded
+                </Text>
+              </View>
 
-              {/* Attendance % Trend */}
               <View style={styles.chartCard}>
-                <View style={styles.chartHeader}>
-                  <Text style={styles.chartCardTitle}>Attendance Trend (%)</Text>
-                  <View style={styles.chartActions}>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Download size={15} color="#94A3B8" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Share2 size={15} color="#94A3B8" />
-                    </TouchableOpacity>
+                <View style={styles.pieContent}>
+                  <View style={styles.pieWrapper}>
+                    <PieChart
+                      data={pieData}
+                      showText
+                      textColor="#FFFFFF"
+                      textSize={14}
+                      radius={76}
+                      focusOnPress
+                    />
+                  </View>
+                  <View style={styles.legendWrapper}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                      <View>
+                        <Text style={styles.legendTitle}>Present ({presentPercentage}%)</Text>
+                        <Text style={styles.legendSubtitle}>
+                          ~{avgPresentEmployees} employees / day
+                        </Text>
+                        <Text style={styles.legendDetail}>
+                          {totalPresentCount} total present logs
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+                      <View>
+                        <Text style={styles.legendTitle}>Absent ({absentPercentage}%)</Text>
+                        <Text style={styles.legendSubtitle}>
+                          ~{avgAbsentEmployees} employees / day
+                        </Text>
+                        <Text style={styles.legendDetail}>
+                          {totalAbsentCount} missed logs
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
-                <LineChart
-                  data={attendanceTrendData}
-                  width={screenWidth - 68}
-                  height={190}
-                  chartConfig={chartConfig}
-                  bezier
-                  style={styles.chart}
-                  withInnerLines={true}
-                  withOuterLines={false}
-                  withVerticalLines={false}
-                  withHorizontalLines={true}
-                  fromZero={false}
-                  segments={4}
-                />
               </View>
-
-              {/* Late Check-ins (Weekly) */}
-              <View style={styles.chartCard}>
-                <View style={styles.chartHeader}>
-                  <Text style={styles.chartCardTitle}>Weekly Late check-ins</Text>
-                  <View style={styles.chartActions}>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Download size={15} color="#94A3B8" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Share2 size={15} color="#94A3B8" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <BarChart
-                  data={lateTrendData}
-                  width={screenWidth - 66}
-                  height={190}
-                  chartConfig={barChartConfig}
-                  style={styles.chart}
-                  showValuesOnTopOfBars={true}
-                  withInnerLines={false}
-                  fromZero={true}
-                  segments={4}
-                  yAxisLabel=""
-                  yAxisSuffix=""
-                />
-              </View>
-
-              {/* Weekly Work Hours Trend */}
-              <View style={styles.chartCard}>
-                <View style={styles.chartHeader}>
-                  <Text style={styles.chartCardTitle}>Weekly Work hours trend</Text>
-                  <View style={styles.chartActions}>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Download size={15} color="#94A3B8" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.chartAction}>
-                      <Share2 size={15} color="#94A3B8" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <LineChart
-                  data={weeklyHoursData}
-                  width={screenWidth - 68}
-                  height={190}
-                  chartConfig={{
-                    ...chartConfig,
-                    color: (opacity = 1) => `rgba(6, 182, 212, ${opacity})`,
-                    propsForDots: { r: '5', strokeWidth: '2.5', stroke: '#06B6D4' },
-                  }}
-                  bezier
-                  style={styles.chart}
-                  withInnerLines={true}
-                  withOuterLines={false}
-                  withVerticalLines={false}
-                  withHorizontalLines={true}
-                  fromZero={false}
-                  segments={4}
-                />
-              </View>
-            </View>
-
-            {/* Employee Overview */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Employee Directory Snapshot</Text>
-                <TouchableOpacity style={styles.downloadButton}>
-                  <Download size={15} color="#6366f1" />
-                  <Text style={styles.downloadButtonText}>Save list</Text>
-                </TouchableOpacity>
-              </View>
-
-              {employeeList.length === 0 ? (
-                <View style={styles.emptyEmployeesCard}>
-                  <Text style={styles.emptyEmployeesText}>No employee log available for this period.</Text>
-                </View>
-              ) : (
-                <View style={styles.employeeList}>
-                  {employeeList.map((employee, index) => (
-                    <EmployeeItem key={index} employee={employee} />
-                  ))}
-                </View>
-              )}
             </View>
           </Animated.View>
         )}
@@ -670,11 +518,19 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeaderTitle: {
+    marginBottom: 14,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1E1B4B',
-    marginBottom: 14,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -735,128 +591,68 @@ const styles = StyleSheet.create({
   chartCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  chartCardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  chartActions: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  chartAction: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  chart: {
-    marginVertical: 4,
-    borderRadius: 14,
-  },
-
-  // --- Employee list ---
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  downloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 6,
-  },
-  downloadButtonText: {
-    fontSize: 11,
-    color: '#6366f1',
-    fontWeight: '700',
-  },
-  employeeList: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    overflow: 'hidden',
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
     shadowRadius: 10,
-    elevation: 2,
+    elevation: 3,
   },
-  employeeItem: {
+  pieContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    justifyContent: 'space-around',
   },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    justifyContent: 'center',
+  pieWrapper: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+  pieCenterLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pieCenterValue: {
+    fontSize: 20,
     fontWeight: '800',
+    color: '#1E1B4B',
   },
-  employeeDetailsContainer: {
-    flex: 1,
-    marginLeft: 12,
+  pieCenterSubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#10B981',
+    textTransform: 'uppercase',
   },
-  employeeName: {
-    fontSize: 14,
+  legendWrapper: {
+    gap: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendTitle: {
+    fontSize: 13,
     fontWeight: '700',
     color: '#1E293B',
   },
-  employeeDepartment: {
+  legendSubtitle: {
     fontSize: 11,
-    color: '#64748B',
-    marginTop: 2,
     fontWeight: '500',
-  },
-  emptyEmployeesCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  emptyEmployeesText: {
-    fontSize: 13,
     color: '#64748B',
+    marginTop: 1,
+  },
+  legendDetail: {
+    fontSize: 10,
     fontWeight: '500',
-    textAlign: 'center',
+    color: '#94A3B8',
+    marginTop: 1,
   },
 
   // --- Loader ---
