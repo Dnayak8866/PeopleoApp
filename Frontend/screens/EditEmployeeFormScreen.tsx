@@ -39,6 +39,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AddEmployeeIllustration from '@/components/illustrations/AddEmployeeIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -80,6 +81,7 @@ const GENDERS: DropdownItem[] = [
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { id } = useLocalSearchParams();
   const [formData, setFormData] = useState<FormData>({
     profileImage: '',
@@ -253,12 +255,12 @@ export default function EditProfileScreen() {
     maxLength?: number,
   ) => (
     <View style={styles.inputContainer}>
-      <View style={[styles.inputWrapper, errors[field] && styles.inputError]}>
+      <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}>
         <View style={styles.inputIconContainer}>{icon}</View>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.textPrimary }]}
           placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
           value={formData[field]}
           onChangeText={(value) => handleInputChange(field, value)}
           keyboardType={keyboardType}
@@ -280,21 +282,22 @@ export default function EditProfileScreen() {
   ) => (
     <View style={styles.inputContainer}>
       <TouchableOpacity
-        style={[styles.dropdownWrapper, errors[field] && styles.inputError]}
+        style={[styles.dropdownWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}
         onPress={onPress}
         activeOpacity={0.8}
       >
         <View style={styles.inputIconContainer}>{icon}</View>
         <Text style={[
           styles.dropdownPlaceholder,
-          formData[field] && styles.dropdownSelected
+          { color: colors.textSecondary },
+          formData[field] && [styles.dropdownSelected, { color: colors.textPrimary }]
         ]}>
           {formData[field] ? getSelectedLabel(field) : placeholder}
         </Text>
-        {showDropdown ? <ChevronUp size={16} color='#94A3B8' /> : <ChevronDown size={16} color="#94A3B8" />}
+        {showDropdown ? <ChevronUp size={16} color={colors.textMuted} /> : <ChevronDown size={16} color={colors.textMuted} />}
       </TouchableOpacity>
       {showDropdown && data && (
-        <View style={styles.dropdownList}>
+        <View style={[styles.dropdownList, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {data.map((item) => (
             <TouchableOpacity
               key={item.id}
@@ -312,6 +315,7 @@ export default function EditProfileScreen() {
             >
               <Text style={[
                 styles.dropdownListItemText,
+                { color: colors.textSecondary },
                 formData[field].toString() === item.id.toString() && styles.dropdownListItemTextSelected
               ]}>
                 {item.value}
@@ -324,27 +328,24 @@ export default function EditProfileScreen() {
     </View>
   );
 
-  const renderDatePicker = (
-    placeholder: string,
-    field: keyof FormData,
-    onPress?: () => void,
-  ) => (
+  const renderDatePicker = (label: string, field: keyof FormData, onPress: () => void) => (
     <View style={styles.inputContainer}>
       <TouchableOpacity
-        style={[styles.dropdownWrapper, errors[field] && styles.inputError]}
+        style={[styles.dropdownWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}
         onPress={onPress}
         activeOpacity={0.8}
       >
         <View style={styles.inputIconContainer}>
-          <CalendarDays size={18} color="#6366f1" />
+          <CalendarDays size={18} color={colors.primary} />
         </View>
         <Text style={[
           styles.dropdownPlaceholder,
-          formData[field] && styles.dropdownSelected
+          { color: colors.textSecondary },
+          formData[field] && [styles.dropdownSelected, { color: colors.textPrimary }]
         ]}>
-          {formData[field] ? formatDate(formData[field]) : placeholder}
+          {formData[field] ? formatDate(formData[field]) : label}
         </Text>
-        <ChevronDown size={16} color="#94A3B8" />
+        <ChevronDown size={16} color={colors.textMuted} />
       </TouchableOpacity>
       {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
     </View>
@@ -377,22 +378,22 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.back()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ChevronLeft size={22} color="#1E293B" />
+            <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Edit Profile</Text>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Edit Profile</Text>
           </View>
         </View>
 
@@ -402,17 +403,17 @@ export default function EditProfileScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Welcome Card & Illustration */}
-          <View style={styles.welcomeCard}>
+          <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
             <LinearGradient
-              colors={['#EEF2FF', '#F5F3FF']}
+              colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.welcomeGradient}
             >
               <View style={styles.welcomeTextContainer}>
-                <Text style={styles.welcomeQuote}>Modify Profile</Text>
-                <Text style={styles.ownerName}>Update Info</Text>
-                <Text style={styles.welcomeDesc}>
+                <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Modify Profile</Text>
+                <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Update Info</Text>
+                <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                   Update basic personal details, address information, and upload identification documents.
                 </Text>
               </View>
@@ -423,23 +424,23 @@ export default function EditProfileScreen() {
           </View>
 
           {/* Profile Photo Area */}
-          <View style={styles.photoCard}>
+          <View style={[styles.photoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <TouchableOpacity style={styles.photoContainer} onPress={handleImagePicker} activeOpacity={0.9}>
               {formData.profileImage ? (
                 <Image source={{ uri: formData.profileImage }} style={styles.profileImage} />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Camera size={26} color="#6366f1" />
+                  <Camera size={26} color={colors.primary} />
                 </View>
               )}
             </TouchableOpacity>
-            <Text style={styles.photoPlaceholderText}>Tap avatar to update profile photo</Text>
+            <Text style={[styles.photoPlaceholderText, { color: colors.textSecondary }]}>Tap avatar to update profile photo</Text>
           </View>
 
           {/* Form details */}
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Basic details */}
-            <Text style={styles.sectionTitle}>Basic Details</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Details</Text>
             {renderInput('Employee Name', 'full_name', <User size={18} color="#6366f1" />)}
             {renderInput('Mobile No', 'phone_number', <Phone size={18} color="#6366f1" />, 'phone-pad')}
             {renderInput('Email Address', 'email', <Mail size={18} color="#6366f1" />, 'email-address')}
@@ -489,21 +490,23 @@ export default function EditProfileScreen() {
             )}
 
             {/* Working Hours */}
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Working Hours</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 12 }]}>Working Hours</Text>
             <View style={styles.shiftContainer}>
               {shiftTimings.map((shift: any, index: number) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.shiftButton,
+                    { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', borderColor: colors.border },
                     formData.shift_id === shift.shift_id.toString() && styles.shiftButtonSelected,
                   ]}
                   onPress={() => handleInputChange('shift_id', shift.shift_id.toString())}
                   activeOpacity={0.8}
                 >
-                  <Clock size={14} color={formData.shift_id === shift.shift_id.toString() ? '#ffffff' : '#64748B'} />
+                  <Clock size={14} color={formData.shift_id === shift.shift_id.toString() ? '#ffffff' : colors.textSecondary} />
                   <Text style={[
                     styles.shiftButtonText,
+                    { color: colors.textSecondary },
                     formData.shift_id === shift.shift_id.toString() && styles.shiftButtonTextSelected,
                   ]}>
                     {shift.shift_name} ({shift.from_time.slice(0, 5)} - {shift.to_time.slice(0, 5)})
@@ -513,30 +516,30 @@ export default function EditProfileScreen() {
             </View>
 
             {/* Address Details */}
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Address Details</Text>
-            {renderInput('House / Flat No.', 'houseNo', <Home size={18} color="#6366f1" />)}
-            {renderInput('Area Landmark', 'areaLandmark', <MapPin size={18} color="#6366f1" />)}
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 12 }]}>Address Details</Text>
+            {renderInput('House / Flat No.', 'houseNo', <Home size={18} color={colors.primary} />)}
+            {renderInput('Area Landmark', 'areaLandmark', <MapPin size={18} color={colors.primary} />)}
             
             <View style={styles.rowInputs}>
               <View style={[styles.halfInput, { marginRight: 6 }]}>
-                {renderInput('Zipcode', 'zipcode', <MapPin size={16} color="#6366f1" />, 'numeric')}
+                {renderInput('Zipcode', 'zipcode', <MapPin size={16} color={colors.primary} />, 'numeric')}
               </View>
               <View style={[styles.halfInput, { marginLeft: 6 }]}>
-                {renderInput('City', 'city', <MapPin size={16} color="#6366f1" />)}
+                {renderInput('City', 'city', <MapPin size={16} color={colors.primary} />)}
               </View>
             </View>
 
             <View style={styles.rowInputs}>
               <View style={[styles.halfInput, { marginRight: 6 }]}>
-                {renderInput('State', 'state', <MapPin size={16} color="#6366f1" />)}
+                {renderInput('State', 'state', <MapPin size={16} color={colors.primary} />)}
               </View>
               <View style={[styles.halfInput, { marginLeft: 6 }]}>
-                {renderInput('Country', 'country', <MapPin size={16} color="#6366f1" />)}
+                {renderInput('Country', 'country', <MapPin size={16} color={colors.primary} />)}
               </View>
             </View>
 
             {/* Additional Information */}
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Additional Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 12 }]}>Additional Information</Text>
             {renderInput('Aadhar Card Number', 'aadharNumber', <Notebook size={18} color="#6366f1" />, 'numeric')}
             {renderInput('PAN Card Number', 'panNumber', <Notebook size={18} color="#6366f1" />)}
 

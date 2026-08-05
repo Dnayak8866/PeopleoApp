@@ -47,12 +47,15 @@ const statusStyles: Record<AttendanceStatus, { background: string; color: string
   Leave: { background: '#EFF6FF', color: '#3B82F6', dot: '#3B82F6' },
 };
 
+import { useTheme } from '@/context/ThemeContext';
+
 function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
 export default function AttendanceScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [searchQuery, setSearchQuery] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -173,7 +176,7 @@ export default function AttendanceScreen() {
   const renderEmployeeCard = (employee: AttendanceEmployee) => {
     const stylesCard = statusStyles[employee.status] || { background: '#F3F4F6', color: '#374151', dot: '#9CA3AF' };
     return (
-      <View key={employee.id} style={styles.employeeCard}>
+      <View key={employee.id} style={[styles.employeeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {/* Top Info Area */}
         <View style={styles.employeeHeader}>
           <View style={styles.employeeInfo}>
@@ -183,17 +186,17 @@ export default function AttendanceScreen() {
               <Avatar fullName={employee.name} size={42} style={styles.avatarPlaceholder} />
             )}
             <View style={styles.employeeDetails}>
-              <Text style={styles.employeeName} numberOfLines={1}>
+              <Text style={[styles.employeeName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {employee.name}
               </Text>
-              <View style={styles.designationBadge}>
-                <Text style={styles.designationText} numberOfLines={1}>
+              <View style={[styles.designationBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                <Text style={[styles.designationText, { color: colors.textSecondary }]} numberOfLines={1}>
                   {employee.designation || 'Employee'}
                 </Text>
               </View>
             </View>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: stylesCard.background }]}>
+          <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1E293B' : stylesCard.background }]}>
             <View style={[styles.statusDot, { backgroundColor: stylesCard.dot }]} />
             <Text style={[styles.statusText, { color: stylesCard.color }]}>
               {employee.status}
@@ -202,14 +205,14 @@ export default function AttendanceScreen() {
         </View>
 
         {/* Timings Card Grid */}
-        <View style={styles.attendanceDetailsGrid}>
+        <View style={[styles.attendanceDetailsGrid, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
           <View style={styles.timeGridItem}>
             <View style={styles.timeIconCircle}>
               <LogIn size={13} color="#10B981" />
             </View>
             <View>
-              <Text style={styles.timeGridLabel}>Entry Time</Text>
-              <Text style={styles.timeGridValue}>{employee.entryTime || '——'}</Text>
+              <Text style={[styles.timeGridLabel, { color: colors.textSecondary }]}>Entry Time</Text>
+              <Text style={[styles.timeGridValue, { color: colors.textPrimary }]}>{employee.entryTime || '——'}</Text>
             </View>
           </View>
 
@@ -218,44 +221,44 @@ export default function AttendanceScreen() {
               <LogOut size={13} color="#EF4444" />
             </View>
             <View>
-              <Text style={styles.timeGridLabel}>Exit Time</Text>
-              <Text style={styles.timeGridValue}>{employee.exitTime || '——'}</Text>
+              <Text style={[styles.timeGridLabel, { color: colors.textSecondary }]}>Exit Time</Text>
+              <Text style={[styles.timeGridValue, { color: colors.textPrimary }]}>{employee.exitTime || '——'}</Text>
             </View>
           </View>
 
           <View style={[styles.timeGridItem, { borderRightWidth: 0, flex: 1.2 }]}>
             <View style={styles.timeIconCircle}>
-              <Hourglass size={13} color="#6366f1" />
+              <Hourglass size={13} color={colors.primary} />
             </View>
             <View>
-              <Text style={styles.timeGridLabel}>Total Duration</Text>
-              <Text style={styles.timeGridValue}>{employee.duration || '0 hrs'}</Text>
+              <Text style={[styles.timeGridLabel, { color: colors.textSecondary }]}>Total Duration</Text>
+              <Text style={[styles.timeGridValue, { color: colors.textPrimary }]}>{employee.duration || '0 hrs'}</Text>
             </View>
           </View>
         </View>
 
         {/* Action footer link */}
         <TouchableOpacity
-          style={styles.cardFooter}
+          style={[styles.cardFooter, { borderTopColor: colors.border }]}
           onPress={() => router.push(`/employee/${employee.id}`)}
           activeOpacity={0.7}
         >
-          <Text style={styles.viewDetailsText}>View Full Attendance History</Text>
-          <ArrowRight size={14} color="#6366f1" />
+          <Text style={[styles.viewDetailsText, { color: colors.primary }]}>View Full Attendance History</Text>
+          <ArrowRight size={14} color={colors.primary} />
         </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.welcomeText}>Attendance Logging</Text>
-          <Text style={styles.headerTitle}>Daily Logs</Text>
+          <Text style={[styles.welcomeText, { color: colors.primary }]}>Attendance Logging</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Daily Logs</Text>
         </View>
         <Avatar
           fullName={userDetails?.fullName || 'User'}
@@ -266,18 +269,18 @@ export default function AttendanceScreen() {
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Date Strips Panel */}
-        <View style={styles.dateSelectorCard}>
+        <View style={[styles.dateSelectorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.dateSelectorHeader}>
             <View style={styles.dateHeaderLeft}>
-              <CalendarDays size={18} color="#6366f1" />
-              <Text style={styles.selectedDateLabel}>{getDisplayDate(selectedDate)}</Text>
+              <CalendarDays size={18} color={colors.primary} />
+              <Text style={[styles.selectedDateLabel, { color: colors.textPrimary }]}>{getDisplayDate(selectedDate)}</Text>
             </View>
             <TouchableOpacity
-              style={styles.pickerButton}
+              style={[styles.pickerButton, { backgroundColor: isDarkMode ? '#1E1B4B' : '#EEF2FF', borderColor: colors.border }]}
               onPress={() => setShowDatePicker(true)}
               activeOpacity={0.75}
             >
-              <Text style={styles.pickerButtonText}>Pick Date</Text>
+              <Text style={[styles.pickerButtonText, { color: colors.primary }]}>Pick Date</Text>
             </TouchableOpacity>
           </View>
 
@@ -302,11 +305,12 @@ export default function AttendanceScreen() {
                   onPress={() => handleDateSelect(day)}
                   style={[
                     styles.dayItem,
+                    { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border },
                     isSelected && styles.dayItemSelect,
                   ]}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.dayNumberText, isSelected && styles.dayNumberTextSelect]}>
+                  <Text style={[styles.dayNumberText, { color: colors.textSecondary }, isSelected && styles.dayNumberTextSelect]}>
                     {day}
                   </Text>
                   {isToday && (
@@ -332,62 +336,62 @@ export default function AttendanceScreen() {
         )}
 
         {/* Analytics Card */}
-        <View style={styles.analyticsCard}>
+        <View style={[styles.analyticsCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.analyticsGradient}
           >
             <View style={styles.analyticsLeft}>
               <View style={styles.avgTimeBadge}>
-                <Clock size={12} color="#6366f1" />
-                <Text style={styles.avgTimeBadgeText}>PUNCTUALITY INSIGHT</Text>
+                <Clock size={12} color={colors.primary} />
+                <Text style={[styles.avgTimeBadgeText, { color: colors.primary }]}>PUNCTUALITY INSIGHT</Text>
               </View>
-              <Text style={styles.avgTimeValue}>
+              <Text style={[styles.avgTimeValue, { color: colors.textPrimary }]}>
                 {loading ? '——' : averagePunchInTime}
               </Text>
-              <Text style={styles.avgTimeLabel}>Average Punch-In</Text>
-              <Text style={styles.avgTimeSub}>
+              <Text style={[styles.avgTimeLabel, { color: colors.textPrimary }]}>Average Punch-In</Text>
+              <Text style={[styles.avgTimeSub, { color: colors.textSecondary }]}>
                 Based on {employees.filter(e => e.entryTime).length} check-ins recorded today.
               </Text>
             </View>
             <View style={styles.illustrationWrapper}>
-              <AttendanceIllustration width={100} height={80} />
+              <AttendanceIllustration width={100} height={80} isDarkMode={isDarkMode} />
             </View>
           </LinearGradient>
         </View>
 
         {/* Search bar & Filter */}
         <View style={styles.searchWrapper}>
-          <View style={styles.searchBarContainer}>
-            <Search size={18} color="#94A3B8" />
+          <View style={[styles.searchBarContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Search size={18} color={colors.textMuted} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.textPrimary }]}
               placeholder="Search by name or designation..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity style={styles.filterButton} activeOpacity={0.7}>
-            <Filter size={16} color="#475569" />
+          <TouchableOpacity style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.border }]} activeOpacity={0.7}>
+            <Filter size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* Employee Logs list */}
         <View style={styles.logsSection}>
-          <Text style={styles.logsSectionTitle}>Employee Check-in Logs</Text>
+          <Text style={[styles.logsSectionTitle, { color: colors.textPrimary }]}>Employee Check-in Logs</Text>
           
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {loading ? (
               <View style={styles.loaderWrapper}>
-                <ActivityIndicator size="large" color="#6366f1" />
-                <Text style={styles.loaderText}>Syncing records...</Text>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Syncing records...</Text>
               </View>
             ) : filteredEmployees.length === 0 ? (
-              <View style={styles.emptyLogsCard}>
-                <Text style={styles.emptyLogsText}>
+              <View style={[styles.emptyLogsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.emptyLogsText, { color: colors.textSecondary }]}>
                   {searchQuery ? 'No match found for this criteria.' : 'No logs recorded for this date.'}
                 </Text>
               </View>

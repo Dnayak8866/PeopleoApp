@@ -1,30 +1,65 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Application Theme Colors and Tokens
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#6366F1';
+const tintColorDark = '#818CF8';
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
+    textPrimary: '#1E1B4B',
+    textSecondary: '#64748B',
+    textMuted: '#94A3B8',
+    background: '#FAFBFF',
+    card: '#FFFFFF',
+    cardBorder: '#F1F5F9',
+    border: '#E2E8F0',
+    primary: '#6366F1',
+    primaryLight: '#EEF2FF',
+    accent: '#8B5CF6',
+    surface: '#F8FAFC',
+    icon: '#64748B',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    tabBar: '#FFFFFF',
+    tabBarBorder: '#E2E8F0',
+    tabIconDefault: '#94A3B8',
     tabIconSelected: tintColorLight,
+    statusSuccessBg: '#ECFDF5',
+    statusSuccessText: '#10B981',
+    statusWarningBg: '#FFFBEB',
+    statusWarningText: '#F59E0B',
+    statusDangerBg: '#FEF2F2',
+    statusDangerText: '#EF4444',
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#CBD5E1',
+    textMuted: '#64748B',
+    background: '#0B0F19',
+    card: '#151D30',
+    cardBorder: '#1E293B',
+    border: '#334155',
+    primary: '#818CF8',
+    primaryLight: '#1E1B4B',
+    accent: '#A78BFA',
+    surface: '#0F172A',
+    icon: '#CBD5E1',
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    tabBar: '#0F172A',
+    tabBarBorder: '#1E293B',
+    tabIconDefault: '#64748B',
     tabIconSelected: tintColorDark,
+    statusSuccessBg: '#064E3B',
+    statusSuccessText: '#34D399',
+    statusWarningBg: '#78350F',
+    statusWarningText: '#FBBF24',
+    statusDangerBg: '#7F1D1D',
+    statusDangerText: '#F87171',
   },
-  primary: '#636ae8',
-  background: '#F9FAFBFF',
-  primaryLight: '#F2F2FDFF',
-  primaryText: '#242524FF'
+  primary: '#6366F1',
+  primaryLight: '#EEF2FF',
+  background: '#FAFBFF',
+  primaryText: '#1E1B4B'
 };

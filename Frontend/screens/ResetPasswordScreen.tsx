@@ -21,8 +21,11 @@ import ResetPasswordIllustration from '@/components/illustrations/ResetPasswordI
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { userId } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -76,41 +79,41 @@ export default function ResetPasswordScreen() {
     setShow: (s: boolean) => void
   ) => (
     <View style={styles.inputContainer}>
-      <View style={styles.inputWrapper}>
-        <Lock size={18} color="#6366f1" />
+      <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Lock size={18} color={colors.primary} />
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.textPrimary }]}
           placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
           value={value}
           onChangeText={setValue}
           secureTextEntry={!show}
         />
         <TouchableOpacity onPress={() => setShow(!show)} activeOpacity={0.7}>
-          {show ? <EyeOff size={18} color="#94A3B8" /> : <Eye size={18} color="#94A3B8" />}
+          {show ? <EyeOff size={18} color={colors.textMuted} /> : <Eye size={18} color={colors.textMuted} />}
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.back()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ChevronLeft size={22} color="#1E293B" />
+            <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Reset Password</Text>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Reset Password</Text>
           </View>
         </View>
 
@@ -120,17 +123,17 @@ export default function ResetPasswordScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Welcome Card & Illustration */}
-          <View style={styles.welcomeCard}>
+          <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
             <LinearGradient
-              colors={['#EEF2FF', '#F5F3FF']}
+              colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.welcomeGradient}
             >
               <View style={styles.welcomeTextContainer}>
-                <Text style={styles.welcomeQuote}>Security First</Text>
-                <Text style={styles.ownerName}>New Keys</Text>
-                <Text style={styles.welcomeDesc}>
+                <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Security First</Text>
+                <Text style={[styles.ownerName, { color: colors.textPrimary }]}>New Keys</Text>
+                <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                   Enter your current credentials and select a strong, secure new password.
                 </Text>
               </View>
@@ -141,14 +144,14 @@ export default function ResetPasswordScreen() {
           </View>
 
           {/* Form Card */}
-          <View style={styles.formCard}>
-            <Text style={styles.inputLabel}>Current Password</Text>
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Current Password</Text>
             {renderPasswordInput(currentPassword, setCurrentPassword, 'Enter current password', showCurrent, setShowCurrent)}
 
-            <Text style={[styles.inputLabel, { marginTop: 8 }]}>New Password</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: 8 }]}>New Password</Text>
             {renderPasswordInput(newPassword, setNewPassword, 'Enter new password (min. 6 chars)', showNew, setShowNew)}
 
-            <Text style={[styles.inputLabel, { marginTop: 8 }]}>Confirm New Password</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: 8 }]}>Confirm New Password</Text>
             {renderPasswordInput(confirmPassword, setConfirmPassword, 'Re-enter new password', showConfirm, setShowConfirm)}
 
             <TouchableOpacity

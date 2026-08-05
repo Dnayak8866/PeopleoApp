@@ -65,8 +65,11 @@ const GENDERS: DropdownItem[] = [
   { value: 'Prefer not to say', id: 'prefer_not_to_say' },
 ];
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function AddEmployeeScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
     phone_number: '',
@@ -202,12 +205,12 @@ export default function AddEmployeeScreen() {
     maxLength?: number,
   ) => (
     <View style={styles.inputContainer}>
-      <View style={[styles.inputWrapper, errors[field] && styles.inputError]}>
+      <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}>
         <View style={styles.inputIconContainer}>{icon}</View>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.textPrimary }]}
           placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
           value={formData[field]}
           onChangeText={(value) => handleInputChange(field, value)}
           keyboardType={keyboardType}
@@ -237,21 +240,22 @@ export default function AddEmployeeScreen() {
     return (
       <View style={styles.inputContainer}>
         <TouchableOpacity
-          style={[styles.dropdownWrapper, errors[field] && styles.inputError]}
+          style={[styles.dropdownWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}
           onPress={onToggleDropdown}
           activeOpacity={0.8}
         >
           <View style={styles.inputIconContainer}>{icon}</View>
           <Text style={[
             styles.dropdownPlaceholder,
-            formData[field] ? styles.dropdownSelected : null
+            { color: colors.textSecondary },
+            formData[field] && [styles.dropdownSelected, { color: colors.textPrimary }]
           ]}>
             {displayText}
           </Text>
-          {showDropdown ? <ChevronUp size={16} color='#94A3B8' /> : <ChevronDown size={16} color="#94A3B8" />}
+          {showDropdown ? <ChevronUp size={16} color={colors.textMuted} /> : <ChevronDown size={16} color={colors.textMuted} />}
         </TouchableOpacity>
         {showDropdown && (
-          <View style={styles.dropdownList}>
+          <View style={[styles.dropdownList, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {data.map((item) => (
               <TouchableOpacity
                 key={item.id}
@@ -267,6 +271,7 @@ export default function AddEmployeeScreen() {
               >
                 <Text style={[
                   styles.dropdownListItemText,
+                  { color: colors.textSecondary },
                   formData[field].toString() === item.id.toString() && styles.dropdownListItemTextSelected
                 ]}>
                   {item.value}
@@ -287,20 +292,21 @@ export default function AddEmployeeScreen() {
   ) => (
     <View style={styles.inputContainer}>
       <TouchableOpacity
-        style={[styles.dropdownWrapper, errors[field] && styles.inputError]}
+        style={[styles.dropdownWrapper, { backgroundColor: colors.card, borderColor: colors.border }, errors[field] && styles.inputError]}
         onPress={onPress}
         activeOpacity={0.8}
       >
         <View style={styles.inputIconContainer}>
-          <CalendarDays size={18} color="#6366f1" />
+          <CalendarDays size={18} color={colors.primary} />
         </View>
         <Text style={[
           styles.dropdownPlaceholder,
-          formData[field] && styles.dropdownSelected
+          { color: colors.textSecondary },
+          formData[field] && [styles.dropdownSelected, { color: colors.textPrimary }]
         ]}>
           {formData[field] ? formatDate(formData[field]) : placeholder}
         </Text>
-        <ChevronDown size={16} color="#94A3B8" />
+        <ChevronDown size={16} color={colors.textMuted} />
       </TouchableOpacity>
       {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
     </View>
@@ -325,22 +331,23 @@ export default function AddEmployeeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.back()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ChevronLeft size={22} color="#1E293B" />
+            <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Add Employee</Text>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Add New Employee</Text>
           </View>
         </View>
 
@@ -350,9 +357,9 @@ export default function AddEmployeeScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Welcome Card & Illustration */}
-          <View style={styles.welcomeCard}>
+          <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
             <LinearGradient
-              colors={['#EEF2FF', '#F5F3FF']}
+              colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.welcomeGradient}
@@ -371,17 +378,17 @@ export default function AddEmployeeScreen() {
           </View>
 
           {/* Form details */}
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Basic details */}
-            <Text style={styles.sectionTitle}>Basic Details</Text>
-            {renderInput('full_name', 'Full Name', <UserRound size={18} color="#6366f1" />)}
-            {renderInput('phone_number', 'Mobile Number', <Phone size={18} color="#6366f1" />, 'phone-pad', 10)}
-            {renderInput('email', 'Email Address', <Mail size={18} color="#6366f1" />, 'email-address')}
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Details</Text>
+            {renderInput('full_name', 'Full Name', <UserRound size={18} color={colors.primary} />)}
+            {renderInput('phone_number', 'Mobile Number', <Phone size={18} color={colors.primary} />, 'phone-pad', 10)}
+            {renderInput('email', 'Email Address', <Mail size={18} color={colors.primary} />, 'email-address')}
             
             {renderDropdown(
               'gender',
               'Gender',
-              <UserRound size={18} color="#6366f1" />,
+              <UserRound size={18} color={colors.primary} />,
               GENDERS,
               showGenderDropdown,
               () => {
@@ -397,11 +404,11 @@ export default function AddEmployeeScreen() {
             })}
 
             {/* Job Details */}
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Job Details</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 12 }]}>Job Details</Text>
             {renderDropdown(
               'department_id',
               'Department',
-              <Briefcase size={18} color="#6366f1" />,
+              <Briefcase size={18} color={colors.primary} />,
               DEPARTMENTS,
               showDepartmentDropdown,
               () => {
@@ -414,7 +421,7 @@ export default function AddEmployeeScreen() {
             {renderDropdown(
               'designation_id',
               'Designation',
-              <Briefcase size={18} color="#6366f1" />,
+              <Briefcase size={18} color={colors.primary} />,
               DESIGNATIONS,
               showDesignationDropdown,
               () => {
@@ -430,21 +437,23 @@ export default function AddEmployeeScreen() {
             })}
 
             {/* Working Hours */}
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Working Hours</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 12 }]}>Working Hours</Text>
             <View style={styles.shiftContainer}>
               {shiftTimings.map((shift) => (
                 <TouchableOpacity
                   key={shift.shift_id}
                   style={[
                     styles.shiftButton,
+                    { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', borderColor: colors.border },
                     formData.shift_id === shift.shift_id.toString() && styles.shiftButtonSelected,
                   ]}
                   onPress={() => handleInputChange('shift_id', shift.shift_id.toString())}
                   activeOpacity={0.8}
                 >
-                  <Clock size={14} color={formData.shift_id === shift.shift_id.toString() ? '#ffffff' : '#64748B'} />
+                  <Clock size={14} color={formData.shift_id === shift.shift_id.toString() ? '#ffffff' : colors.textSecondary} />
                   <Text style={[
                     styles.shiftButtonText,
+                    { color: colors.textSecondary },
                     formData.shift_id === shift.shift_id.toString() && styles.shiftButtonTextSelected,
                   ]}>
                     {shift.shift_name} ({formatTime(shift.from_time)} - {formatTime(shift.to_time)})

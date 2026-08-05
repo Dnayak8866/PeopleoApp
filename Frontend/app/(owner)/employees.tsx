@@ -38,6 +38,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import { showSuccessToast, showErrorToast } from '@/services/toast';
 import * as Linking from 'expo-linking';
+import { useTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -55,6 +56,7 @@ interface Employee {
 
 const SkeletonItem = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
+  const { isDarkMode, colors } = useTheme();
 
   useEffect(() => {
     const startAnimation = () => {
@@ -80,20 +82,22 @@ const SkeletonItem = () => {
     outputRange: [0.3, 0.7],
   });
 
+  const skeletonFill = isDarkMode ? '#1E293B' : '#E5E7EB';
+
   return (
-    <View style={[styles.employeeCard, { flexDirection: 'column', alignItems: 'stretch', padding: 16 }]}>
+    <View style={[styles.employeeCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'column', alignItems: 'stretch', padding: 16 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Animated.View style={[styles.skeletonCheckbox, { opacity }]} />
-        <Animated.View style={[styles.skeletonAvatar, { opacity }]} />
+        <Animated.View style={[styles.skeletonCheckbox, { backgroundColor: skeletonFill, opacity }]} />
+        <Animated.View style={[styles.skeletonAvatar, { backgroundColor: skeletonFill, opacity }]} />
         <View style={styles.employeeInfo}>
-          <Animated.View style={[styles.skeletonName, { opacity }]} />
-          <Animated.View style={[styles.skeletonPosition, { opacity }]} />
+          <Animated.View style={[styles.skeletonName, { backgroundColor: skeletonFill, opacity }]} />
+          <Animated.View style={[styles.skeletonPosition, { backgroundColor: skeletonFill, opacity }]} />
         </View>
       </View>
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
       <View style={[styles.actionButtons, { justifyContent: 'space-between', marginTop: 12, paddingHorizontal: 4 }]}>
         {[...Array(5)].map((_, index) => (
-          <Animated.View key={index} style={[styles.skeletonActionButton, { opacity }]} />
+          <Animated.View key={index} style={[styles.skeletonActionButton, { backgroundColor: skeletonFill, opacity }]} />
         ))}
       </View>
     </View>
@@ -107,6 +111,7 @@ export default function EmployeesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { userDetails } = useAuth();
   const { designations } = useMasterDataContext();
 
@@ -259,10 +264,10 @@ export default function EmployeesScreen() {
           <View style={styles.noEmployeesIllustration}>
             <EmployeeListIllustration width={200} height={140} />
           </View>
-          <Text style={styles.emptyStateTitle}>
+          <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
             {isSearching ? 'No match found' : 'No employees yet'}
           </Text>
-          <Text style={styles.emptyStateSubtitle}>
+          <Text style={[styles.emptyStateSubtitle, { color: colors.textSecondary }]}>
             {isSearching
               ? `We couldn't find any employees matching "${searchText}". Try another search term.`
               : "It looks like you haven't added any employees yet. Build your workspace team now!"}
@@ -297,6 +302,7 @@ export default function EmployeesScreen() {
               key={employee.id}
               style={[
                 styles.employeeCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
                 isSelected && styles.employeeCardSelected,
                 { flexDirection: 'column', alignItems: 'stretch', padding: 16 }
               ]}
@@ -306,7 +312,7 @@ export default function EmployeesScreen() {
                   style={styles.checkbox}
                   value={isSelected}
                   onValueChange={() => toggleEmployeeSelection(employee.id)}
-                  color={isSelected ? '#6366f1' : undefined}
+                  color={isSelected ? colors.primary : undefined}
                 />
 
                 <TouchableOpacity
@@ -317,11 +323,11 @@ export default function EmployeesScreen() {
                   {renderAvatar(employee)}
 
                   <View style={styles.employeeInfo}>
-                    <Text style={styles.employeeName} numberOfLines={1}>
+                    <Text style={[styles.employeeName, { color: colors.textPrimary }]} numberOfLines={1}>
                       {employee.fullName}
                     </Text>
-                    <View style={styles.designationBadge}>
-                      <Text style={styles.designationText} numberOfLines={1}>
+                    <View style={[styles.designationBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                      <Text style={[styles.designationText, { color: colors.textSecondary }]} numberOfLines={1}>
                         {getPositionNameById(employee.designationId, designations)}
                       </Text>
                     </View>
@@ -329,20 +335,20 @@ export default function EmployeesScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
               <View style={[styles.actionButtons, { justifyContent: 'space-between', marginTop: 12, paddingHorizontal: 4 }]}>
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#EEF2FF', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
+                  style={[styles.actionButton, { backgroundColor: isDarkMode ? '#1E1B4B' : '#EEF2FF', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
                   onPress={() => handleCall(employee)}
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
-                  <Phone size={13} color="#6366f1" />
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#6366f1' }}>Call</Text>
+                  <Phone size={13} color={colors.primary} />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>Call</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#ECFDF5', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
+                  style={[styles.actionButton, { backgroundColor: isDarkMode ? '#064E3B' : '#ECFDF5', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
                   onPress={() => handleMessage(employee)}
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
@@ -351,7 +357,7 @@ export default function EmployeesScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#FFFBEB', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
+                  style={[styles.actionButton, { backgroundColor: isDarkMode ? '#78350F' : '#FFFBEB', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
                   onPress={() => handleEmail(employee)}
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
@@ -360,16 +366,16 @@ export default function EmployeesScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#F1F5F9', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
+                  style={[styles.actionButton, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
                   onPress={() => router.push({ pathname: '/employee/edit', params: { id: employee.id } })}
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
-                  <Edit size={13} color="#64748B" />
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B' }}>Edit</Text>
+                  <Edit size={13} color={colors.textSecondary} />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>Edit</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#FEF2F2', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
+                  style={[styles.actionButton, { backgroundColor: isDarkMode ? '#7F1D1D' : '#FEF2F2', flex: 1, height: 32, borderRadius: 8, flexDirection: 'row', gap: 6, marginHorizontal: 2 }]}
                   onPress={() => handleDelete(employee)}
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
@@ -385,22 +391,22 @@ export default function EmployeesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.outerContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.outerContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header section with Illustration */}
-      <View style={styles.topSection}>
+      <View style={[styles.topSection, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.welcomeText}>Manage Team</Text>
-            <Text style={styles.headerTitle}>Employees</Text>
+            <Text style={[styles.welcomeText, { color: colors.primary }]}>Manage Team</Text>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Employees</Text>
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.bellButton}
+              style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push('/notifications')}
             >
-              <Bell size={22} color="#1E293B" />
+              <Bell size={22} color={colors.textPrimary} />
               <View style={styles.bellBadge} />
             </TouchableOpacity>
             <Avatar
@@ -412,16 +418,16 @@ export default function EmployeesScreen() {
         </View>
 
         {/* Dynamic welcome illustration in header */}
-        <View style={styles.headerCard}>
+        <View style={[styles.headerCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.headerCardGradient}
           >
             <View style={styles.headerCardText}>
-              <Text style={styles.cardHeaderTitle}>Team Directory</Text>
-              <Text style={styles.cardHeaderDesc}>
+              <Text style={[styles.cardHeaderTitle, { color: colors.textPrimary }]}>Team Directory</Text>
+              <Text style={[styles.cardHeaderDesc, { color: colors.textSecondary }]}>
                 Add, manage, and communicate with your team members in one tap.
               </Text>
             </View>
@@ -433,12 +439,12 @@ export default function EmployeesScreen() {
 
         {/* Floating Search input */}
         <View style={styles.searchWrapper}>
-          <View style={styles.searchContainer}>
-            <Search size={18} color="#94A3B8" style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Search size={18} color={colors.textMuted} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.textPrimary }]}
               placeholder="Search by employee name..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={searchText}
               onChangeText={setSearchText}
               editable={!isLoading}
@@ -448,7 +454,7 @@ export default function EmployeesScreen() {
       </View>
 
       {/* Main List */}
-      <View style={styles.listContainer}>
+      <View style={[styles.listContainer, { backgroundColor: colors.background }]}>
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}

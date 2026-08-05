@@ -25,10 +25,13 @@ import { StatusBar } from 'expo-status-bar';
 import { HeaderAvatar } from '@/components/HeaderAvatar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useTheme } from '@/context/ThemeContext';
+
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { logout } = useAuth();
   const { userDetails } = useAuth();
   const { companyDetails } = useMasterDataContext();
@@ -199,36 +202,36 @@ export default function HomeScreen() {
   };
 
   const StatCard = ({ label, value, color, icon: Icon }: { label: string; value: string; color: string; icon: any }) => (
-    <View style={styles.statCard}>
+    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[styles.progressCircle, { borderColor: color + '20', borderTopColor: color }]}>
         <View style={[styles.innerCircle, { backgroundColor: color + '08' }]}>
           <Icon size={16} color={color} />
-          <Text style={styles.statNumber}>{value}</Text>
+          <Text style={[styles.statNumber, { color: colors.textPrimary }]}>{value}</Text>
         </View>
       </View>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.greeting}>Hello,</Text>
-          <Text style={styles.employeeName}>
+          <Text style={[styles.greeting, { color: colors.primary }]}>Hello,</Text>
+          <Text style={[styles.employeeName, { color: colors.textPrimary }]}>
             {userDetails?.fullName?.split(' ')[0] || 'Employee'}
           </Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.bellButton}
+            style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/notifications')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Bell size={22} color="#1E293B" />
+            <Bell size={22} color={colors.textPrimary} />
             <View style={styles.bellBadge} />
           </TouchableOpacity>
           <HeaderAvatar size={38} />
@@ -241,17 +244,17 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Welcome Gradient & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.timeLabel}>CURRENT TIME</Text>
-              <Text style={styles.timeText}>{timeString}</Text>
-              <Text style={styles.dateText}>{dateString}</Text>
+              <Text style={[styles.timeLabel, { color: colors.primary }]}>CURRENT TIME</Text>
+              <Text style={[styles.timeText, { color: colors.textPrimary }]}>{timeString}</Text>
+              <Text style={[styles.dateText, { color: colors.textSecondary }]}>{dateString}</Text>
               <View style={styles.companyBadge}>
                 <Text style={styles.companyBadgeText} numberOfLines={1}>
                   {companyDetails?.name || 'Workspace'}
@@ -266,11 +269,11 @@ export default function HomeScreen() {
 
         {/* Location Section */}
         <View style={styles.locationSection}>
-          <View style={styles.locationBadge}>
+          <View style={[styles.locationBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#FFFBEB', borderColor: isDarkMode ? '#334155' : '#FEF3C7' }]}>
             <View style={styles.locationIconWrapper}>
               <ShieldAlert size={16} color="#F59E0B" />
             </View>
-            <Text style={styles.locationText}>
+            <Text style={[styles.locationText, { color: colors.textSecondary }]}>
               <Text style={styles.locationBold}>Out of Range:</Text> You are not within office limits
             </Text>
           </View>
@@ -291,7 +294,7 @@ export default function HomeScreen() {
                 style={[
                   styles.pulseCircle,
                   {
-                    borderColor: isPunchedIn ? '#EF4444' : '#6366f1',
+                    borderColor: isPunchedIn ? '#EF4444' : colors.primary,
                     opacity: pulseAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [0.3, 0],
@@ -329,14 +332,14 @@ export default function HomeScreen() {
             </Animated.View>
           </TouchableOpacity>
 
-          <Text style={styles.statusDescription}>
+          <Text style={[styles.statusDescription, { color: colors.textSecondary }]}>
             {isLoading ? 'Processing check-in...' : isPunchedIn ? 'Logged In' : 'Not Punched In'}
           </Text>
 
           {isPunchedIn && punchInTime && (
-            <View style={styles.timeBadge}>
-              <Clock size={12} color="#64748B" />
-              <Text style={styles.timeBadgeText}>
+            <View style={[styles.timeBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Clock size={12} color={colors.textSecondary} />
+              <Text style={[styles.timeBadgeText, { color: colors.textSecondary }]}>
                 Active since {punchInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
@@ -344,21 +347,21 @@ export default function HomeScreen() {
         </View>
 
         {/* Stats Row */}
-        <View style={styles.statsSection}>
+        <View style={[styles.statsSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <StatCard
             label="Attendance"
             value={attendancePercent}
             color="#3B82F6"
             icon={Award}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <StatCard
             label="Leave Taken"
             value={leavesTaken}
             color="#8B5CF6"
             icon={CalendarX}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <StatCard
             label="Salary Count"
             value={salaryDays}

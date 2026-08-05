@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ApprovalIllustration from '@/components/illustrations/ApprovalIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -47,6 +48,7 @@ const daysBetween = (from: string, to: string) => {
 
 export default function LeaveApprovalsScreen() {
   const { userDetails } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const [leaves, setLeaves] = useState<PendingLeave[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<number, 'approve' | 'reject' | null>>({});
@@ -148,27 +150,27 @@ export default function LeaveApprovalsScreen() {
     const countDays = daysBetween(leave.from_date, leave.to_date);
 
     return (
-      <View key={leave.leave_id} style={styles.leaveCard}>
+      <View key={leave.leave_id} style={[styles.leaveCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {/* Employee Row */}
         <View style={styles.employeeRow}>
           <Avatar fullName={leave.employee_name} size={44} />
           <View style={styles.employeeInfo}>
-            <Text style={styles.employeeName} numberOfLines={1}>
+            <Text style={[styles.employeeName, { color: colors.textPrimary }]} numberOfLines={1}>
               {leave.employee_name}
             </Text>
-            <Text style={styles.appliedTime}>
+            <Text style={[styles.appliedTime, { color: colors.textSecondary }]}>
               Applied {leave.applied_at ? formatDate(leave.applied_at) : '--'}
             </Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColors[leave.status]?.bg ?? '#F1F5F9' }]}>
-            <Text style={[styles.statusText, { color: statusColors[leave.status]?.text ?? '#64748B' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1E293B' : (statusColors[leave.status]?.bg ?? '#F1F5F9') }]}>
+            <Text style={[styles.statusText, { color: statusColors[leave.status]?.text ?? colors.textSecondary }]}>
               {leave.status}
             </Text>
           </View>
         </View>
 
         {/* Leave Details Box */}
-        <View style={styles.detailsBox}>
+        <View style={[styles.detailsBox, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
           <View style={styles.detailsRow}>
             <View style={styles.detailCell}>
               <Text style={styles.detailLabel}>Leave Type</Text>
@@ -237,20 +239,20 @@ export default function LeaveApprovalsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ChevronLeft size={22} color="#1E293B" />
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Leave Approvals</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Leave Approvals</Text>
         </View>
         {leaves.length > 0 && (
           <View style={styles.countBadge}>
@@ -266,9 +268,9 @@ export default function LeaveApprovalsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Welcome Card & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
@@ -292,10 +294,10 @@ export default function LeaveApprovalsScreen() {
             <Text style={styles.loaderText}>Syncing requests...</Text>
           </View>
         ) : leaves.length === 0 ? (
-          <View style={styles.emptyState}>
-            <ClipboardList size={48} color="#94A3B8" style={{ marginBottom: 16 }} />
-            <Text style={styles.emptyTitle}>No Pending Requests</Text>
-            <Text style={styles.emptyDesc}>
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <ClipboardList size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Pending Requests</Text>
+            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
               All employee leave applications have been reviewed. Check back later.
             </Text>
           </View>

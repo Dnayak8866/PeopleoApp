@@ -41,8 +41,11 @@ type AttendanceLog = {
     leaveType: string | null;
 };
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function AttendanceHistoryScreen() {
     const { userDetails } = useAuth();
+    const { isDarkMode, colors } = useTheme();
     const today = new Date();
 
     const [month, setMonth] = useState(today.getMonth()); // 0-indexed
@@ -186,14 +189,14 @@ export default function AttendanceHistoryScreen() {
     const selectedDayLog = getLogForDay(selectedDay);
 
     return (
-        <SafeAreaView style={styles.safeContainer}>
-            <StatusBar style="dark" />
+        <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+            <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.background }]}>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.welcomeText}>My Records</Text>
-                    <Text style={styles.headerTitle}>Attendance History</Text>
+                    <Text style={[styles.welcomeText, { color: colors.primary }]}>Attendance Logs</Text>
+                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My History</Text>
                 </View>
             </View>
 
@@ -203,73 +206,73 @@ export default function AttendanceHistoryScreen() {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Stats Summary Welcome Card */}
-                <View style={styles.welcomeCard}>
+                <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
                     <LinearGradient
-                        colors={['#EEF2FF', '#F5F3FF']}
+                        colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.welcomeGradient}
                     >
                         <View style={styles.welcomeTextContainer}>
-                            <Text style={styles.welcomeQuote}>Monthly Summary</Text>
-                            <Text style={styles.ownerName}>
+                            <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Monthly Summary</Text>
+                            <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
                                 {MONTH_NAMES[month].slice(0, 3)} {year}
                             </Text>
 
                             {/* Mini Stats Grid inside welcome card */}
-                            <View style={styles.miniStatsGrid}>
+                            <View style={[styles.miniStatsGrid, { backgroundColor: isDarkMode ? '#0F172A' : '#FFFFFF', borderWidth: 1, borderColor: colors.border }]}>
                                 <View style={styles.miniStatItem}>
                                     <Text style={[styles.miniStatValue, { color: '#10b981' }]}>
                                         {String(stats.presentDays).padStart(2, '0')}
                                     </Text>
-                                    <Text style={styles.miniStatLabel}>Present</Text>
+                                    <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>Present</Text>
                                 </View>
-                                <View style={styles.miniStatDivider} />
+                                <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
                                 <View style={styles.miniStatItem}>
                                     <Text style={[styles.miniStatValue, { color: '#f59e0b' }]}>
                                         {String(stats.lateDays).padStart(2, '0')}
                                     </Text>
-                                    <Text style={styles.miniStatLabel}>Late</Text>
+                                    <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>Late</Text>
                                 </View>
-                                <View style={styles.miniStatDivider} />
+                                <View style={[styles.miniStatDivider, { backgroundColor: colors.border }]} />
                                 <View style={styles.miniStatItem}>
-                                    <Text style={[styles.miniStatValue, { color: '#6366f1' }]}>
+                                    <Text style={[styles.miniStatValue, { color: colors.primary }]}>
                                         {stats.totalHours}h
                                     </Text>
-                                    <Text style={styles.miniStatLabel}>Worked</Text>
+                                    <Text style={[styles.miniStatLabel, { color: colors.textSecondary }]}>Worked</Text>
                                 </View>
                             </View>
                         </View>
                         <View style={styles.illustrationWrapper}>
-                            <HistoryIllustration width={105} height={85} />
+                            <HistoryIllustration width={105} height={85} isDarkMode={isDarkMode} />
                         </View>
                     </LinearGradient>
                 </View>
 
                 {/* Calendar Card */}
-                <View style={styles.calendarCard}>
+                <View style={[styles.calendarCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     {/* Month Navigation */}
                     <View style={styles.monthNav}>
                         <View style={styles.monthTitleWrapper}>
-                            <CalendarDays size={18} color="#6366f1" />
-                            <Text style={styles.monthText}>
+                            <CalendarDays size={18} color={colors.primary} />
+                            <Text style={[styles.monthText, { color: colors.textPrimary }]}>
                                 {MONTH_NAMES[month]} {year}
                             </Text>
                         </View>
                         <View style={styles.navButtons}>
                           <TouchableOpacity
-                            style={styles.navBtn}
+                            style={[styles.navBtn, { backgroundColor: colors.surface }]}
                             onPress={goToPrevMonth}
                             activeOpacity={0.7}
                           >
-                            <ChevronLeft size={16} color="#475569" />
+                            <ChevronLeft size={16} color={colors.textSecondary} />
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={styles.navBtn}
+                            style={[styles.navBtn, { backgroundColor: colors.surface }]}
                             onPress={goToNextMonth}
                             activeOpacity={0.7}
                           >
-                            <ChevronRight size={16} color="#475569" />
+                            <ChevronRight size={16} color={colors.textSecondary} />
                           </TouchableOpacity>
                         </View>
                     </View>
@@ -277,7 +280,7 @@ export default function AttendanceHistoryScreen() {
                     {/* Day labels */}
                     <View style={styles.dayLabelsRow}>
                         {DAYS.map((d, idx) => (
-                            <Text key={idx} style={styles.dayLabel}>{d}</Text>
+                            <Text key={idx} style={[styles.dayLabel, { color: colors.textSecondary }]}>{d}</Text>
                         ))}
                     </View>
 
@@ -305,6 +308,7 @@ export default function AttendanceHistoryScreen() {
                                         <Text
                                             style={[
                                                 styles.dayText,
+                                                { color: colors.textPrimary },
                                                 isSelected && styles.dayTextSelected,
                                                 isToday && !isSelected && styles.dayTextToday,
                                                 isPast && !isSelected && styles.dayTextFuture,
@@ -324,94 +328,94 @@ export default function AttendanceHistoryScreen() {
 
                 {/* Selected Day Log Panel */}
                 <View style={styles.selectedDayPanel}>
-                    <Text style={styles.selectedDayTitle}>
+                    <Text style={[styles.selectedDayTitle, { color: colors.textPrimary }]}>
                         Day Summary: {selectedDay} {MONTH_NAMES[month].slice(0, 3)}
                     </Text>
                     {selectedDayLog ? (
-                        <View style={styles.logSummaryCard}>
+                        <View style={[styles.logSummaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <View style={styles.summaryBadgeRow}>
-                                <View style={[styles.summaryStatusBadge, { backgroundColor: getStatusStyle(selectedDayLog.status).bg }]}>
+                                <View style={[styles.summaryStatusBadge, { backgroundColor: isDarkMode ? '#1E293B' : getStatusStyle(selectedDayLog.status).bg }]}>
                                     <Text style={[styles.summaryStatusText, { color: getStatusStyle(selectedDayLog.status).text }]}>
                                         {getStatusStyle(selectedDayLog.status).label}
                                     </Text>
                                 </View>
-                                <View style={styles.summaryHoursBadge}>
-                                    <Clock size={12} color="#6366f1" />
-                                    <Text style={styles.summaryHoursText}>{selectedDayLog.workedHours || '0h 0m'}</Text>
+                                <View style={[styles.summaryHoursBadge, { backgroundColor: isDarkMode ? '#1E1B4B' : '#EEF2FF' }]}>
+                                    <Clock size={12} color={colors.primary} />
+                                    <Text style={[styles.summaryHoursText, { color: colors.textPrimary }]}>{selectedDayLog.workedHours || '0h 0m'}</Text>
                                 </View>
                             </View>
                             
                             {selectedDayLog.punchIn ? (
-                                <View style={styles.summaryTimesRow}>
+                                <View style={[styles.summaryTimesRow, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
                                     <View style={styles.timeValueCell}>
-                                        <Text style={styles.timeLabelText}>PUNCH IN</Text>
-                                        <Text style={styles.timeValText}>{selectedDayLog.punchIn}</Text>
+                                        <Text style={[styles.timeLabelText, { color: colors.textSecondary }]}>PUNCH IN</Text>
+                                        <Text style={[styles.timeValText, { color: colors.textPrimary }]}>{selectedDayLog.punchIn}</Text>
                                     </View>
-                                    <View style={styles.timeDividerLine} />
+                                    <View style={[styles.timeDividerLine, { backgroundColor: colors.border }]} />
                                     <View style={styles.timeValueCell}>
-                                        <Text style={styles.timeLabelText}>PUNCH OUT</Text>
-                                        <Text style={styles.timeValText}>{selectedDayLog.punchOut || '--:--'}</Text>
+                                        <Text style={[styles.timeLabelText, { color: colors.textSecondary }]}>PUNCH OUT</Text>
+                                        <Text style={[styles.timeValText, { color: colors.textPrimary }]}>{selectedDayLog.punchOut || '--:--'}</Text>
                                     </View>
                                 </View>
                             ) : (
-                                <Text style={styles.noPunchText}>No check-in logs registered for this date.</Text>
+                                <Text style={[styles.noPunchText, { color: colors.textSecondary }]}>No check-in logs registered for this date.</Text>
                             )}
                         </View>
                     ) : (
-                        <View style={styles.emptyDayCard}>
-                            <Text style={styles.emptyDayText}>No attendance records logged.</Text>
+                        <View style={[styles.emptyDayCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <Text style={[styles.emptyDayText, { color: colors.textSecondary }]}>No attendance records logged.</Text>
                         </View>
                     )}
                 </View>
 
                 {/* Daily Logs */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Monthly History Log</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Monthly History Log</Text>
                 </View>
 
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
                     {isLoading ? (
                         <View style={styles.loaderWrapper}>
-                            <ActivityIndicator size="large" color="#6366f1" />
-                            <Text style={styles.loaderText}>Syncing logs...</Text>
+                            <ActivityIndicator size="large" color={colors.primary} />
+                            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Syncing logs...</Text>
                         </View>
                     ) : logs.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>No attendance records for this month.</Text>
+                        <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No attendance records for this month.</Text>
                         </View>
                     ) : (
                         logs.map((log, idx) => {
                             const { month: logMonth, day: logDay } = formatLogDate(log.date);
                             const status = getStatusStyle(log.status);
                             return (
-                                <View key={idx} style={styles.logCard}>
+                                <View key={idx} style={[styles.logCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     {/* Date Badge */}
-                                    <View style={styles.dateBadge}>
-                                        <Text style={styles.dateBadgeMonth}>{logMonth}</Text>
-                                        <Text style={styles.dateBadgeDay}>{logDay}</Text>
+                                    <View style={[styles.dateBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                                        <Text style={[styles.dateBadgeMonth, { color: colors.primary }]}>{logMonth}</Text>
+                                        <Text style={[styles.dateBadgeDay, { color: colors.textPrimary }]}>{logDay}</Text>
                                     </View>
 
                                     {/* Log Info */}
                                     <View style={styles.logInfo}>
                                         {log.status === 'Absent' || !log.punchIn ? (
                                             <>
-                                                <Text style={styles.logTime}>—— : ——</Text>
-                                                <Text style={styles.logWorked}>
+                                                <Text style={[styles.logTime, { color: colors.textPrimary }]}>—— : ——</Text>
+                                                <Text style={[styles.logWorked, { color: colors.textSecondary }]}>
                                                     {log.leaveType || 'Absent'}
                                                 </Text>
                                             </>
                                         ) : (
                                             <>
-                                                <Text style={styles.logTime}>
+                                                <Text style={[styles.logTime, { color: colors.textPrimary }]}>
                                                     {log.punchIn} - {log.punchOut || '--:--'}
                                                 </Text>
-                                                <Text style={styles.logWorked}>{log.workedHours} worked</Text>
+                                                <Text style={[styles.logWorked, { color: colors.textSecondary }]}>{log.workedHours} worked</Text>
                                             </>
                                         )}
                                     </View>
 
                                     {/* Status Badge */}
-                                    <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+                                    <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1E293B' : status.bg }]}>
                                         <Text style={[styles.statusText, { color: status.text }]}>
                                             {status.label}
                                         </Text>

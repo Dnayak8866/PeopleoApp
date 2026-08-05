@@ -35,11 +35,13 @@ import { getDailyAttendanceSummary } from '@/services/api/attendance';
 import { getPendingLeavesCount } from '@/services/api/leaves';
 import { DailySummary } from '@/services/types/attendance';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '@/context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
 export default function HomePage() {
+  const { isDarkMode, colors } = useTheme();
   const getToday = () => {
     const d = new Date();
     return d.toISOString().slice(0, 10);
@@ -143,7 +145,7 @@ export default function HomePage() {
     badgeCount?: number;
   }) => (
     <TouchableOpacity
-      style={styles.quickActionCard}
+      style={[styles.quickActionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.85}
     >
@@ -157,39 +159,39 @@ export default function HomePage() {
       </LinearGradient>
       
       <View style={styles.quickActionTextContainer}>
-        <Text style={styles.quickActionTitle}>{title}</Text>
-        <Text style={styles.quickActionSubtitle}>{subtitle}</Text>
+        <Text style={[styles.quickActionTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.quickActionSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
       </View>
 
-      {badgeCount !== undefined && badgeCount > 0 ? (
+      {badgeCount !== undefined && badgeCount > 0 && (
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>{badgeCount}</Text>
         </View>
-      ) : (
-        <ChevronRight size={16} color="#94A3B8" style={styles.chevron} />
       )}
+
+      <ChevronRight size={18} color={colors.textMuted} style={styles.chevron} />
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.logoContainer}>
-          <Text style={styles.appName}>Peopleo</Text>
-          <Text style={styles.companyName}>
+          <Text style={[styles.appName, { color: colors.primary }]}>Peopleo</Text>
+          <Text style={[styles.companyName, { color: colors.textSecondary }]}>
             {companyDetails?.name || 'Dashboard'}
           </Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.bellButton}
+            style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/notifications')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Bell size={22} color="#1E293B" />
+            <Bell size={22} color={colors.textPrimary} />
             <View style={styles.bellBadge} />
           </TouchableOpacity>
           <HeaderAvatar size={38} />
@@ -201,30 +203,30 @@ export default function HomePage() {
         showsVerticalScrollIndicator={false}
       >
         {/* Welcome Section with Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeGreeting}>Welcome Back,</Text>
-              <Text style={styles.ownerName}>
+              <Text style={[styles.welcomeGreeting, { color: colors.primary }]}>Welcome Back,</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
                 {userDetails?.fullName?.split(' ')[0] || 'Manager'}
               </Text>
-              <Text style={styles.welcomeQuote}>
+              <Text style={[styles.welcomeQuote, { color: colors.textSecondary }]}>
                 Here is your team's overview for today.
               </Text>
 
               {/* Date Selector Button */}
               <TouchableOpacity
-                style={styles.dateSelector}
+                style={[styles.dateSelector, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => setShowDatePicker(true)}
                 activeOpacity={0.7}
               >
-                <Calendar size={14} color="#6366f1" />
-                <Text style={styles.dateSelectorText}>
+                <Calendar size={14} color={colors.primary} />
+                <Text style={[styles.dateSelectorText, { color: colors.textPrimary }]}>
                   {getDisplayDate(selectedDate)}
                 </Text>
               </TouchableOpacity>
@@ -255,17 +257,19 @@ export default function HomePage() {
           style={[
             styles.dashboardCard,
             {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
             },
           ]}
         >
-          <Text style={styles.cardTitle}>Today's Snapshot</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Today's Snapshot</Text>
 
           {loading ? (
             <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#6366f1" />
-              <Text style={styles.loaderText}>Syncing records...</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Syncing records...</Text>
             </View>
           ) : (
             <View style={styles.dashboardBody}>
@@ -274,6 +278,7 @@ export default function HomePage() {
                 <PieChart
                   data={chartData}
                   donut
+                  innerCircleColor={colors.card}
                   showText={hasData}
                   textColor="white"
                   radius={80}
@@ -282,10 +287,10 @@ export default function HomePage() {
                   focusOnPress
                   centerLabelComponent={() => (
                     <View style={styles.chartCenter}>
-                      <Text style={styles.chartCenterHours}>
+                      <Text style={[styles.chartCenterHours, { color: colors.textPrimary }]}>
                         {summary ? summary.avgWorkingHours.toFixed(1) : '0.0'}
                       </Text>
-                      <Text style={styles.chartCenterLabel}>Avg Hrs</Text>
+                      <Text style={[styles.chartCenterLabel, { color: colors.textSecondary }]}>Avg Hrs</Text>
                     </View>
                   )}
                 />
@@ -297,8 +302,8 @@ export default function HomePage() {
                 <View style={styles.statBadgeRow}>
                   <View style={[styles.statDot, { backgroundColor: '#10B981' }]} />
                   <View style={styles.statInfo}>
-                    <Text style={styles.statLabel}>Present</Text>
-                    <Text style={styles.statCount}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Present</Text>
+                    <Text style={[styles.statCount, { color: colors.textPrimary }]}>
                       {summary?.present ?? 0}
                     </Text>
                   </View>
@@ -308,8 +313,8 @@ export default function HomePage() {
                 <View style={styles.statBadgeRow}>
                   <View style={[styles.statDot, { backgroundColor: '#F59E0B' }]} />
                   <View style={styles.statInfo}>
-                    <Text style={styles.statLabel}>Late In</Text>
-                    <Text style={styles.statCount}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Late In</Text>
+                    <Text style={[styles.statCount, { color: colors.textPrimary }]}>
                       {summary?.lateCheckIns ?? 0}
                     </Text>
                   </View>
@@ -319,8 +324,8 @@ export default function HomePage() {
                 <View style={styles.statBadgeRow}>
                   <View style={[styles.statDot, { backgroundColor: '#8B5CF6' }]} />
                   <View style={styles.statInfo}>
-                    <Text style={styles.statLabel}>On Leave</Text>
-                    <Text style={styles.statCount}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>On Leave</Text>
+                    <Text style={[styles.statCount, { color: colors.textPrimary }]}>
                       {summary?.onLeave ?? 0}
                     </Text>
                   </View>
@@ -330,8 +335,8 @@ export default function HomePage() {
                 <View style={styles.statBadgeRow}>
                   <View style={[styles.statDot, { backgroundColor: '#EF4444' }]} />
                   <View style={styles.statInfo}>
-                    <Text style={styles.statLabel}>Absent</Text>
-                    <Text style={styles.statCount}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Absent</Text>
+                    <Text style={[styles.statCount, { color: colors.textPrimary }]}>
                       {summary?.absent ?? 0}
                     </Text>
                   </View>
@@ -343,7 +348,7 @@ export default function HomePage() {
 
         {/* Quick Management Section */}
         <View style={styles.quickActionsSection}>
-          <Text style={styles.sectionTitle}>Quick Management</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Management</Text>
           <View style={styles.quickActionsList}>
             <QuickActionCard
               icon={UserCheck}

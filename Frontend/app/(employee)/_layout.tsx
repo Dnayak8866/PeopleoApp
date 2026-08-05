@@ -6,8 +6,11 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { LayoutDashboard, Fingerprint, CalendarClock, TrendingUp } from 'lucide-react-native';
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function TabLayout() {
   const { userDetails } = useAuth();
+  const { isDarkMode, colors } = useTheme();
 
   return (
     <Tabs
@@ -15,18 +18,19 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          // bottom: Platform.OS === 'ios' ? 24 : 16,
           left: 16,
           right: 16,
           height: 66,
           borderRadius: 22,
           borderWidth: 1,
-          borderColor: 'rgba(99, 102, 241, 0.1)',
-          backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.82)' : '#FFFFFF',
+          borderColor: isDarkMode ? colors.border : 'rgba(99, 102, 241, 0.1)',
+          backgroundColor: Platform.OS === 'ios'
+            ? (isDarkMode ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.82)')
+            : colors.tabBar,
           overflow: 'hidden',
           shadowColor: '#6366f1',
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.08,
+          shadowOpacity: isDarkMode ? 0.3 : 0.08,
           shadowRadius: 18,
           elevation: 6,
           paddingBottom: Platform.OS === 'ios' ? 12 : 8,
@@ -34,11 +38,11 @@ export default function TabLayout() {
         },
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
-            <BlurView intensity={75} style={StyleSheet.absoluteFill} tint="light" />
+            <BlurView intensity={75} style={StyleSheet.absoluteFill} tint={isDarkMode ? 'dark' : 'light'} />
           ) : null
         ),
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '700',

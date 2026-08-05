@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import EmployeeDetailsIllustration from '@/components/illustrations/EmployeeDetailsIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +55,7 @@ interface Props {
 
 export default function EmployeeDetailsScreen({ employeeId }: Props) {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [employee, setEmployee] = useState<any>(null);
   const [attendanceList, setAttendanceList] = useState<DailyAttendance[]>([]);
@@ -174,17 +176,17 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
     const dayDate = dateObj.getDate().toString().padStart(2, '0');
     const status = attendance.status || 'Absent';
-    const colors = statusColors[status] || statusColors.Absent;
+    const statusTheme = statusColors[status] || statusColors.Absent;
 
     return (
-      <View key={`${attendance.date}-${index}`} style={[styles.attendanceCard, { borderLeftColor: colors.color }]}>
+      <View key={`${attendance.date}-${index}`} style={[styles.attendanceCard, { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: statusTheme.color }]}>
         <View style={styles.cardMain}>
           {/* Calendar visual pill */}
           <View style={styles.dateBlock}>
-            <View style={[styles.dateNumberContainer, { backgroundColor: colors.bg }]}>
-              <Text style={[styles.dateNumberText, { color: colors.color }]}>{dayDate}</Text>
+            <View style={[styles.dateNumberContainer, { backgroundColor: isDarkMode ? '#1E293B' : statusTheme.bg }]}>
+              <Text style={[styles.dateNumberText, { color: statusTheme.color }]}>{dayDate}</Text>
             </View>
-            <Text style={styles.dayLabelText}>{dayName}</Text>
+            <Text style={[styles.dayLabelText, { color: colors.textSecondary }]}>{dayName}</Text>
           </View>
 
           {/* Details Column */}
@@ -192,27 +194,27 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
             <View style={styles.timeRows}>
               <View style={styles.timeCell}>
                 <LogIn size={13} color="#10B981" />
-                <Text style={styles.timeLabel}>In:</Text>
-                <Text style={styles.timeValue}>{attendance.punchIn || '--'}</Text>
+                <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>In:</Text>
+                <Text style={[styles.timeValue, { color: colors.textPrimary }]}>{attendance.punchIn || '--'}</Text>
               </View>
               <View style={styles.timeCell}>
                 <LogOut size={13} color="#EF4444" />
-                <Text style={styles.timeLabel}>Out:</Text>
-                <Text style={styles.timeValue}>{attendance.punchOut || '--'}</Text>
+                <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>Out:</Text>
+                <Text style={[styles.timeValue, { color: colors.textPrimary }]}>{attendance.punchOut || '--'}</Text>
               </View>
             </View>
             
             <View style={styles.workedHoursRow}>
-              <Clock size={13} color="#6366f1" />
-              <Text style={styles.workedHoursLabel}>Worked:</Text>
-              <Text style={styles.workedHoursValue}>{attendance.workedHours || '0h 0m'}</Text>
+              <Clock size={13} color={colors.primary} />
+              <Text style={[styles.workedHoursLabel, { color: colors.textSecondary }]}>Worked:</Text>
+              <Text style={[styles.workedHoursValue, { color: colors.textPrimary }]}>{attendance.workedHours || '0h 0m'}</Text>
             </View>
           </View>
 
           {/* Status Label on Right */}
           <View style={styles.statusBadgeWrapper}>
-            <View style={[styles.statusBadge, { backgroundColor: colors.bg }]}>
-              <Text style={[styles.statusText, { color: colors.color }]}>{status}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1E293B' : statusTheme.bg }]}>
+              <Text style={[styles.statusText, { color: statusTheme.color }]}>{status}</Text>
             </View>
           </View>
         </View>
@@ -224,27 +226,27 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
   const displayDesignation = employee?.designation?.name || employee?.designationName || 'Staff';
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ChevronLeft size={22} color="#1E293B" />
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Employee Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Employee Profile</Text>
         </View>
       </View>
 
       {loading && !employee ? (
         <View style={styles.loaderWrapper}>
-          <ActivityIndicator size="large" color="#6366f1" />
-          <Text style={styles.loaderText}>Loading details...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Loading details...</Text>
         </View>
       ) : (
         <ScrollView
@@ -253,17 +255,17 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Welcome Card & Illustration */}
-          <View style={styles.welcomeCard}>
+          <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
             <LinearGradient
-              colors={['#EEF2FF', '#F5F3FF']}
+              colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.welcomeGradient}
             >
               <View style={styles.welcomeTextContainer}>
-                <Text style={styles.welcomeQuote}>Workspace Directory</Text>
-                <Text style={styles.ownerName}>Profile Details</Text>
-                <Text style={styles.welcomeDesc}>
+                <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Workspace Directory</Text>
+                <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Profile Details</Text>
+                <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                   Review profile designation, monthly attendance statistics, and hours summary metrics.
                 </Text>
               </View>
@@ -274,7 +276,7 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
           </View>
 
           {/* Profile Card */}
-          <View style={styles.profileCard}>
+          <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {employee?.avatar ? (
               <Image source={{ uri: employee.avatar }} style={styles.profileAvatar} />
             ) : (
@@ -283,62 +285,62 @@ export default function EmployeeDetailsScreen({ employeeId }: Props) {
               </View>
             )}
             <View style={styles.profileDetails}>
-              <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
-              <View style={styles.designationBadge}>
-                <Text style={styles.designationText}>{displayDesignation}</Text>
+              <Text style={[styles.profileName, { color: colors.textPrimary }]} numberOfLines={1}>{displayName}</Text>
+              <View style={[styles.designationBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                <Text style={[styles.designationText, { color: colors.textSecondary }]}>{displayDesignation}</Text>
               </View>
             </View>
           </View>
 
           {/* Monthly Summary */}
-          <Text style={styles.sectionTitle}>Monthly Summary</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Monthly Summary</Text>
           <View style={styles.summaryGrid}>
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIconWrapper, { backgroundColor: '#EFF6FF' }]}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: isDarkMode ? '#1E1B4B' : '#EFF6FF' }]}>
                 <Timer size={20} color="#3B82F6" />
               </View>
-              <Text style={styles.summaryValue} numberOfLines={1}>{avgPunchInTime}</Text>
-              <Text style={styles.summaryLabel}>Avg Punch In</Text>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary }]} numberOfLines={1}>{avgPunchInTime}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Avg Punch In</Text>
             </View>
 
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIconWrapper, { backgroundColor: '#FEF2F2' }]}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: isDarkMode ? '#7F1D1D' : '#FEF2F2' }]}>
                 <LogOut size={20} color="#EF4444" />
               </View>
-              <Text style={styles.summaryValue} numberOfLines={1}>{avgPunchOutTime}</Text>
-              <Text style={styles.summaryLabel}>Avg Punch Out</Text>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary }]} numberOfLines={1}>{avgPunchOutTime}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Avg Punch Out</Text>
             </View>
 
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIconWrapper, { backgroundColor: '#F5F3FF' }]}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.summaryIconWrapper, { backgroundColor: isDarkMode ? '#2E1065' : '#F5F3FF' }]}>
                 <Clock size={20} color="#8B5CF6" />
               </View>
-              <Text style={styles.summaryValue} numberOfLines={1}>{avgWorkingHours}</Text>
-              <Text style={styles.summaryLabel}>Avg Hours</Text>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary }]} numberOfLines={1}>{avgWorkingHours}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Avg Hours</Text>
             </View>
           </View>
 
           {/* Month Navigator */}
-          <View style={styles.monthSelector}>
-            <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.monthNavBtn}>
-              <ChevronLeft size={18} color="#64748B" />
+          <View style={[styles.monthSelector, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TouchableOpacity onPress={() => navigateMonth('prev')} style={[styles.monthNavBtn, { backgroundColor: colors.surface }]}>
+              <ChevronLeft size={18} color={colors.textSecondary} />
             </TouchableOpacity>
-            <Text style={styles.monthSelectorText}>
+            <Text style={[styles.monthSelectorText, { color: colors.textPrimary }]}>
               {months[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Text>
-            <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.monthNavBtn}>
-              <ChevronRight size={18} color="#64748B" />
+            <TouchableOpacity onPress={() => navigateMonth('next')} style={[styles.monthNavBtn, { backgroundColor: colors.surface }]}>
+              <ChevronRight size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           {/* Attendance Section */}
           <Animated.View style={[styles.attendanceSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {loading ? (
-              <ActivityIndicator size="small" color="#6366f1" style={{ marginVertical: 30 }} />
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 30 }} />
             ) : attendanceList.length === 0 ? (
-              <View style={styles.emptyState}>
-                <CalendarDays size={32} color="#94A3B8" style={{ marginBottom: 10 }} />
-                <Text style={styles.emptyText}>No attendance logs found.</Text>
+              <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <CalendarDays size={32} color={colors.textMuted} style={{ marginBottom: 10 }} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No attendance logs found.</Text>
               </View>
             ) : (
               attendanceList.map(renderAttendanceCard)

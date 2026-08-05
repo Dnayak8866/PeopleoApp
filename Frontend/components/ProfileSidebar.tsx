@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import ProfileIllustration from './illustrations/ProfileIllustration';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   onLogout,
 }) => {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -74,11 +76,11 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const MenuItem = ({ label, icon: Icon, color, bg, onPress }: any) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.iconContainer, { backgroundColor: bg }]}>
+      <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? '#1E1B4B' : bg }]}>
         <Icon size={20} color={color} />
       </View>
-      <Text style={[styles.menuItemText, label === 'Logout' && styles.logoutText]}>{label}</Text>
-      <ChevronRight size={16} color="#94A3B8" style={styles.menuItemChevron} />
+      <Text style={[styles.menuItemText, { color: colors.textPrimary }, label === 'Logout' && styles.logoutText]}>{label}</Text>
+      <ChevronRight size={16} color={colors.textMuted} style={styles.menuItemChevron} />
     </TouchableOpacity>
   );
 
@@ -100,12 +102,16 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         <Animated.View
           style={[
             styles.sidebarContainer,
-            { transform: [{ translateX: slideAnim }] },
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              transform: [{ translateX: slideAnim }],
+            },
           ]}
         >
           {/* Glass blur background on iOS */}
           {Platform.OS === 'ios' && (
-            <BlurView intensity={90} style={StyleSheet.absoluteFill} tint="light" />
+            <BlurView intensity={90} style={StyleSheet.absoluteFill} tint={isDarkMode ? 'dark' : 'light'} />
           )}
 
           {/* Close button at the top */}
@@ -114,8 +120,8 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             onPress={onClose}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <View style={styles.closeIconWrapper}>
-              <ChevronLeft size={20} color="#6366f1" />
+            <View style={[styles.closeIconWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <ChevronLeft size={20} color={colors.primary} />
             </View>
           </TouchableOpacity>
 
@@ -126,34 +132,34 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           >
             {/* Header profile details */}
             <View style={styles.profileSection}>
-              <View style={styles.avatarBorder}>
+              <View style={[styles.avatarBorder, { borderColor: isDarkMode ? colors.border : '#EEF2FF' }]}>
                 <Avatar
                   fullName={userDetails?.fullName || 'User'}
                   size={84}
                   uri={userDetails?.avatar}
                 />
               </View>
-              <Text style={styles.userName} numberOfLines={1}>
+              <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {userDetails?.fullName || 'Employee'}
               </Text>
-              <View style={styles.roleBadge}>
-                <Text style={styles.userRole}>
+              <View style={[styles.roleBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                <Text style={[styles.userRole, { color: colors.textSecondary }]}>
                   {userDetails?.role || 'Team Member'}
                 </Text>
               </View>
             </View>
 
             {/* Gradient Illustration Divider Card */}
-            <View style={styles.welcomeCard}>
+            <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
               <LinearGradient
-                colors={['#EEF2FF', '#F5F3FF']}
+                colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.welcomeGradient}
               >
                 <View style={styles.welcomeTextContainer}>
-                  <Text style={styles.welcomeQuote}>Workspace Details</Text>
-                  <Text style={styles.welcomeDesc}>
+                  <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Workspace Details</Text>
+                  <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                     Review status, edit profile details, or configure settings.
                   </Text>
                 </View>
@@ -209,7 +215,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
             {/* Version Footer */}
             <View style={styles.footer}>
-              <Text style={styles.versionText}>Version 1.0.0</Text>
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>Version 1.0.0</Text>
             </View>
           </ScrollView>
         </Animated.View>

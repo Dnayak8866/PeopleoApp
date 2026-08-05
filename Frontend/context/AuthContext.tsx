@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (phone: string, pin: string) => {
-    setLoading(true);
     try {
       const response = await loginApi(phone, pin);
       const { accessToken, refreshToken } = response;
@@ -93,14 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAccessToken(null);
       setRefreshToken(null);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
   // Logout function
   const logout = async () => {
-    setLoading(true);
     await storage.deleteItemAsync('accessToken');
     await storage.deleteItemAsync('refreshToken');
     await storage.deleteItemAsync('companyId');
@@ -110,7 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(null);
     setRefreshToken(null);
     setUserDetails(null);
-    setLoading(false);
   };
 
   return (

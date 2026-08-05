@@ -14,24 +14,25 @@ import { ChevronLeft, ChevronRight, Bell, Shield, Moon, Globe, HelpCircle, FileT
 import SettingsIllustration from '@/components/illustrations/SettingsIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { isDarkMode, toggleDarkMode, colors } = useTheme();
 
   // Settings states
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(false);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
 
   const SettingRow = ({ icon: Icon, label, value, type, onValueChange, subText }: any) => (
     <View style={styles.settingRow}>
       <View style={styles.settingRowLeft}>
-        <View style={styles.iconWrapper}>
-          <Icon size={18} color="#6366f1" />
+        <View style={[styles.iconWrapper, { backgroundColor: isDarkMode ? '#1E1B4B' : '#EEF2FF' }]}>
+          <Icon size={18} color={colors.primary} />
         </View>
         <View style={styles.settingTextWrapper}>
-          <Text style={styles.settingLabel}>{label}</Text>
-          {subText && <Text style={styles.settingSubtext}>{subText}</Text>}
+          <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{label}</Text>
+          {subText && <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>{subText}</Text>}
         </View>
       </View>
 
@@ -39,33 +40,33 @@ export default function SettingsScreen() {
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: '#CBD5E1', true: '#C7D2FE' }}
-          thumbColor={value ? '#6366f1' : '#F1F5F9'}
+          trackColor={{ false: isDarkMode ? '#334155' : '#CBD5E1', true: isDarkMode ? '#6366F1' : '#C7D2FE' }}
+          thumbColor={value ? (isDarkMode ? '#818CF8' : '#6366f1') : (isDarkMode ? '#64748B' : '#F1F5F9')}
           ios_backgroundColor="#CBD5E1"
         />
       ) : (
         <View style={styles.settingRowRight}>
-          {value && <Text style={styles.settingValueText}>{value}</Text>}
-          <ChevronRight size={16} color="#94A3B8" />
+          {value && <Text style={[styles.settingValueText, { color: colors.textSecondary }]}>{value}</Text>}
+          <ChevronRight size={16} color={colors.textMuted} />
         </View>
       )}
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ChevronLeft size={22} color="#1E293B" />
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
         </View>
       </View>
 
@@ -75,17 +76,17 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Welcome Card & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeQuote}>App Preferences</Text>
-              <Text style={styles.ownerName}>Control</Text>
-              <Text style={styles.welcomeDesc}>
+              <Text style={[styles.welcomeQuote, { color: colors.primary }]}>App Preferences</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Control</Text>
+              <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                 Customize notifications, toggle biometric authentication, and configure display parameters.
               </Text>
             </View>
@@ -96,8 +97,8 @@ export default function SettingsScreen() {
         </View>
 
         {/* Account settings */}
-        <Text style={styles.sectionTitle}>Account & Security</Text>
-        <View style={styles.settingsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account & Security</Text>
+        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <SettingRow
             icon={Bell}
             label="Push Notifications"
@@ -106,7 +107,7 @@ export default function SettingsScreen() {
             value={notificationsEnabled}
             onValueChange={setNotificationsEnabled}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <SettingRow
             icon={Shield}
             label="Biometric Login"
@@ -118,17 +119,17 @@ export default function SettingsScreen() {
         </View>
 
         {/* Preferences settings */}
-        <Text style={styles.sectionTitle}>App Preferences</Text>
-        <View style={styles.settingsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>App Preferences</Text>
+        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <SettingRow
             icon={Moon}
             label="Dark Mode"
             subText="Toggle display contrast themes"
             type="switch"
-            value={darkModeEnabled}
-            onValueChange={setDarkModeEnabled}
+            value={isDarkMode}
+            onValueChange={toggleDarkMode}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TouchableOpacity activeOpacity={0.7}>
             <SettingRow
               icon={Globe}
@@ -140,8 +141,8 @@ export default function SettingsScreen() {
         </View>
 
         {/* Support & Legal */}
-        <Text style={styles.sectionTitle}>Support & Legal</Text>
-        <View style={styles.settingsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support & Legal</Text>
+        <View style={[styles.settingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity activeOpacity={0.7}>
             <SettingRow
               icon={HelpCircle}
@@ -149,7 +150,7 @@ export default function SettingsScreen() {
               type="link"
             />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TouchableOpacity activeOpacity={0.7}>
             <SettingRow
               icon={FileText}
@@ -157,7 +158,7 @@ export default function SettingsScreen() {
               type="link"
             />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TouchableOpacity activeOpacity={0.7}>
             <SettingRow
               icon={FileText}
@@ -174,7 +175,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#FAFBFF',
   },
   container: {
     flex: 1,
@@ -197,11 +197,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#F1F5F9',
   },
   headerTitleContainer: {
     flex: 1,
@@ -210,7 +208,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1E1B4B',
   },
 
   // --- Welcome Card ---
@@ -218,7 +215,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.08)',
     marginBottom: 20,
   },
   welcomeGradient: {
@@ -233,7 +229,6 @@ const styles = StyleSheet.create({
   },
   welcomeQuote: {
     fontSize: 12,
-    color: '#6366f1',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -241,12 +236,10 @@ const styles = StyleSheet.create({
   ownerName: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1E1B4B',
     marginVertical: 2,
   },
   welcomeDesc: {
     fontSize: 11,
-    color: '#64748B',
     lineHeight: 16,
   },
   illustrationWrapper: {
@@ -259,7 +252,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 10,
@@ -269,12 +261,10 @@ const styles = StyleSheet.create({
 
   // --- Settings Card ---
   settingsCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 22,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.02,
@@ -297,7 +287,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -308,11 +297,9 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
   },
   settingSubtext: {
     fontSize: 11,
-    color: '#64748B',
     fontWeight: '500',
     marginTop: 2,
   },
@@ -323,12 +310,10 @@ const styles = StyleSheet.create({
   },
   settingValueText: {
     fontSize: 12,
-    color: '#64748B',
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
     width: '100%',
   },
 });

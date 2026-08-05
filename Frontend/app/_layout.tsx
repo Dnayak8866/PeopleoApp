@@ -11,6 +11,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import Toast from 'react-native-toast-message';
 
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+
 // Prevent Expo's native splash screen from auto-hiding before JS component mounts
 ExpoSplashScreen.preventAutoHideAsync();
 
@@ -30,16 +32,19 @@ export default function RootLayout() {
   };
 
   return (
-    <AuthProvider>
-      <MasterDataProvider>
-        <AppNavigator showSplash={showSplash} onSplashComplete={handleSplashComplete} />
-      </MasterDataProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MasterDataProvider>
+          <AppNavigator showSplash={showSplash} onSplashComplete={handleSplashComplete} />
+        </MasterDataProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; onSplashComplete: () => void }) {
   const { userId, loading } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -59,9 +64,9 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
   }, [userId, loading, segments]);
 
   return (
-    <View style={styles.container}>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Overlay SplashScreen over Stack so background routing redirects seamlessly without flash */}
       {showSplash && (
@@ -72,8 +77,8 @@ function AppNavigator({ showSplash, onSplashComplete }: { showSplash: boolean; o
 
       {/* Show loader if splash has finished but auth state is loading */}
       {!showSplash && loading && (
-        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
 

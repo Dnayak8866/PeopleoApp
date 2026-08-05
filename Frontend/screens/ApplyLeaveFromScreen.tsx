@@ -35,10 +35,12 @@ import ApplyLeaveIllustration from '@/components/illustrations/ApplyLeaveIllustr
 import { applyLeave, getLeaveBalances } from '@/services/api/leaves';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function ApplyLeaveFormScreen() {
+  const { isDarkMode, colors } = useTheme();
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
@@ -161,30 +163,30 @@ export default function ApplyLeaveFormScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.push('/(employee)/leave')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ChevronLeft size={22} color="#1E293B" />
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Apply Leave</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Apply Leave</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.bellButton}
+            style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/notifications')}
           >
-            <Bell size={22} color="#1E293B" />
+            <Bell size={22} color={colors.textPrimary} />
             <View style={styles.bellBadge} />
           </TouchableOpacity>
-          <View style={styles.profileAvatar}>
+          <View style={[styles.profileAvatar, { backgroundColor: colors.primary }]}>
             <Text style={styles.profileInitial}>{profileInitial}</Text>
           </View>
         </View>
@@ -197,17 +199,17 @@ export default function ApplyLeaveFormScreen() {
         onScrollBeginDrag={() => setShowLeaveTypeDropdown(false)}
       >
         {/* Welcome Card & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeQuote}>Leave Request</Text>
-              <Text style={styles.ownerName}>Apply Form</Text>
-              <Text style={styles.welcomeDesc}>
+              <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Leave Request</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Apply Form</Text>
+              <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                 Complete the details below to submit your time-off request for manager review.
               </Text>
             </View>
@@ -219,17 +221,17 @@ export default function ApplyLeaveFormScreen() {
 
         {/* Balance Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Leave Balance</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Leave Balance</Text>
           
           <View style={styles.balanceContainer}>
             {isLoadingBalances ? (
               <View style={styles.balanceLoader}>
-                <ActivityIndicator size="small" color="#6366f1" />
-                <Text style={styles.balanceLoaderText}>Fetching stats...</Text>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.balanceLoaderText, { color: colors.textSecondary }]}>Fetching stats...</Text>
               </View>
             ) : leaveBalances.length === 0 ? (
-              <View style={styles.emptyBalancesCard}>
-                <Text style={styles.emptyBalancesText}>No leave types found.</Text>
+              <View style={[styles.emptyBalancesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.emptyBalancesText, { color: colors.textSecondary }]}>No leave types found.</Text>
               </View>
             ) : (
               <Animated.View style={[styles.balanceGrid, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -237,27 +239,27 @@ export default function ApplyLeaveFormScreen() {
                   const isSick = balance.type_name.toLowerCase().includes('sick');
                   const isEarned = balance.type_name.toLowerCase().includes('earned');
 
-                  let icon = <BriefcaseBusiness size={18} color="#6366f1" />;
-                  let iconBg = '#EEF2FF';
-                  let numColor = '#6366f1';
+                  let icon = <BriefcaseBusiness size={18} color={colors.primary} />;
+                  let iconBg = isDarkMode ? '#1E1B4B' : '#EEF2FF';
+                  let numColor = colors.primary;
 
                   if (isSick) {
                     icon = <HeartPulse size={18} color="#10B981" />;
-                    iconBg = '#ECFDF5';
+                    iconBg = isDarkMode ? '#064E3B' : '#ECFDF5';
                     numColor = '#10B981';
                   } else if (isEarned) {
                     icon = <Banknote size={18} color="#EF4444" />;
-                    iconBg = '#FEF2F2';
+                    iconBg = isDarkMode ? '#7F1D1D' : '#FEF2F2';
                     numColor = '#EF4444';
                   }
 
                   return (
-                    <View key={balance.leave_type_id} style={styles.balanceCard}>
+                    <View key={balance.leave_type_id} style={[styles.balanceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <View style={styles.balanceHeader}>
                         <View style={[styles.balanceIcon, { backgroundColor: iconBg }]}>
                           {icon}
                         </View>
-                        <Text style={styles.balanceLabel} numberOfLines={1}>
+                        <Text style={[styles.balanceLabel, { color: colors.textSecondary }]} numberOfLines={1}>
                           {balance.type_name}
                         </Text>
                       </View>
@@ -265,7 +267,7 @@ export default function ApplyLeaveFormScreen() {
                         <Text style={[styles.balanceNumber, { color: numColor }]}>
                           {balance.remaining}
                         </Text>
-                        <Text style={styles.balanceDays}>days remaining</Text>
+                        <Text style={[styles.balanceDays, { color: colors.textMuted }]}>days remaining</Text>
                       </View>
                     </View>
                   );
@@ -277,40 +279,40 @@ export default function ApplyLeaveFormScreen() {
 
         {/* Form Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Application Details</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Application Details</Text>
 
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Dates Selectors */}
             <View style={styles.datesRow}>
               <View style={styles.dateField}>
-                <Text style={styles.inputLabel}>Start Date</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Start Date</Text>
                 <TouchableOpacity
-                  style={styles.dateInput}
+                  style={[styles.dateInput, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}
                   onPress={() => {
                     setSelectingDate('start');
                     setShowCalendar(true);
                   }}
                   activeOpacity={0.75}
                 >
-                  <CalendarDays size={16} color="#94A3B8" />
-                  <Text style={styles.dateInputText}>
+                  <CalendarDays size={16} color={colors.textMuted} />
+                  <Text style={[styles.dateInputText, { color: colors.textPrimary }]}>
                     {startDate.toLocaleDateString()}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.dateField}>
-                <Text style={styles.inputLabel}>End Date</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>End Date</Text>
                 <TouchableOpacity
-                  style={styles.dateInput}
+                  style={[styles.dateInput, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}
                   onPress={() => {
                     setSelectingDate('end');
                     setShowCalendar(true);
                   }}
                   activeOpacity={0.75}
                 >
-                  <CalendarDays size={16} color="#94A3B8" />
-                  <Text style={styles.dateInputText}>
+                  <CalendarDays size={16} color={colors.textMuted} />
+                  <Text style={[styles.dateInputText, { color: colors.textPrimary }]}>
                     {endDate.toLocaleDateString()}
                   </Text>
                 </TouchableOpacity>
@@ -319,17 +321,17 @@ export default function ApplyLeaveFormScreen() {
 
             {/* Leave Type Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Leave Type</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Leave Type</Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}
                 onPress={() => setShowLeaveTypeDropdown(!showLeaveTypeDropdown)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.dropdownText}>{leaveType}</Text>
-                <ChevronDown size={18} color="#94A3B8" />
+                <Text style={[styles.dropdownText, { color: colors.textPrimary }]}>{leaveType}</Text>
+                <ChevronDown size={18} color={colors.textMuted} />
               </TouchableOpacity>
               {showLeaveTypeDropdown && (
-                <View style={styles.dropdownMenu}>
+                <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {leaveTypes.map((type) => (
                     <TouchableOpacity
                       key={type.leave_type_id}
@@ -341,7 +343,7 @@ export default function ApplyLeaveFormScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.dropdownItemText}>{type.type_name}</Text>
+                      <Text style={[styles.dropdownItemText, { color: colors.textPrimary }]}>{type.type_name}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -350,20 +352,21 @@ export default function ApplyLeaveFormScreen() {
 
             {/* Duration Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Duration</Text>
-              <View style={styles.durationContainer}>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Duration</Text>
+              <View style={[styles.durationContainer, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
                 <TouchableOpacity
                   style={[
                     styles.durationButton,
+                    { backgroundColor: duration === 'Full Day' ? colors.primary : (isDarkMode ? '#0F172A' : '#FFFFFF') },
                     duration === 'Full Day' && styles.durationButtonActive,
                   ]}
                   onPress={() => setDuration('Full Day')}
                   activeOpacity={0.8}
                 >
-                  <Sun size={16} color={duration === 'Full Day' ? '#ffffff' : '#64748B'} />
+                  <Sun size={16} color={duration === 'Full Day' ? '#ffffff' : colors.textSecondary} />
                   <Text style={[
                     styles.durationButtonText,
-                    duration === 'Full Day' && styles.durationButtonTextActive,
+                    { color: duration === 'Full Day' ? '#ffffff' : colors.textSecondary },
                   ]}>
                     Full Day
                   </Text>
@@ -372,15 +375,16 @@ export default function ApplyLeaveFormScreen() {
                 <TouchableOpacity
                   style={[
                     styles.durationButton,
+                    { backgroundColor: duration === 'Half Day' ? colors.primary : (isDarkMode ? '#0F172A' : '#FFFFFF') },
                     duration === 'Half Day' && styles.durationButtonActive,
                   ]}
                   onPress={() => setDuration('Half Day')}
                   activeOpacity={0.8}
                 >
-                  <Moon size={16} color={duration === 'Half Day' ? '#ffffff' : '#64748B'} />
+                  <Moon size={16} color={duration === 'Half Day' ? '#ffffff' : colors.textSecondary} />
                   <Text style={[
                     styles.durationButtonText,
-                    duration === 'Half Day' && styles.durationButtonTextActive,
+                    { color: duration === 'Half Day' ? '#ffffff' : colors.textSecondary },
                   ]}>
                     Half Day
                   </Text>
@@ -390,11 +394,11 @@ export default function ApplyLeaveFormScreen() {
 
             {/* Reason */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Reason for Leave</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Reason for Leave</Text>
               <TextInput
-                style={styles.textArea}
+                style={[styles.textArea, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border, color: colors.textPrimary }]}
                 placeholder="Enter your reason for leave..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={reason}
                 onChangeText={setReason}
                 multiline
@@ -439,7 +443,7 @@ export default function ApplyLeaveFormScreen() {
           activeOpacity={1}
           onPress={() => setShowCalendar(false)}
         >
-          <View style={styles.calendarContainer}>
+          <View style={[styles.calendarContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Calendar
               current={selectingDate === 'start' ? formatDate(startDate) : formatDate(endDate)}
               minDate={selectingDate === 'end' ? formatDate(startDate) : formatDate(new Date())}
@@ -447,20 +451,26 @@ export default function ApplyLeaveFormScreen() {
               markedDates={{
                 [formatDate(startDate)]: {
                   startingDay: true,
-                  color: '#6366f1',
+                  color: colors.primary,
                   textColor: 'white'
                 },
                 [formatDate(endDate)]: {
                   endingDay: true,
-                  color: '#6366f1',
+                  color: colors.primary,
                   textColor: 'white'
                 }
               }}
               theme={{
-                todayTextColor: '#6366f1',
-                selectedDayBackgroundColor: '#6366f1',
+                backgroundColor: colors.card,
+                calendarBackground: colors.card,
+                textSectionTitleColor: colors.textSecondary,
+                selectedDayBackgroundColor: colors.primary,
                 selectedDayTextColor: '#ffffff',
-                arrowColor: '#6366f1',
+                todayTextColor: colors.primary,
+                dayTextColor: colors.textPrimary,
+                textDisabledColor: colors.textMuted,
+                monthTextColor: colors.textPrimary,
+                arrowColor: colors.primary,
               }}
             />
           </View>

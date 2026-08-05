@@ -23,10 +23,13 @@ import ReportIllustration from '@/components/illustrations/ReportIllustration';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 
+import { useTheme } from '@/context/ThemeContext';
+
 const { width } = Dimensions.get('window');
 
 export default function EmployeeReportsScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { userDetails, userId, companyId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
@@ -146,27 +149,27 @@ export default function EmployeeReportsScreen() {
   const barData = last7DaysData;
 
   const StatCard = ({ label, value, subLabel, icon: Icon, color }: any) => (
-    <View style={styles.statCard}>
+    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[styles.iconBox, { backgroundColor: color + '12' }]}>
         <Icon size={18} color={color} />
       </View>
       <View style={styles.statInfo}>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-        {subLabel && <Text style={styles.statSubLabel}>{subLabel}</Text>}
+        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+        {subLabel && <Text style={[styles.statSubLabel, { color: colors.textMuted }]}>{subLabel}</Text>}
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.welcomeText}>Personal</Text>
-          <Text style={styles.headerTitle}>My Reports</Text>
+          <Text style={[styles.welcomeText, { color: colors.primary }]}>Personal</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Reports</Text>
         </View>
         <HeaderAvatar size={38} />
       </View>
@@ -177,17 +180,17 @@ export default function EmployeeReportsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Welcome Analytics Card & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeQuote}>Insights & Logs</Text>
-              <Text style={styles.ownerName}>Analytics</Text>
-              <Text style={styles.welcomeDesc}>
+              <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Insights & Logs</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Analytics</Text>
+              <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                 Track your attendance metrics, daily worked hours, and remaining leaves.
               </Text>
             </View>
@@ -198,26 +201,26 @@ export default function EmployeeReportsScreen() {
         </View>
 
         {/* Month Selector */}
-        <View style={styles.monthSelector}>
+        <View style={[styles.monthSelector, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity
-            style={styles.navButton}
+            style={[styles.navButton, { backgroundColor: colors.surface }]}
             onPress={() => changeMonth(-1)}
             activeOpacity={0.7}
           >
-            <ChevronLeft size={16} color="#475569" />
+            <ChevronLeft size={16} color={colors.textSecondary} />
           </TouchableOpacity>
           <View style={styles.dateDisplay}>
-            <CalendarDays size={16} color="#6366f1" />
-            <Text style={styles.dateText}>
+            <CalendarDays size={16} color={colors.primary} />
+            <Text style={[styles.dateText, { color: colors.textPrimary }]}>
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.navButton}
+            style={[styles.navButton, { backgroundColor: colors.surface }]}
             onPress={() => changeMonth(1)}
             activeOpacity={0.7}
           >
-            <ChevronRight size={16} color="#475569" />
+            <ChevronRight size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -247,8 +250,8 @@ export default function EmployeeReportsScreen() {
             </View>
 
             {/* Attendance Distribution Chart */}
-            <View style={styles.chartSection}>
-              <Text style={styles.sectionTitle}>Attendance Distribution</Text>
+            <View style={[styles.chartSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Attendance Distribution</Text>
               <View style={styles.pieContainer}>
                 {pieData.length > 0 && stats?.monthlySummary?.totalDays > 0 ? (
                   <View style={styles.chartAndCenterLabel}>
@@ -257,41 +260,42 @@ export default function EmployeeReportsScreen() {
                       donut
                       radius={72}
                       innerRadius={50}
+                      innerCircleColor={colors.card}
                       centerLabelComponent={() => (
                         <View style={{ alignItems: 'center' }}>
-                          <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E1B4B' }}>
+                          <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textPrimary }}>
                             {stats?.monthlySummary?.totalDays || 0}
                           </Text>
-                          <Text style={{ fontSize: 9, color: '#64748B', fontWeight: '700', textTransform: 'uppercase' }}>Days</Text>
+                          <Text style={{ fontSize: 9, color: colors.textSecondary, fontWeight: '700', textTransform: 'uppercase' }}>Days</Text>
                         </View>
                       )}
                     />
                   </View>
                 ) : (
                   <View style={styles.emptyChart}>
-                    <Text style={styles.noData}>No attendance logs available.</Text>
+                    <Text style={[styles.noData, { color: colors.textMuted }]}>No attendance logs available.</Text>
                   </View>
                 )}
                 <View style={styles.legend}>
                   <View style={styles.legendItem}>
                     <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-                    <Text style={styles.legendText}>Present ({stats?.monthlySummary?.presentDays || 0})</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>Present ({stats?.monthlySummary?.presentDays || 0})</Text>
                   </View>
                   <View style={styles.legendItem}>
                     <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />
-                    <Text style={styles.legendText}>Absent ({stats?.monthlySummary?.absentDays || 0})</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>Absent ({stats?.monthlySummary?.absentDays || 0})</Text>
                   </View>
                   <View style={styles.legendItem}>
-                    <View style={[styles.dot, { backgroundColor: '#6366f1' }]} />
-                    <Text style={styles.legendText}>Leave ({stats?.monthlySummary?.onLeaveDays || 0})</Text>
+                    <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>Leave ({stats?.monthlySummary?.onLeaveDays || 0})</Text>
                   </View>
                 </View>
               </View>
             </View>
 
             {/* Working Hours Bar Chart */}
-            <View style={styles.chartSection}>
-              <Text style={styles.sectionTitle}>Working Hours (Last 7 Days)</Text>
+            <View style={[styles.chartSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Working Hours (Last 7 Days)</Text>
               <View style={styles.barContainer}>
                 {barData.length > 0 ? (
                   <BarChart
@@ -302,32 +306,32 @@ export default function EmployeeReportsScreen() {
                     roundedBottom
                     hideRules={false}
                     rulesType="dashed"
-                    rulesColor="#F1F5F9"
+                    rulesColor={isDarkMode ? '#334155' : '#F1F5F9'}
                     yAxisThickness={0}
                     xAxisThickness={1}
-                    xAxisColor="#E2E8F0"
-                    yAxisTextStyle={{ color: '#94A3B8', fontSize: 10, fontWeight: '600' }}
-                    xAxisLabelTextStyle={{ color: '#64748B', fontSize: 11, fontWeight: '600' }}
+                    xAxisColor={colors.border}
+                    yAxisTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}
+                    xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}
                     noOfSections={5}
                     maxValue={10}
                     stepValue={2}
                     yAxisLabelTexts={['0', '2', '4', '6', '8', '10']}
                   />
                 ) : (
-                  <Text style={styles.noData}>Not enough check-in logs for charts.</Text>
+                  <Text style={[styles.noData, { color: colors.textMuted }]}>Not enough check-in logs for charts.</Text>
                 )}
               </View>
             </View>
 
             {/* Leave Balances Section */}
-            <View style={styles.chartSection}>
+            <View style={[styles.chartSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Leave Balance</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Leave Balance</Text>
                 <TouchableOpacity
                   onPress={() => router.push('/employee/apply-leave')}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.actionText}>Apply Leave</Text>
+                  <Text style={[styles.actionText, { color: colors.primary }]}>Apply Leave</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.balanceList}>
@@ -336,17 +340,17 @@ export default function EmployeeReportsScreen() {
                   return (
                     <View key={index} style={styles.balanceItem}>
                       <View style={styles.balanceInfo}>
-                        <Text style={styles.balanceName}>{item.type_name}</Text>
-                        <Text style={styles.balanceUsed}>Used: {item.used} / {item.total_allowed}</Text>
+                        <Text style={[styles.balanceName, { color: colors.textPrimary }]}>{item.type_name}</Text>
+                        <Text style={[styles.balanceUsed, { color: colors.textSecondary }]}>Used: {item.used} / {item.total_allowed}</Text>
                       </View>
-                      <View style={styles.balanceTrack}>
+                      <View style={[styles.balanceTrack, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
                         <View
                           style={[
                             styles.balanceFill,
                             { width: `${percentage}%` }
                           ]}
                         />
-                        <Text style={styles.balanceRemaining}>{item.remaining} Days Left</Text>
+                        <Text style={[styles.balanceRemaining, { color: colors.primary }]}>{item.remaining} Days Left</Text>
                       </View>
                     </View>
                   );

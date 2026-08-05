@@ -58,8 +58,11 @@ const getNotificationMeta = (type: string) => {
   }
 };
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function NotificationScreen() {
   const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { userDetails } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,42 +137,45 @@ export default function NotificationScreen() {
 
     return (
       <TouchableOpacity
-        key={item.id}
-        style={[styles.notificationCard, !item.isRead && styles.unreadCard]}
+        style={[
+          styles.notificationCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          !item.isRead && { backgroundColor: isDarkMode ? '#1E1B4B' : '#EEF2FF' },
+        ]}
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.8}
       >
-        <View style={[styles.iconContainer, { backgroundColor: bg }]}>
+        <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? '#1E1B4B' : bg }]}>
           <Icon size={20} color={color} />
         </View>
         <View style={styles.textContainer}>
           <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, !item.isRead && styles.unreadText]} numberOfLines={1}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }, !item.isRead && styles.unreadText]} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={styles.timeText}>{timeStr}</Text>
+            <Text style={[styles.timeText, { color: colors.textMuted }]}>{timeStr}</Text>
           </View>
-          <Text style={styles.messageText}>{item.message}</Text>
+          <Text style={[styles.messageText, { color: colors.textSecondary }]}>{item.message}</Text>
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ChevronLeft size={22} color="#1E293B" />
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Notifications</Text>
         </View>
       </View>
 
@@ -185,22 +191,22 @@ export default function NotificationScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Welcome Card & Illustration */}
-          <View style={styles.welcomeCard}>
+          <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
             <LinearGradient
-              colors={['#EEF2FF', '#F5F3FF']}
+              colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.welcomeGradient}
             >
               <View style={styles.welcomeTextContainer}>
-                <Text style={styles.welcomeQuote}>Stay Updated</Text>
-                <Text style={styles.ownerName}>Alert Logs</Text>
-                <Text style={styles.welcomeDesc}>
+                <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Stay Updated</Text>
+                <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Alert Logs</Text>
+                <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                   View workspace announcements, punch status confirmations, and time-off request updates.
                 </Text>
               </View>
               <View style={styles.illustrationWrapper}>
-                <NotificationIllustration width={110} height={90} />
+                <NotificationIllustration width={110} height={90} isDarkMode={isDarkMode} />
               </View>
             </LinearGradient>
           </View>
@@ -209,9 +215,9 @@ export default function NotificationScreen() {
             {unread.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent</Text>
                   <TouchableOpacity onPress={handleMarkAllRead} activeOpacity={0.7}>
-                    <Text style={styles.markRead}>Mark all as read</Text>
+                    <Text style={[styles.markRead, { color: colors.primary }]}>Mark all as read</Text>
                   </TouchableOpacity>
                 </View>
                 {unread.map(renderCard)}
@@ -219,18 +225,18 @@ export default function NotificationScreen() {
             )}
 
             <View style={[styles.sectionHeader, { marginTop: unread.length === 0 ? 10 : 20 }]}>
-              <Text style={styles.sectionTitle}>Earlier</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Earlier</Text>
             </View>
 
             {read.length === 0 && unread.length === 0 ? (
-              <View style={styles.emptyState}>
-                <BellRing size={40} color="#94A3B8" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyText}>No notifications yet.</Text>
+              <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <BellRing size={40} color={colors.textMuted} style={{ marginBottom: 12 }} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No notifications yet.</Text>
               </View>
             ) : read.length === 0 ? (
-              <View style={styles.emptyState}>
-                <ClipboardCheck size={40} color="#94A3B8" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyText}>No older notifications.</Text>
+              <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <ClipboardCheck size={40} color={colors.textMuted} style={{ marginBottom: 12 }} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No older notifications.</Text>
               </View>
             ) : (
               read.map(renderCard)

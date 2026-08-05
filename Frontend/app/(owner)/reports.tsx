@@ -39,7 +39,13 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+import { useRouter } from 'expo-router';
+
+import { useTheme } from '@/context/ThemeContext';
+
 export default function ReportsScreen() {
+  const router = useRouter();
+  const { isDarkMode, colors } = useTheme();
   const { userDetails } = useAuth();
   const { companyDetails } = useMasterDataContext();
 
@@ -210,18 +216,18 @@ export default function ReportsScreen() {
   const MetricCard = ({ metric }: any) => {
     const isPos = metric.changeType === 'positive';
     const isNeg = metric.changeType === 'negative';
-    const statusColor = isPos ? '#10B981' : isNeg ? '#EF4444' : '#64748B';
-    const statusBg = isPos ? '#ECFDF5' : isNeg ? '#FEF2F2' : '#F1F5F9';
+    const statusColor = isPos ? '#10B981' : isNeg ? '#EF4444' : colors.textSecondary;
+    const statusBg = isPos ? (isDarkMode ? '#064E3B' : '#ECFDF5') : isNeg ? (isDarkMode ? '#7F1D1D' : '#FEF2F2') : (isDarkMode ? '#1E293B' : '#F1F5F9');
 
     return (
-      <View style={styles.metricCard}>
+      <View style={[styles.metricCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.metricHeader}>
-          <View style={[styles.metricIconCircle, { backgroundColor: metric.iconBg }]}>
+          <View style={[styles.metricIconCircle, { backgroundColor: isDarkMode ? '#1E1B4B' : metric.iconBg }]}>
             {metric.icon}
           </View>
-          <Text style={styles.metricLabel} numberOfLines={1}>{metric.label}</Text>
+          <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{metric.label}</Text>
         </View>
-        <Text style={styles.metricValue}>{metric.value}</Text>
+        <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{metric.value}</Text>
         <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
           <Text style={[styles.statusText, { color: statusColor }]}>{metric.change}</Text>
         </View>
@@ -230,30 +236,30 @@ export default function ReportsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.welcomeText}>Company Performance</Text>
-          <Text style={styles.headerTitle}>Analytics Reports</Text>
+          <Text style={[styles.welcomeText, { color: colors.primary }]}>Company Performance</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics Reports</Text>
         </View>
         <TouchableOpacity
-          style={styles.bellButton}
+          style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.push('/notifications')}
         >
-          <Bell size={22} color="#1E293B" />
+          <Bell size={22} color={colors.textPrimary} />
           <View style={styles.bellBadge} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Month Selector Pill */}
-        <TouchableOpacity style={styles.dateSelector} onPress={() => setShowMonthPicker(true)} activeOpacity={0.75}>
+        <TouchableOpacity style={[styles.dateSelector, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowMonthPicker(true)} activeOpacity={0.75}>
           <View style={styles.dateSelectorLeft}>
-            <TrendingUp size={16} color="#6366f1" />
-            <Text style={styles.dateText}>{monthLabel}</Text>
+            <TrendingUp size={16} color={colors.primary} />
+            <Text style={[styles.dateText, { color: colors.primary }]}>{monthLabel}</Text>
           </View>
           <ChevronDown size={18} color="#6366f1" />
         </TouchableOpacity>
@@ -265,22 +271,23 @@ export default function ReportsScreen() {
             activeOpacity={1}
             onPress={() => setShowMonthPicker(false)}
           >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Reporting Month</Text>
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Reporting Month</Text>
               <ScrollView showsVerticalScrollIndicator={false}>
                 {MONTHS.map((m, i) => (
                   <TouchableOpacity
                     key={m}
                     style={[
                       styles.modalItem,
-                      selectedMonth === i + 1 && styles.modalItemSelect,
+                      { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC' },
+                      selectedMonth === i + 1 && [styles.modalItemSelect, { backgroundColor: isDarkMode ? '#2E1065' : '#EEF2FF' }],
                     ]}
                     onPress={() => {
                       setSelectedMonth(i + 1);
                       setShowMonthPicker(false);
                     }}
                   >
-                    <Text style={[styles.modalItemText, selectedMonth === i + 1 && styles.modalItemTextSelect]}>
+                    <Text style={[styles.modalItemText, { color: colors.textSecondary }, selectedMonth === i + 1 && [styles.modalItemTextSelect, { color: colors.primary }]]}>
                       {m} {selectedYear}
                     </Text>
                   </TouchableOpacity>
@@ -291,36 +298,36 @@ export default function ReportsScreen() {
         </Modal>
 
         {/* Analytics card with Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeQuote}>Monthly Insights</Text>
-              <Text style={styles.ownerName}>Overview</Text>
-              <Text style={styles.welcomeDesc}>
+              <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Monthly Insights</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Overview</Text>
+              <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                 View key performance indicators and overall metrics for this month.
               </Text>
             </View>
             <View style={styles.illustrationWrapper}>
-              <ReportIllustration width={110} height={90} />
+              <ReportIllustration width={110} height={90} isDarkMode={isDarkMode} />
             </View>
           </LinearGradient>
         </View>
 
         {loading ? (
           <View style={styles.loaderWrapper}>
-            <ActivityIndicator size="large" color="#6366f1" />
-            <Text style={styles.loaderText}>Generating report details...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Generating report details...</Text>
           </View>
         ) : (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {/* Key Metrics Grid */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Key Performance Indicators</Text>
               <View style={styles.metricsGrid}>
                 {keyMetrics.map((metric, index) => (
                   <MetricCard key={index} metric={metric} />
@@ -331,13 +338,13 @@ export default function ReportsScreen() {
             {/* All Employees Monthly Present & Absent Pie Chart */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderTitle}>
-                <Text style={styles.sectionTitle}>All Employees Monthly Attendance</Text>
-                <Text style={styles.sectionSubtitle}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>All Employees Monthly Attendance</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
                   {totalEmployees} active employees • {daysWithData} working days recorded
                 </Text>
               </View>
 
-              <View style={styles.chartCard}>
+              <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.pieContent}>
                   <View style={styles.pieWrapper}>
                     <PieChart
@@ -353,11 +360,11 @@ export default function ReportsScreen() {
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
                       <View>
-                        <Text style={styles.legendTitle}>Present ({presentPercentage}%)</Text>
-                        <Text style={styles.legendSubtitle}>
+                        <Text style={[styles.legendTitle, { color: colors.textPrimary }]}>Present ({presentPercentage}%)</Text>
+                        <Text style={[styles.legendSubtitle, { color: colors.textSecondary }]}>
                           ~{avgPresentEmployees} employees / day
                         </Text>
-                        <Text style={styles.legendDetail}>
+                        <Text style={[styles.legendDetail, { color: colors.textMuted }]}>
                           {totalPresentCount} total present logs
                         </Text>
                       </View>
@@ -365,11 +372,11 @@ export default function ReportsScreen() {
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
                       <View>
-                        <Text style={styles.legendTitle}>Absent ({absentPercentage}%)</Text>
-                        <Text style={styles.legendSubtitle}>
+                        <Text style={[styles.legendTitle, { color: colors.textPrimary }]}>Absent ({absentPercentage}%)</Text>
+                        <Text style={[styles.legendSubtitle, { color: colors.textSecondary }]}>
                           ~{avgAbsentEmployees} employees / day
                         </Text>
-                        <Text style={styles.legendDetail}>
+                        <Text style={[styles.legendDetail, { color: colors.textMuted }]}>
                           {totalAbsentCount} missed logs
                         </Text>
                       </View>

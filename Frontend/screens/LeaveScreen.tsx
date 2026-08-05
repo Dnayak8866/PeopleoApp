@@ -23,6 +23,7 @@ import { getEmployeeLeaves } from '@/services/api/leaves';
 import { useMasterDataContext } from '@/context/MasterDataContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ const statusStyles: Record<LeaveStatus, { bg: string; text: string }> = {
 };
 
 export default function LeavesScreen() {
+  const { isDarkMode, colors } = useTheme();
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [leaves, setLeaves] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,10 +102,10 @@ export default function LeavesScreen() {
 
   const getStatusBgColor = (status: string) => {
     switch (status) {
-      case 'Pending': return '#FFFBEB';
-      case 'Approved': return '#ECFDF5';
-      case 'Rejected': return '#FEF2F2';
-      default: return '#F1F5F9';
+      case 'Pending': return isDarkMode ? '#78350F' : '#FFFBEB';
+      case 'Approved': return isDarkMode ? '#064E3B' : '#ECFDF5';
+      case 'Rejected': return isDarkMode ? '#7F1D1D' : '#FEF2F2';
+      default: return isDarkMode ? '#1E293B' : '#F1F5F9';
     }
   };
 
@@ -117,22 +119,22 @@ export default function LeavesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.welcomeText}>Time Off</Text>
-          <Text style={styles.headerTitle}>Leaves</Text>
+          <Text style={[styles.welcomeText, { color: colors.primary }]}>Time Off</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Leaves</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.bellButton}
+            style={[styles.bellButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/notifications')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Bell size={22} color="#1E293B" />
+            <Bell size={22} color={colors.textPrimary} />
             <View style={styles.bellBadge} />
           </TouchableOpacity>
         </View>
@@ -144,17 +146,17 @@ export default function LeavesScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Welcome Time Off Card & Illustration */}
-        <View style={styles.welcomeCard}>
+        <View style={[styles.welcomeCard, { borderColor: isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(99, 102, 241, 0.08)' }]}>
           <LinearGradient
-            colors={['#EEF2FF', '#F5F3FF']}
+            colors={isDarkMode ? ['#151D30', '#1E1B4B'] : ['#EEF2FF', '#F5F3FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.welcomeGradient}
           >
             <View style={styles.welcomeTextContainer}>
-              <Text style={styles.welcomeQuote}>Planning Time Off?</Text>
-              <Text style={styles.ownerName}>Holidays</Text>
-              <Text style={styles.welcomeDesc}>
+              <Text style={[styles.welcomeQuote, { color: colors.primary }]}>Planning Time Off?</Text>
+              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>Holidays</Text>
+              <Text style={[styles.welcomeDesc, { color: colors.textSecondary }]}>
                 Submit a leave request, track approval logs, and view your active leave balances.
               </Text>
               
@@ -172,24 +174,24 @@ export default function LeavesScreen() {
           </LinearGradient>
         </View>
 
-        {/* Filter Section */}
+        {/* Category Filter Selector */}
         <View style={styles.filterSection}>
           <TouchableOpacity
-            style={styles.filterTrigger}
+            style={[styles.filterTrigger, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => setShowFilterDropdown(!showFilterDropdown)}
             activeOpacity={0.8}
           >
             <View style={styles.filterTriggerLeft}>
-              <Filter size={16} color="#6366f1" style={{ marginRight: 8 }} />
-              <Text style={styles.filterTriggerText}>
-                Category: <Text style={styles.filterTriggerActive}>{selectedFilter}</Text>
+              <Filter size={16} color={colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.filterTriggerText, { color: colors.textSecondary }]}>
+                Category: <Text style={[styles.filterTriggerActive, { color: colors.primary }]}>{selectedFilter}</Text>
               </Text>
             </View>
-            <ChevronDown size={16} color="#94A3B8" />
+            <ChevronDown size={16} color={colors.textMuted} />
           </TouchableOpacity>
 
           {showFilterDropdown && (
-            <View style={styles.dropdownMenu}>
+            <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {['All', ...leaveTypes.map(t => t.type_name)].map((filter) => (
                 <TouchableOpacity
                   key={filter}
@@ -202,12 +204,13 @@ export default function LeavesScreen() {
                 >
                   <Text style={[
                     styles.dropdownItemText,
-                    selectedFilter === filter && styles.dropdownItemTextActive
+                    { color: colors.textSecondary },
+                    selectedFilter === filter && [styles.dropdownItemTextActive, { color: colors.primary }]
                   ]}>
                     {filter}
                   </Text>
                   {selectedFilter === filter && (
-                    <Check size={16} color="#6366f1" />
+                    <Check size={16} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -225,18 +228,18 @@ export default function LeavesScreen() {
 
         {/* Logs Applications List */}
         <View style={styles.logsSection}>
-          <Text style={styles.logsSectionTitle}>My Applications</Text>
+          <Text style={[styles.logsSectionTitle, { color: colors.textPrimary }]}>My Applications</Text>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {isLoading ? (
               <View style={styles.loaderWrapper}>
-                <ActivityIndicator size="large" color="#6366f1" />
-                <Text style={styles.loaderText}>Syncing records...</Text>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Syncing records...</Text>
               </View>
             ) : filteredApplications.length === 0 ? (
-              <View style={styles.emptyState}>
-                <ClipboardList size={40} color="#94A3B8" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyText}>No leave applications found.</Text>
+              <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <ClipboardList size={40} color={colors.textMuted} style={{ marginBottom: 12 }} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No leave applications found.</Text>
               </View>
             ) : (
               filteredApplications.map((application) => {
@@ -245,20 +248,20 @@ export default function LeavesScreen() {
                 return (
                   <TouchableOpacity
                     key={application.leave_id}
-                    style={styles.leaveCard}
+                    style={[styles.leaveCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     activeOpacity={0.7}
                     onPress={() => {}}
                   >
                     <View style={styles.leaveCardContent}>
-                      <View style={styles.leaveTypeBadge}>
-                        <Text style={styles.leaveTypeBadgeText} numberOfLines={1}>
+                      <View style={[styles.leaveTypeBadge, { backgroundColor: isDarkMode ? '#1E293B' : '#EEF2FF' }]}>
+                        <Text style={[styles.leaveTypeBadgeText, { color: colors.primary }]} numberOfLines={1}>
                           {application.leave_type?.type_name || 'Leave'}
                         </Text>
                       </View>
-                      <Text style={styles.applicationDate} numberOfLines={1}>
+                      <Text style={[styles.applicationDate, { color: colors.textPrimary }]} numberOfLines={1}>
                         {getDisplayDate(application.from_date)} - {getDisplayDate(application.to_date)}
                       </Text>
-                      <Text style={styles.applicationReason} numberOfLines={1}>
+                      <Text style={[styles.applicationReason, { color: colors.textSecondary }]} numberOfLines={1}>
                         {application.reason || 'No reason provided'}
                       </Text>
                     </View>
@@ -268,9 +271,7 @@ export default function LeavesScreen() {
                           {application.status}
                         </Text>
                       </View>
-                      <View style={styles.chevronWrapper}>
-                        <ChevronRight size={14} color="#94A3B8" />
-                      </View>
+
                     </View>
                   </TouchableOpacity>
                 );
